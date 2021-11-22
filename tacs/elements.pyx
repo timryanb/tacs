@@ -236,6 +236,75 @@ def TestElementMatSVSens(Element element, ElementMatrixType mat_type,
                                    <TacsScalar*>vars.data, dh,
                                    test_print_level, atol, rtol)
 
+def TestElementQuantityDVSens(Element element, int elem_index,
+                              int quantity_type, double time,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] xpts,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] vars,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] dvars,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] ddvars,
+                              double dh=1e-6,
+                              int test_print_level=2,
+                              double atol=1e-5, double rtol=1e-5):
+    num_nodes = element.getNumNodes()
+    num_vars = element.getNumVariables()
+
+    # Make sure input arrays are large enough for element to avoid segfault
+    assert len(xpts) >= 3 * num_nodes
+    assert len(vars) >= num_vars
+    assert len(dvars) >= num_vars
+    assert len(ddvars) >= num_vars
+
+    return TacsTestElementQuantityDVSens(element.ptr, elem_index, quantity_type, time,
+                                         <TacsScalar*>xpts.data,
+                                         <TacsScalar*>vars.data, <TacsScalar*>dvars.data, <TacsScalar*>ddvars.data, dh,
+                                         test_print_level, atol, rtol)
+
+def TestElementQuantitySVSens(Element element, int elem_index,
+                              int quantity_type, double time,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] xpts,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] vars,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] dvars,
+                              np.ndarray[TacsScalar, ndim=1, mode='c'] ddvars,
+                              double dh=1e-6,
+                              int test_print_level=2,
+                              double atol=1e-5, double rtol=1e-5):
+    num_nodes = element.getNumNodes()
+    num_vars = element.getNumVariables()
+
+    # Make sure input arrays are large enough for element to avoid segfault
+    assert len(xpts) >= 3 * num_nodes
+    assert len(vars) >= num_vars
+    assert len(dvars) >= num_vars
+    assert len(ddvars) >= num_vars
+
+    return TacsTestElementQuantitySVSens(element.ptr, elem_index, quantity_type, time,
+                                         <TacsScalar*>xpts.data,
+                                         <TacsScalar*>vars.data, <TacsScalar*>dvars.data, <TacsScalar*>ddvars.data, dh,
+                                         test_print_level, atol, rtol)
+
+def TestElementQuantityXptSens(Element element, int elem_index,
+                               int quantity_type, double time,
+                               np.ndarray[TacsScalar, ndim=1, mode='c'] xpts,
+                               np.ndarray[TacsScalar, ndim=1, mode='c'] vars,
+                               np.ndarray[TacsScalar, ndim=1, mode='c'] dvars,
+                               np.ndarray[TacsScalar, ndim=1, mode='c'] ddvars,
+                               double dh=1e-6,
+                               int test_print_level=2,
+                               double atol=1e-5, double rtol=1e-5):
+    num_nodes = element.getNumNodes()
+    num_vars = element.getNumVariables()
+
+    # Make sure input arrays are large enough for element to avoid segfault
+    assert len(xpts) >= 3 * num_nodes
+    assert len(vars) >= num_vars
+    assert len(dvars) >= num_vars
+    assert len(ddvars) >= num_vars
+
+    return TacsTestElementQuantityXptSens(element.ptr, elem_index, quantity_type, time,
+                                          <TacsScalar*>xpts.data,
+                                          <TacsScalar*>vars.data, <TacsScalar*>dvars.data, <TacsScalar*>ddvars.data, dh,
+                                          test_print_level, atol, rtol)
+
 # Function for setting random seeds for all element tests
 def SeedRandomGenerator(int seed=0):
     TacsSeedRandomGenerator(seed)
