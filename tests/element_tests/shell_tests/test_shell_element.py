@@ -72,6 +72,15 @@ class ElementTest(unittest.TestCase):
         # Set matrix types
         self.matrix_types = [TACS.STIFFNESS_MATRIX, TACS.MASS_MATRIX, TACS.GEOMETRIC_STIFFNESS_MATRIX]
 
+        # Set quantity types
+        self.quantity_types = [elements.ELEMENT_DENSITY, elements.STRAIN_ENERGY_DENSITY, elements.FAILURE_INDEX,
+                               elements.HEAT_FLUX, elements.TEMPERATURE, elements.TOTAL_STRAIN_ENERGY_DENSITY,
+                               elements.ELEMENT_DISPLACEMENT, elements.ELEMENT_STRAIN, elements.ELEMENT_STRESS]
+
+        self.quantity_names = ['ELEMENT_DENSITY', 'STRAIN_ENERGY_DENSITY', 'FAILURE_INDEX',
+                               'HEAT_FLUX', 'TEMPERATURE', 'TOTAL_STRAIN_ENERGY_DENSITY',
+                               'ELEMENT_DISPLACEMENT', 'ELEMENT_STRAIN', 'ELEMENT_STRESS']
+
         # Seed random number generator in tacs for consistent test results
         elements.SeedRandomGenerator(0)
 
@@ -155,3 +164,48 @@ class ElementTest(unittest.TestCase):
                                                              self.time, self.xpts, self.vars, self.dh,
                                                              self.print_level, self.atol, self.rtol)
                         self.assertFalse(fail)
+
+    def test_element_quantity_dv_sens(self):
+        # Loop through every combination of model and basis class and test element matrix inner product sens
+        for transform in self.transforms:
+            with self.subTest(transform=transform):
+                for element_handle in self.elements:
+                    with self.subTest(element=element_handle):
+                        element = element_handle(transform, self.con)
+                        for quantity_name, quantity_type in zip(self.quantity_names, self.quantity_types):
+                            with self.subTest(quantity_type=quantity_name):
+                                fail = elements.TestElementQuantityDVSens(element, self.elem_index, quantity_type,
+                                                                          self.time, self.xpts, self.vars, self.dvars,
+                                                                          self.ddvars, self.dh, self.print_level,
+                                                                          self.atol, self.rtol)
+                                self.assertFalse(fail)
+
+    def test_element_quantity_sv_sens(self):
+        # Loop through every combination of model and basis class and test element matrix inner product sens
+        for transform in self.transforms:
+            with self.subTest(transform=transform):
+                for element_handle in self.elements:
+                    with self.subTest(element=element_handle):
+                        element = element_handle(transform, self.con)
+                        for quantity_name, quantity_type in zip(self.quantity_names, self.quantity_types):
+                            with self.subTest(quantity_type=quantity_name):
+                                fail = elements.TestElementQuantitySVSens(element, self.elem_index, quantity_type,
+                                                                          self.time, self.xpts, self.vars, self.dvars,
+                                                                          self.ddvars, self.dh, self.print_level,
+                                                                          self.rtol, self.atol)
+                                self.assertFalse(fail)
+
+    def test_element_quantity_xpt_sens(self):
+        # Loop through every combination of model and basis class and test element matrix inner product sens
+        for transform in self.transforms:
+            with self.subTest(transform=transform):
+                for element_handle in self.elements:
+                    with self.subTest(element=element_handle):
+                        element = element_handle(transform, self.con)
+                        for quantity_name, quantity_type in zip(self.quantity_names, self.quantity_types):
+                            with self.subTest(quantity_type=quantity_name):
+                                fail = elements.TestElementQuantityXptSens(element, self.elem_index, quantity_type,
+                                                                           self.time, self.xpts, self.vars, self.dvars,
+                                                                           self.ddvars, self.dh, self.print_level,
+                                                                           self.atol, self.rtol)
+                                self.assertFalse(fail)
