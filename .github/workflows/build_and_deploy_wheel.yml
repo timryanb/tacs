@@ -27,7 +27,7 @@ jobs:
             export OMPI_MCA_btl=self,tcp &&
             export OMPI_MCA_rmaps_base_oversubscribe=1 &&
             adduser mpiuser
-          CIBW_TEST_COMMAND: export TESTFLO=$(which testflo) && chmod +X ${TESTFLO} && su -c "${TESTFLO} {project}/tests/" mpiuser
+          CIBW_TEST_COMMAND: export TESTFLO=$(which testflo) && chmod ugo+rwx ${TESTFLO} && su -c "${TESTFLO} {project}/tests/" mpiuser
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
