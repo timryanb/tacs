@@ -1,0 +1,34 @@
+name: Build and deploy
+
+on: [push, pull_request]
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.3.1
+        env:
+          CIBW_ENVIRONMENT: >
+            PATH=$PATH:/usr/lib64/openmpi/bin/ CC=mpicc
+          CIBW_BEFORE_ALL: >
+            yum install openmpi-devel lapack-devel metis-devel -y &&
+            cp Makefile.in.info Makefile.in &&
+            make TACS_DIR=${PWD} METIS_LIB=-lmetis
+          CIBW_TEST_EXTRAS: "test"
+          CIBW_BEFORE_TEST: >
+            export OMPI_MCA_btl=self,tcp &&
+            export OMPI_MCA_rmaps_base_oversubscribe=1
+          CIBW_TEST_COMMAND: testflo {project}/tests
+          CIBW_BUILD_VERBOSITY: 3
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
