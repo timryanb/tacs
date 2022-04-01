@@ -17,13 +17,17 @@ jobs:
         uses: pypa/cibuildwheel@v2.3.1
         env:
           CIBW_ENVIRONMENT: >
-            PATH=$PATH:/usr/lib64/mpich/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/mpich/lib CC=mpicc
+            PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
           CIBW_BEFORE_ALL: >
-            yum install mpich-devel lapack-devel metis-devel -y &&
+            yum install openmpi-devel lapack-devel metis-devel -y &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_TEST_EXTRAS: "testing"
-          CIBW_TEST_COMMAND: testflo {project}/tests/
+          CIBW_BEFORE_TEST: >
+            export OMPI_MCA_btl=self,tcp &&
+            export OMPI_MCA_rmaps_base_oversubscribe=1 &&
+            adduser mpiuser
+          CIBW_TEST_COMMAND: export TESTFLO=$(which testflo) && su -c "${TESTFLO} {project}/tests/" mpiuser
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
