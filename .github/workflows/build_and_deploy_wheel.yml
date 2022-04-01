@@ -28,7 +28,7 @@ jobs:
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/mpich/lib &&
             export CC=mpicc &&
             export MPICC=mpicc
-          CIBW_TEST_COMMAND: echo $LD_LIBRARY_PATH && testflo {project}/tests/
+          CIBW_TEST_COMMAND: which mpirun && echo $LD_LIBRARY_PATH && testflo {project}/tests/
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
