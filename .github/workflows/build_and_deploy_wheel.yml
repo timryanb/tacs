@@ -21,13 +21,16 @@ jobs:
           CIBW_BEFORE_ALL: >
             yum install openmpi-devel lapack-devel metis-devel -y &&
             cp Makefile.in.info Makefile.in &&
-            make TACS_DIR=${PWD} METIS_LIB=-lmetis
+            make TACS_DIR=${PWD} METIS_LIB=-lmetis &&
+            adduser mpiuser
           CIBW_TEST_EXTRAS: "testing"
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
             export OMPI_MCA_rmaps_base_oversubscribe=1 &&
-            adduser mpiuser
-          CIBW_TEST_COMMAND: export TESTFLO=$(which testflo) && chmod -R 777 /tmp/tmp.* && ls -l ${TESTFLO} && su -c "ls -l ${TESTFLO} && ${TESTFLO} --noreport {project}/tests/" mpiuser
+          CIBW_TEST_COMMAND: >
+            export TESTFLO=$(which testflo) &&
+            chmod -R 777 /tmp/tmp.* &&
+            su -c "${TESTFLO} --noreport {project}/tests/" mpiuser
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
