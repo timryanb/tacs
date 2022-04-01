@@ -26,7 +26,7 @@ jobs:
           CIBW_TEST_EXTRAS: "testing"
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
-            export OMPI_MCA_rmaps_base_oversubscribe=1 &&
+            export OMPI_MCA_rmaps_base_oversubscribe=1
           CIBW_TEST_COMMAND: >
             export TESTFLO=$(which testflo) &&
             chmod -R 777 /tmp/tmp.* &&
