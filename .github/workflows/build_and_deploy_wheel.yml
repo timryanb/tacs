@@ -22,11 +22,11 @@ jobs:
             yum install openmpi-devel lapack-devel metis-devel -y &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
-          CIBW_TEST_EXTRAS: "test"
+          CIBW_TEST_EXTRAS: "testing"
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
             export OMPI_MCA_rmaps_base_oversubscribe=1
-          CIBW_TEST_COMMAND: testflo {project}/tests
+          CIBW_TEST_COMMAND: testflo .
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
