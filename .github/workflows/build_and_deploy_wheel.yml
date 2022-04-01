@@ -17,7 +17,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.3.1
         env:
           CIBW_ENVIRONMENT: >
-            PATH=$PATH:/usr/lib64/openmpi/bin/ CC=mpicc
+            PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
           CIBW_BEFORE_ALL: >
             yum install openmpi-devel lapack-devel metis-devel -y &&
             cp Makefile.in.info Makefile.in &&
