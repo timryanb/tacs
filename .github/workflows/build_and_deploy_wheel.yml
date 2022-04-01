@@ -26,7 +26,7 @@ jobs:
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_BEFORE_ALL_MACOS: >
-            brew install metis lapack openblas &&
+            brew install openmpi metis lapack openblas &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib"
           CIBW_TEST_EXTRAS: "testing"
