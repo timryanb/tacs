@@ -19,14 +19,14 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: >
             PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
           CIBW_ENVIRONMENT_MACOS: >
-            PATH="/usr/local/opt/open-mpi/bin:$PATH"LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/opt/lapack/lib:/usr/local/opt/open-mpi/lib CC=mpicc
+            LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/opt/lapack/lib CC=mpicc
           CIBW_BEFORE_ALL_LINUX: >
             yum install openmpi-devel lapack-devel metis-devel -y &&
             adduser mpiuser &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_BEFORE_ALL_MACOS: >
-            brew install metis openmpi lapack openblas &&
+            brew install metis lapack openblas &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib"
           CIBW_TEST_EXTRAS: "testing"
