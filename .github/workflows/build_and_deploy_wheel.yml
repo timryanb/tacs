@@ -26,7 +26,7 @@ jobs:
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
             export OMPI_MCA_rmaps_base_oversubscribe=1
-          CIBW_TEST_COMMAND: ls && testflo tacs/
+          CIBW_TEST_COMMAND: ls && cd tacs && testflo .
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
