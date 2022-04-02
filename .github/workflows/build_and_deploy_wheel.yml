@@ -16,7 +16,6 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.3.1
         env:
-          CIBW_ARCHS: native
           CIBW_SKIP: "pp* *musllinux*"
           CIBW_ENVIRONMENT_LINUX: >
             PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
