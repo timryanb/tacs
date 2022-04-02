@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, macos-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -40,7 +40,7 @@ jobs:
             chmod -R 777 /tmp/tmp.* &&
             su -c "${TESTFLO} --noreport {project}/tests/" mpiuser
           CIBW_TEST_COMMAND_MACOS: >
-            testflo --noreport {project}/tests/
+            testflo -s --noreport {project}/tests/
           CIBW_BUILD_VERBOSITY: 3
 
       - uses: actions/upload-artifact@v2
