@@ -4,3 +4,16 @@ requires-python = ">=3.7"
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = ['setuptools>=45.0', 'cython>=0.29', 'oldest-supported-numpy', 'mpi4py']
+
+[tool.cibuildwheel.linux]
+before-all = "yum install openmpi-devel lapack-devel metis-devel -y &&
+              adduser mpiuser &&
+              cp Makefile.in.info Makefile.in &&
+              make TACS_DIR=${PWD} METIS_LIB=-lmetis"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = "apt-get install -y openmpi-bin libopenmpi-dev libblas-dev liblapack-dev metis &&
+              adduser mpiuser &&
+              cp Makefile.in.info Makefile.in &&
+              make TACS_DIR=${PWD} METIS_LIB=-lmetis"
