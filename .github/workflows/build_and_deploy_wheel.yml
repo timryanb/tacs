@@ -28,7 +28,7 @@ jobs:
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_BEFORE_ALL_MACOS: >
-            brew install cmake metis &&
+            brew install automake cmake metis &&
             cd ${HOME} &&
             git clone https://github.com/open-mpi/ompi.git &&
             cd ${HOME}/ompi &&
