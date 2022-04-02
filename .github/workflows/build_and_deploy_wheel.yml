@@ -32,6 +32,7 @@ jobs:
             cd ${HOME} &&
             git clone https://github.com/open-mpi/ompi.git &&
             cd ${HOME}/ompi &&
+            ./autogen.pl &&
             ./configure --prefix=/usr/local &&
             make -j 3 all &&
             make install &&
