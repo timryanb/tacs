@@ -17,11 +17,11 @@ jobs:
         uses: pypa/cibuildwheel@v2.3.1
         env:
           CIBW_ARCHS: native
-          CIBW_SKIP: "pp*"
+          CIBW_SKIP: "pp* *-musllinux_aarch64 *-musllinux_ppc64le *-musllinux_s390x"
           CIBW_ENVIRONMENT_LINUX: >
             PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
           CIBW_ENVIRONMENT_MACOS: >
-            PATH="/usr/local/opt/open-mpi/bin:$PATH" LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/opt/lapack/lib:/usr/local/opt/open-mpi/lib:/usr/local/opt/metis/lib CC=mpicc
+            PATH="/usr/local/opt/open-mpi/bin:$PATH" DYLD_LIBRARY_PATH=DYLD_LIBRARY_PATH:/usr/local/opt/lapack/lib:/usr/local/opt/open-mpi/lib:/usr/local/opt/metis/lib CC=mpicc
           CIBW_BEFORE_ALL_LINUX: >
             yum install openmpi-devel lapack-devel metis-devel -y &&
             adduser mpiuser &&
