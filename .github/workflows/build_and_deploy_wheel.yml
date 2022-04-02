@@ -30,7 +30,7 @@ jobs:
           CIBW_BEFORE_ALL_MACOS: >
             brew install automake cmake metis &&
             cd ${HOME} &&
-            git clone https://github.com/open-mpi/ompi.git &&
+            git clone --recursive https://github.com/open-mpi/ompi.git &&
             cd ${HOME}/ompi &&
             ./autogen.pl &&
             ./configure --prefix=/usr/local &&
