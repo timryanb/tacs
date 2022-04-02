@@ -31,7 +31,6 @@ jobs:
             brew install openmpi metis lapack openblas &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib" LAPACK_LIBS="-framework accelerate"
-          CIBW_BEFORE_BUILD: pip install --upgrade pip
           CIBW_TEST_EXTRAS: "testing"
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
