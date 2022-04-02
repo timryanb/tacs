@@ -30,7 +30,7 @@ jobs:
           CIBW_BEFORE_ALL_MACOS: >
             brew install openmpi metis lapack openblas &&
             cp Makefile.in.info Makefile.in &&
-            make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib" LAPACK_LIBS="-framework accelerate"
+            make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib"
           CIBW_TEST_EXTRAS: "testing"
           CIBW_BEFORE_TEST: >
             export OMPI_MCA_btl=self,tcp &&
