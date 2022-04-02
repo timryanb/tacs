@@ -32,7 +32,7 @@ jobs:
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib" LAPACK_LIBS="-framework accelerate"
           CIBW_TEST_EXTRAS: "testing"
-          CIBW_BEFORE_TEST: >
+          CIBW_BEFORE_TEST_LINUX: >
             export OMPI_MCA_btl=self,tcp &&
             export OMPI_MCA_rmaps_base_oversubscribe=1
           CIBW_TEST_COMMAND_LINUX: >
