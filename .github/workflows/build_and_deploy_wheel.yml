@@ -29,13 +29,15 @@ jobs:
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_BEFORE_ALL_MACOS: >
             brew install automake cmake metis &&
-            cd ${HOME} &&
+            ls &&
             git clone --recursive https://github.com/open-mpi/ompi.git &&
             cd ./ompi &&
             ./autogen.pl &&
             ./configure --prefix=/usr/local &&
             make -j 3 all &&
             make install &&
+            which mpicc &&
+            export CC=mpicc &&
             cd .. &&
             ls &&
             cp Makefile.in.info Makefile.in &&
