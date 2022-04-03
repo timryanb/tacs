@@ -20,8 +20,6 @@ jobs:
           CIBW_SKIP: "pp* *musllinux*"
           CIBW_ENVIRONMENT_LINUX: >
             PATH=$PATH:/usr/lib64/openmpi/bin/ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib CC=mpicc
-          CIBW_ENVIRONMENT_MACOS: >
-            CC=clang CXX=clang++ OMPI_CC=clang OMPI_CXX=clang++ PATH="/usr/local/opt/open-mpi/bin:$PATH" DYLD_LIBRARY_PATH=DYLD_LIBRARY_PATH:/usr/local/opt/lapack/lib:/usr/local/opt/open-mpi/lib
           CIBW_BEFORE_ALL_LINUX: >
             yum install openmpi-devel lapack-devel metis-devel -y &&
             adduser mpiuser &&
@@ -29,7 +27,6 @@ jobs:
             make TACS_DIR=${PWD} METIS_LIB=-lmetis
           CIBW_BEFORE_ALL_MACOS: >
             brew install automake metis &&
-            ls &&
             git clone --recursive https://github.com/open-mpi/ompi.git &&
             cd ./ompi &&
             ./autogen.pl &&
@@ -37,10 +34,9 @@ jobs:
             make -j 3 all &&
             make install &&
             which mpicc &&
-            export CC=mpicc &&
-            export CXX=mpicxx &&
+            mpicxx --version &&
+            mpicc --version &&
             cd .. &&
-            ls &&
             cp Makefile.in.info Makefile.in &&
             make TACS_DIR=${PWD} METIS_LIB=-lmetis SO_LINK_FLAGS="-fPIC -dynamiclib" LAPACK_LIBS="-framework accelerate"
           CIBW_TEST_EXTRAS: "testing"
