@@ -50,6 +50,7 @@ jobs:
             chmod -R 777 /tmp/tmp.* &&
             su -c "${TESTFLO} --noreport {project}/tests/" mpiuser
           CIBW_TEST_COMMAND_MACOS: >
+            python {project}/print_libraries.py &&
             testflo -s --noreport {project}/tests/
           CIBW_BUILD_VERBOSITY: 3
 
