@@ -89,12 +89,14 @@ jobs:
           echo "=============================================================";
           echo "running tests";
           echo "=============================================================";
+          conda activate TACS;
           testflo .;
       - name: Build docs
         run: |
           echo "=============================================================";
           echo "building docs";
           echo "=============================================================";
+          conda activate TACS;
           cd docs;
           conda install -c conda-forge sphinx  -q -y;
           conda install -c conda-forge breathe -q -y;
