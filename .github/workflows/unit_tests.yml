@@ -25,23 +25,38 @@ jobs:
         include:
 
           # real versions
-          - NAME: Real
+          - OS: ubuntu-latest
+            NAME: Real
             OPTIONAL: 'default'
+            SO_LINK_FLAGS: '-fPIC'
             INTERFACE: 'interface'
             EXAMPLES: 'default'
             PUBLISH_DOCS: true
 
+          - OS: macos-latest
+            NAME: Real
+            OPTIONAL: 'default'
+            SO_LINK_FLAGS: '-fPIC -dynamiclib'
+            INTERFACE: 'interface'
+            EXAMPLES: 'default'
+            PUBLISH_DOCS: false
+
           # complex versions
-          - NAME: Complex
+          - OS: ubuntu-latest
+            NAME: Complex
             OPTIONAL: 'complex'
+            SO_LINK_FLAGS: '-fPIC'
             INTERFACE: 'complex_interface'
             EXAMPLES: 'complex'
             PUBLISH_DOCS: false
 
-        include:
-          -  OS: ubuntu-latest
-
-          -  OS: macos-latest
+          - OS: macos-latest
+            NAME: Complex
+            OPTIONAL: 'complex'
+            SO_LINK_FLAGS: '-fPIC -dynamiclib'
+            INTERFACE: 'complex_interface'
+            EXAMPLES: 'complex'
+            PUBLISH_DOCS: false
 
     name: TACS ${{ matrix.NAME }} Build/Test/Docs (${{ matrix.OS }})
 
@@ -84,11 +99,11 @@ jobs:
           conda install -c conda-forge metis -q -y;
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
-          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
+          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" SO_LINK_FLAGS=${{ matrix.SO_LINK_FLAGS }};
           cd $TACS_DIR;
           make ${{ matrix.INTERFACE }};
           cd $TACS_DIR/examples;
-          make ${{ matrix.EXAMPLES }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
+          make ${{ matrix.EXAMPLES }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" SO_LINK_FLAGS=${{ matrix.SO_LINK_FLAGS }};
       - name: Run unit tests
         run: |
           echo "=============================================================";
@@ -107,14 +122,14 @@ jobs:
           cd html;
           zip -r ../tacs-docs.zip .;
       - name: 'Upload docs'
-        if: ${{ matrix.OS == 'ubuntu-latest' && matrix.NAME == 'Real' }}
+        if: ${{ matrix.PUBLISH_DOCS }}
         uses: actions/upload-artifact@v2
         with:
           name: tacs-docs
           path: docs/tacs-docs.zip
           retention-days: 7
       - name: 'Deploy docs'
-        if: ${{ github.event_name == 'push' && success() }}
+        if: ${{ github.event_name == 'push' && matrix.PUBLISH_DOCS }}
         uses: JamesIves/github-pages-deploy-action@v4.2.5
         with:
           branch: gh-pages # The branch the action should deploy to.
