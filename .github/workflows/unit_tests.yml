@@ -22,7 +22,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        OS: [ubuntu-latest, macos-latest]
         include:
 
           # real versions
@@ -38,6 +37,11 @@ jobs:
             INTERFACE: 'complex_interface'
             EXAMPLES: 'complex'
             PUBLISH_DOCS: false
+
+        include:
+          -  OS: ubuntu-latest
+
+          -  OS: macos-latest
 
     name: TACS ${{ matrix.NAME }} Build/Test/Docs (${{ matrix.OS }})
 
