@@ -23,6 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - OS: ubuntu-latest
+            SO_LINK_FLAGS: -fPIC
+            CXX_COMPILER: gxx_linux-64
+
+          - OS: macos-latest
+            SO_LINK_FLAGS: -fPIC -dynamiclib
+            CXX_COMPILER: clangxx_osx-64
+
           # real versions
           - NAME: Real
             OPTIONAL: 'default'
@@ -37,7 +45,7 @@ jobs:
             EXAMPLES: 'complex'
             PUBLISH_DOCS: false
 
-    name: TACS ${{ matrix.NAME }} Build/Test/Docs
+    name: TACS ${{ matrix.NAME }} Build/Test/Docs (${{ matrix.OS }})
 
     steps:
 
@@ -73,7 +81,7 @@ jobs:
           # Necessary to prevent mpi tests failing due to lack of slots
           export OMPI_MCA_btl=self,tcp;
           export OMPI_MCA_rmaps_base_oversubscribe=1;
-          conda install gxx_linux-64 -q -y;
+          conda install ${{ matrix.CXX_COMPILER }} -q -y;
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis -q -y;
@@ -102,14 +110,14 @@ jobs:
           cd html;
           zip -r ../tacs-docs.zip .;
       - name: 'Upload docs'
-        if: ${{ matrix.PUBLISH_DOCS }}
+        if: ${{ matrix.OS == ubuntu-latest && matrix.NAME == Real }}
         uses: actions/upload-artifact@v2
         with:
           name: tacs-docs
           path: docs/tacs-docs.zip
           retention-days: 7
       - name: 'Deploy docs'
-        if: ${{ github.event_name == 'push' && matrix.PUBLISH_DOCS }}
+        if: ${{ github.event_name == 'push' && success() }}
         uses: JamesIves/github-pages-deploy-action@v4.2.5
         with:
           branch: gh-pages # The branch the action should deploy to.
