@@ -40,9 +40,9 @@ jobs:
     name: TACS ${{ matrix.NAME }} Build/Test/Docs
 
     env:
+      GITHUB_PATH: $CONDA/envs/TACS/bin:$GITHUB_PATH
 
     steps:
-      GITHUB_PATH: $CONDA/envs/TACS/bin:$GITHUB_PATH
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
       - uses: actions/checkout@v2
