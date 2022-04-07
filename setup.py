@@ -90,6 +90,7 @@ setup(name='tacs',
           f'numpy>={numpy.__version__}',
           'mpi4py>=3.0.2',
           'scipy>=1.2.1',
+          'nptyping<2.0.0',
           'pynastran>=1.3.3'
       ],
       extras_require={
