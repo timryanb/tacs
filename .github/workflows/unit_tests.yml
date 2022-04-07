@@ -22,14 +22,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        OS: [ubuntu-latest, macos-latest]
         include:
-          - OS: ubuntu-latest
-            SO_LINK_FLAGS: -fPIC
-            CXX_COMPILER: gxx_linux-64
-
-          - OS: macos-latest
-            SO_LINK_FLAGS: -fPIC -dynamiclib
-            CXX_COMPILER: clangxx_osx-64
 
           # real versions
           - NAME: Real
@@ -81,7 +75,7 @@ jobs:
           # Necessary to prevent mpi tests failing due to lack of slots
           export OMPI_MCA_btl=self,tcp;
           export OMPI_MCA_rmaps_base_oversubscribe=1;
-          conda install ${{ matrix.CXX_COMPILER }} -q -y;
+          conda install compilers -q -y;
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis -q -y;
