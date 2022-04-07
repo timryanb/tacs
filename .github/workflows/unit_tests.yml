@@ -39,7 +39,10 @@ jobs:
 
     name: TACS ${{ matrix.NAME }} Build/Test/Docs
 
+    env:
+
     steps:
+      GITHUB_PATH: $CONDA/envs/TACS/bin:$GITHUB_PATH
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it.
       - uses: actions/checkout@v2
@@ -89,14 +92,12 @@ jobs:
           echo "=============================================================";
           echo "running tests";
           echo "=============================================================";
-          conda activate TACS;
           testflo .;
       - name: Build docs
         run: |
           echo "=============================================================";
           echo "building docs";
           echo "=============================================================";
-          conda activate TACS;
           cd docs;
           conda install -c conda-forge sphinx  -q -y;
           conda install -c conda-forge breathe -q -y;
