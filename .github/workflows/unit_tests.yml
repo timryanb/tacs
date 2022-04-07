@@ -17,7 +17,7 @@ jobs:
     # Recommended if you intend to make multiple deployments in quick succession.
     concurrency: ci-${{ github.ref }}
     # Run on Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.OS }}
 
     strategy:
       fail-fast: false
@@ -110,7 +110,7 @@ jobs:
           cd html;
           zip -r ../tacs-docs.zip .;
       - name: 'Upload docs'
-        if: ${{ matrix.OS == ubuntu-latest && matrix.NAME == Real }}
+        if: ${{ matrix.OS == 'ubuntu-latest' && matrix.NAME == 'Real' }}
         uses: actions/upload-artifact@v2
         with:
           name: tacs-docs
