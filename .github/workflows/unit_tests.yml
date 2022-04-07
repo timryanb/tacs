@@ -69,7 +69,6 @@ jobs:
           echo "Install TACS";
           echo "=============================================================";
           export TACS_DIR=${GITHUB_WORKSPACE};
-          pip install testflo;
           conda install -c anaconda openmpi -q -y;
           # Necessary to prevent mpi tests failing due to lack of slots
           export OMPI_MCA_btl=self,tcp;
@@ -90,6 +89,7 @@ jobs:
           echo "=============================================================";
           echo "running tests";
           echo "=============================================================";
+          pip install testflo;
           testflo .;
       - name: Build docs
         run: |
@@ -97,9 +97,7 @@ jobs:
           echo "building docs";
           echo "=============================================================";
           cd docs;
-          conda install -c conda-forge sphinx  -q -y;
-          conda install -c conda-forge breathe -q -y;
-          conda install -c conda-forge sphinxcontrib-programoutput -q -y;
+          pip install sphinx breathe sphinxcontrib-programoutput;
           make html BUILDDIR=.;
           cd html;
           zip -r ../tacs-docs.zip .;
