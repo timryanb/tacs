@@ -1,21 +1,20 @@
-import numpy as np
 from copy import deepcopy
 from tacs import TACS
 import unittest
-from mpi4py import MPI
 from collections import namedtuple
 from openmdao.utils.assert_utils import assert_near_equal, assert_check_partials, assert_check_totals
 
 ErrorTuple = namedtuple('ErrorTuple', ['forward', 'reverse', 'forward_reverse'])
 
 '''
-This is a base class for running pytacs unit test cases.
-This base class will test function evaluations and total 
-sensitivities for the user-specified problems implimented by
+This is a base class for running openmdao unit test cases.
+This base class will test function evaluations partial and total 
+sensitivities for the user-specified openmdao problems implimented by
 the child test case. When the user creates a new test based 
-on this class four methods are required to be defined in the child class. 
+on this class two methods are required to be defined in the child class. 
 
     1. setup_problem
+    2. setup_funcs
     
 See the virtual method implementations for each method 
 below for more details.
@@ -46,7 +45,7 @@ class OpenMDAOTestCase:
             # Basically only check rtol
             self.atol = 1e99
 
-            # Setup user-specified assembler for this test
+            # Setup user-specified openmdao problem for this test
             self.prob = self.setup_problem(self.dtype)
             self.prob.setup(mode='rev', force_alloc_complex=True)
 
@@ -101,16 +100,22 @@ class OpenMDAOTestCase:
             """
             Test total sensitivities using fd/cs
             """
-            # solve
-            self.prob.run_model()
+            # Only run this test if the user specified wrt
+            if len(self.wrt) > 0:
+                # solve
+                self.prob.run_model()
 
-            # Test functions values against historical values
-            of = list(self.func_ref.keys())
-            data = self.prob.check_totals(of=of, wrt=self.wrt, compact_print=True, out_stream=None,
-                                          method=self.fd_method, form=self.fd_form, step=self.dh)
-            assert_check_totals(data, atol=self.atol, rtol=self.rtol)
+                # Test functions total sensitivities
+                of = list(self.func_ref.keys())
+                data = self.prob.check_totals(of=of, wrt=self.wrt, compact_print=True, out_stream=None,
+                                              method=self.fd_method, form=self.fd_form, step=self.dh)
+                assert_check_totals(data, atol=self.atol, rtol=self.rtol)
 
         def cleanup_fwd_data(self, data):
+            """
+            Replace the forward sensitivity error with 0.0.
+            We know this is always going to be wrong because TACS only works in reverse.
+            """
             clean_data = deepcopy(data)
             for component in clean_data:
                 for in_out_tuple in clean_data[component]:
