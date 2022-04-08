@@ -77,9 +77,11 @@ jobs:
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis -q -y;
-          conda install -c conda-forge mpi4py  -q -y;
           # Install MPHYS for openmdao tests
-          conda install -c conda-forge petsc=3.12 petsc4py -q -y;
+          conda install -c conda-forge petsc petsc4py -q -y;
+          python -c "import petsc4py; print(petsc4py.get_config())"
+          python -c "import petsc4py; print(petsc4py.get_config())"
+          python -c "import petsc4py; print(petsc4py.get_config())"
           pip install openmdao;
           pip install "mphys @ git+https://github.com/OpenMDAO/mphys.git"
           cd $TACS_DIR;
