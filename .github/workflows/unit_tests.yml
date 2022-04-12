@@ -82,8 +82,8 @@ jobs:
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis -q -y;
           # Install MPHYS for openmdao tests
-          conda install -c conda-forge petsc=3.16 petsc4py=3.16 -q -y;
-          pip install openmdao;
+          conda install -c conda-forge petsc petsc4py -q -y;
+          pip install openmdao==3.15;
           pip install "mphys @ git+https://github.com/OpenMDAO/mphys.git"
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
