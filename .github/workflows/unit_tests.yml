@@ -76,10 +76,10 @@ jobs:
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-          conda install -c conda-forge openmpi openmpi-mpicxx -q -y;
           # zlib 1.2.12 apparently breaks this install, so we pin an older version
           conda install zlib=1.2.11;
-          conda install gxx_linux-64 -q -y;
+          conda install -c anaconda openmpi -q -y;
+          conda install gxx_linux-64=9.3.0 -q -y;
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis -q -y;
@@ -93,7 +93,7 @@ jobs:
       - name: Install optional dependencies
         run: |
           # Install petsc for openmdao tests
-          conda install -c conda-forge petsc petsc4py -q -y;
+          conda install -c conda-forge petsc=3.12 petsc4py -q -y;
       - name: Run unit tests
         run: |
           testflo --timeout 120 .;
