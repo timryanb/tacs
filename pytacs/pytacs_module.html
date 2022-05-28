@@ -4,7 +4,8 @@
 <html lang="python">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>pyTACS class &#8212; TACS  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinxdoc.css" />
@@ -45,7 +46,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-tacs.pytacs">
+  <section id="module-tacs.pytacs">
 <span id="pytacs-class"></span><h1>pyTACS class<a class="headerlink" href="#module-tacs.pytacs" title="Permalink to this headline">¶</a></h1>
 <p>pytacs - The Python wrapper for the TACS assembler</p>
 <p>This python interface is designed to provide a easier interface to the
@@ -73,7 +74,7 @@ for setting loads and functions, performing analysis, and gradient computations.
 </ul>
 </dd>
 </dl>
-<div class="section" id="options">
+<section id="options">
 <h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
 <p>Options can be set for <a class="reference internal" href="#tacs.pytacs.pyTACS" title="tacs.pytacs.pyTACS"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyTACS</span></code></a> at time of creation for the class or using the
 <a class="reference internal" href="#tacs.pytacs.pyTACS.setOption" title="tacs.pytacs.pyTACS.setOption"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pyTACS.setOption</span></code></a>. Current option values for a class
@@ -112,19 +113,19 @@ The following options, their default values and descriptions are listed below:</
 &#39;writeCoordinateFrame&#39;: False
 	 Flag for whether to include element coordinate frames in f5 file.
 &#39;familySeparator&#39;: &#39;/&#39;
-	 Family seperator character used for condensing groups in f5 file.
+	 Family separator character used for condensing groups in f5 file.
 &#39;printTiming&#39;: False
 	 Flag for printing out timing information for class procedures.
 </pre></div>
 </div>
-</div>
-<div class="section" id="initializing">
+</section>
+<section id="initializing">
 <h2>Initializing<a class="headerlink" href="#initializing" title="Permalink to this headline">¶</a></h2>
 <p>Before the class can be used to create problems, it must first be initialized by calling the
 <a class="reference internal" href="#tacs.pytacs.pyTACS.initialize" title="tacs.pytacs.pyTACS.initialize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pyTACS.initialize</span></code></a> method. This method reads in all of the element cards
 from the BDF file and sets up the equivalent TACS element objects necessary for analysis. The
 class can be initialized through two ways: with or without <code class="docutils literal notranslate"><span class="pre">elemCallBack</span></code> function.</p>
-<div class="section" id="initializing-with-elemcallback">
+<section id="initializing-with-elemcallback">
 <h3>Initializing with elemCallBack<a class="headerlink" href="#initializing-with-elemcallback" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference internal" href="#tacs.pytacs.pyTACS" title="tacs.pytacs.pyTACS"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyTACS</span></code></a> can be initialized py passing a user-defined <code class="docutils literal notranslate"><span class="pre">elemCallBack</span></code> function to
 <a class="reference internal" href="#tacs.pytacs.pyTACS.initialize" title="tacs.pytacs.pyTACS.initialize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pyTACS.initialize</span></code></a>, that will be used to setup the correct
@@ -170,8 +171,8 @@ objects as there are element types in <cite>elemDescripts</cite> (one for each).
 These elements are setup automatically by <a class="reference internal" href="#tacs.pytacs.pyTACS" title="tacs.pytacs.pyTACS"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyTACS</span></code></a>. As a general rule of thumb,
 if the NASTRAN element card doesn't contain a property ID, it should not show up in the <code class="docutils literal notranslate"><span class="pre">elemCallBack</span></code> function.</p>
 </div>
-</div>
-<div class="section" id="initializing-without-elemcallback">
+</section>
+<section id="initializing-without-elemcallback">
 <h3>Initializing without elemCallBack<a class="headerlink" href="#initializing-without-elemcallback" title="Permalink to this headline">¶</a></h3>
 <p>If NASTRAN material property card definitions for every element exist in the BDF file,
 <a class="reference internal" href="#tacs.pytacs.pyTACS" title="tacs.pytacs.pyTACS"><code class="xref py py-class docutils literal notranslate"><span class="pre">pyTACS</span></code></a> can be initialized without a <a class="reference internal" href="#tacs.pytacs.elemCallBack" title="tacs.pytacs.elemCallBack"><code class="xref py py-func docutils literal notranslate"><span class="pre">elemCallBack()</span></code></a> function.
@@ -188,6 +189,7 @@ This can be done by calling <a class="reference internal" href="#tacs.pytacs.pyT
 <dt>Property cards:</dt><dd><ul class="simple">
 <li><p>PSHELL -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.IsoShellConstitutive" title="tacs.constitutive.IsoShellConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoShellConstitutive</span></code></a></p></li>
 <li><p>PCOMP -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.CompositeShellConstitutive" title="tacs.constitutive.CompositeShellConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeShellConstitutive</span></code></a></p></li>
+<li><p>PBAR, PROD -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.BasicBeamConstitutive" title="tacs.constitutive.BasicBeamConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicBeamConstitutive</span></code></a></p></li>
 <li><p>PSOLID -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.SolidConstitutive" title="tacs.constitutive.SolidConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolidConstitutive</span></code></a></p></li>
 <li><p>PBUSH -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.DOFSpringConstitutive" title="tacs.constitutive.DOFSpringConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">DOFSpringConstitutive</span></code></a></p></li>
 </ul>
@@ -196,6 +198,7 @@ This can be done by calling <a class="reference internal" href="#tacs.pytacs.pyT
 <li><p>CQUAD4, CQUADR -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Quad4Shell" title="tacs.elements.Quad4Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4Shell</span></code></a></p></li>
 <li><p>CQUAD9 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Quad9Shell" title="tacs.elements.Quad9Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad9Shell</span></code></a></p></li>
 <li><p>CTRIA3, CTRIAR -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Tri3Shell" title="tacs.elements.Tri3Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tri3Shell</span></code></a></p></li>
+<li><p>CBAR, CROD -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Beam2" title="tacs.elements.Beam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam2</span></code></a></p></li>
 <li><p>CHEXA -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Element3D" title="tacs.elements.Element3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code></a> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearHexaBasis" title="tacs.elements.LinearHexaBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearHexaBasis</span></code></a>, <a class="reference internal" href="../core/elements.html#tacs.elements.LinearElasticity3D" title="tacs.elements.LinearElasticity3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code></a>)</p></li>
 <li><p>CTETRA -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Element3D" title="tacs.elements.Element3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code></a> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearTetrahedralBasis" title="tacs.elements.LinearTetrahedralBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearTetrahedralBasis</span></code></a>, <a class="reference internal" href="../core/elements.html#tacs.elements.LinearElasticity3D" title="tacs.elements.LinearElasticity3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code></a>)</p></li>
 <li><p>RBE2 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.RBE2" title="tacs.elements.RBE2"><code class="xref py py-class docutils literal notranslate"><span class="pre">RBE2</span></code></a></p></li>
@@ -220,14 +223,14 @@ In the case where the default TACS elements above don't match the user's desired
 the user is recommended to setup that element through an
 <a class="reference internal" href="#initializing-with-elemcallback"><span class="std std-ref">elemCallBack procedure</span></a> instead.</p>
 </div>
-</div>
-</div>
-<div class="section" id="tagging-component-groups-in-bdf">
+</section>
+</section>
+<section id="tagging-component-groups-in-bdf">
 <h2>Tagging component groups in BDF<a class="headerlink" href="#tagging-component-groups-in-bdf" title="Permalink to this headline">¶</a></h2>
 <p>Several pyTACS methods (<a class="reference internal" href="#tacs.pytacs.pyTACS.selectCompIDs" title="tacs.pytacs.pyTACS.selectCompIDs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pyTACS.selectCompIDs</span></code></a>, <a class="reference internal" href="#tacs.pytacs.elemCallBack" title="tacs.pytacs.elemCallBack"><code class="xref py py-func docutils literal notranslate"><span class="pre">elemCallBack()</span></code></a>, etc.)
 allow for the use of user-defined component labels. These labels are read in through formatted comment in the BDF file.</p>
 <p>There are currently two supported formats for labels: ICEM-format and FEMAP-format. These are described below.</p>
-<div class="section" id="icem-component-label-format">
+<section id="icem-component-label-format">
 <h3>ICEM component label format<a class="headerlink" href="#icem-component-label-format" title="Permalink to this headline">¶</a></h3>
 <p>In the ICEM format, the elements are organized by property groups and
 the component label is appended as a string comment above the first element in every property group.
@@ -249,8 +252,8 @@ CQUADR       101       2    3892    3899    3896    3891       2
 CQUADR       102       2    3896    3899    3898    3895       2
 </pre></div>
 </div>
-</div>
-<div class="section" id="femap-component-label-format">
+</section>
+<section id="femap-component-label-format">
 <h3>FEMAP component label format<a class="headerlink" href="#femap-component-label-format" title="Permalink to this headline">¶</a></h3>
 <p>In the FEMAP format, the component label is appended as a string comment above each property card.
 The string comment should start with <code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">Femap</span> <span class="pre">Property</span> <span class="pre">i</span> <span class="pre">:</span></code> (where <code class="docutils literal notranslate"><span class="pre">i</span></code> is replaced with the property number the label is referencing)
@@ -261,9 +264,9 @@ $ Femap Property 2 : Stiffener
 PSHELL         2       1      .1       1               1              0.
 </pre></div>
 </div>
-</div>
-</div>
-<div class="section" id="api-reference">
+</section>
+</section>
+<section id="api-reference">
 <h2>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="tacs.pytacs.pyTACS">
@@ -289,7 +292,7 @@ len(scaleList) = dvNum</p></li>
 <dt class="sig sig-object py" id="tacs.pytacs.pyTACS.addGlobalDV">
 <span class="sig-name descname"><span class="pre">addGlobalDV</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">descript</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tacs/pytacs.html#pyTACS.addGlobalDV"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tacs.pytacs.pyTACS.addGlobalDV" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function allows adding design variables that are not
-cleanly associated with a particular constiutive object. One
+cleanly associated with a particular constitutive object. One
 example is the pitch of the stiffeners for blade stiffened
 panels; It often is the same for many different constitutive
 objects. By calling this function, the internal dvNum counter
@@ -319,16 +322,16 @@ generating subgroups of these for the purposes of adding
 design variables, constitutive objects, KS domains and mass
 domains. All of these operations boil down to selecting a
 subset of the compIDs.</p>
-<p>This function attemps to support as many ways as possible to
+<p>This function attempts to support as many ways as possible to
 select parts of the structure. Easy and efficient selection of
 parts is critical to the end user.</p>
-<p>Methods of selction:</p>
+<p>Methods of selection:</p>
 <ol class="arabic">
 <li><p>include, integer, string, list of integers and/or strings: The
-simpliest and most direct way of selecting a component. The
+simplest and most direct way of selecting a component. The
 user supplies the index of the componentID, a name or partial
 name, or a list of a combination of both.</p>
-<p>For exammple:</p>
+<p>For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select the 11th component</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
@@ -338,17 +341,17 @@ name, or a list of a combination of both.</p>
 <span class="c1"># Select any component containing &#39;rib.00&#39;</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s1">&#39;rib.00&#39;</span><span class="p">)</span>
 
-<span class="c1"># Select any components containg &#39;rib.00&#39; and &#39;rib.10&#39;</span>
+<span class="c1"># Select any components containing &#39;rib.00&#39; and &#39;rib.10&#39;</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;rib.00&#39;</span><span class="p">,</span> <span class="s1">&#39;rib.10&#39;</span><span class="p">])</span>
 
-<span class="c1"># Select any componet containing &#39;rib.00&#39;, the 11th</span>
+<span class="c1"># Select any component containing &#39;rib.00&#39;, the 11th</span>
 <span class="c1"># component and any component containing &#39;spar&#39;</span>
 <span class="c1"># (This is probably not advisable!)</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;rib.00&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;spar&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
 </li>
-<li><p>Exclude, operates similarally to 'include'. The behaviour
+<li><p>Exclude, operates similarly to 'include'. The behaviour
 of exclude is identical to include above, except that
 component ID's that are found using 'exclude' are
 'subtracted' from those found using include. A special
@@ -363,13 +366,13 @@ compID's EXCEPT the those in exclude.</p>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">exclude</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="n">will</span> <span class="k">return</span>
 
 <span class="c1"># This will return components that have &#39;ribs&#39; in the</span>
-<span class="c1"># componet ID, but not those that have &#39;le_ribs&#39; in the</span>
-<span class="c1"># componet id.</span>
+<span class="c1"># component ID, but not those that have &#39;le_ribs&#39; in the</span>
+<span class="c1"># component id.</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s1">&#39;ribs&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;le_ribs&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </li>
-<li><p>includeBounds, list of componets defining a region inside
+<li><p>includeBounds, list of components defining a region inside
 of which 'include' components will be selected. This
 functionality uses a geometric approach to select the compIDs.
 All components within the project 2D convex hull are included.
@@ -384,13 +387,13 @@ accumulate multiple regions.</p>
 </pre></div>
 </div>
 </li>
-<li><p>nGroup: The number of groups to divde the found componets
+<li><p>nGroup: The number of groups to divide the found componets
 into. Generally this will be 1. However, in certain cases, it
-is convient to create multiple groups in one pass.</p>
+is convenient to create multiple groups in one pass.</p>
 <p>For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># This will &#39;evenly&#39; create 10 groups on all components</span>
 <span class="c1"># containing LE_SPAR. Note that once the componets are</span>
-<span class="c1"># selected, they are sorted **alphetically** and assigned</span>
+<span class="c1"># selected, they are sorted **alphabetically** and assigned</span>
 <span class="c1"># sequentially.</span>
 <span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s1">&#39;LE_SPAR&#39;</span><span class="p">,</span> <span class="n">nGroup</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </pre></div>
@@ -412,7 +415,7 @@ used for item in 'include' option. For example:</p>
 includeOpt='or') will select the LE_SPAR and TE_SPAR
 components (default behaviour).</p>
 <p>selectCompIDs(include=['RIB', 'SEG.01'], includeOpt='and')
-will select any componet with 'RIB' in the description AND
+will select any component with 'RIB' in the description AND
 'SEG.01' in the description.</p>
 </dd></dl>
 
@@ -456,7 +459,7 @@ Defaults to None.</p>
 <dd><p>This is the 'last' method to be called during the setup. The
 user should have already added all the design variables,
 domains ect. before this function is call. This function
-finializes the problem initialization and cannot be changed at
+finalizes the problem initialization and cannot be changed at
 later time. If a elemCallBack function is not provided by the user,
 we will use pyNastran to generate one automatically from element
 properties provided in the BDF file.</p>
@@ -719,6 +722,12 @@ Currently only supports staticProblem (SOL 101) and modalProblems (SOL 103)</p>
 <dd><p>Return number of components (property) groups found in bdf.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tacs.pytacs.pyTACS.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><a class="headerlink" href="#tacs.pytacs.pyTACS.dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.float64</span></code></p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="tacs.pytacs.pyTACS.getOption">
 <span class="sig-name descname"><span class="pre">getOption</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.pytacs.pyTACS.getOption" title="Permalink to this definition">¶</a></dt>
@@ -760,8 +769,8 @@ options to the stdout on the root processor</p>
 
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
