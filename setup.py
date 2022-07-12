@@ -99,7 +99,7 @@ setup(name='tacs',
       install_requires=[
           # Make sure the user's numpy version are at least more current than the build versions
           f'numpy>={numpy.__version__}',
-          'mpi4py>=3.0.2',
+          f'mpi4py>={mpi4py.__version__}',
           'scipy>=1.2.1',
           'pynastran>=1.3.3'
       ],
