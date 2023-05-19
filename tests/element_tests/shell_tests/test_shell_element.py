@@ -224,7 +224,7 @@ class ElementTest(unittest.TestCase):
                                     self.vars,
                                     dvs,
                                     self.dh,
-                                    2l,
+                                    2,
                                     self.atol,
                                     self.rtol,
                                 )
