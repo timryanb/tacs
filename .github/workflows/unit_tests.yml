@@ -134,12 +134,13 @@ jobs:
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
           testflo --timeout 240 .  --coverage --coverpkg tacs;
-      - name: Coveralls Parallel
-        uses: coverallsapp/github-action@v2
-        with:
-          flag-name: ${{ matrix.NAME }}
-          format: python
-          parallel: true
+      - name: Submit coverage
+          env:
+            COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            COVERALLS_SERVICE_NAME: "github"
+            COVERALLS_PARALLEL: true
+          run: |
+            coveralls
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
@@ -180,5 +181,4 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         parallel-finished: true
-        carryforward: "Real,Complex"
         github-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
