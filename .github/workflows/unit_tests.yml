@@ -134,6 +134,18 @@ jobs:
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
           testflo --timeout 240 .;
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@v2
+        with:
+          flag-name: matrix.NAME
+          parallel: true
+        run: |
+          echo "============================================================="
+          echo "Submit coverage"
+          echo "============================================================="
+          cp $TACS_DIR/.coverage .
+          SITE_DIR=`python -c 'import site; print(site.getsitepackages()[-1])'`
+          coveralls --basedir $SITE_DIR
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
@@ -164,3 +176,15 @@ jobs:
         #   3. To activate the conda environment used to build TACS run:
         #       $ source $CONDA/etc/profile.d/conda.sh
         #       $ conda activate test
+
+  finish:
+    needs: unit_test_and_docs
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel-finished: true
+        carryforward: "Real,Complex"
+        github-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
