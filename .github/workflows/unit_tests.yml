@@ -133,7 +133,7 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real' ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          testflo --timeout 240 .;
+          testflo --timeout 240 .  --coverage --coverpkg tacs;
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@v2
         with:
