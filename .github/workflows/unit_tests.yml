@@ -136,7 +136,7 @@ jobs:
           testflo --timeout 240 .  --coverage --coverpkg tacs;
       - name: Submit coverage
           env:
-            COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
             COVERALLS_SERVICE_NAME: "github"
             COVERALLS_PARALLEL: true
           run: |
