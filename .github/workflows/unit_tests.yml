@@ -139,13 +139,6 @@ jobs:
         with:
           flag-name: matrix.NAME
           parallel: true
-        run: |
-          echo "============================================================="
-          echo "Submit coverage"
-          echo "============================================================="
-          cp $TACS_DIR/.coverage .
-          SITE_DIR=`python -c 'import site; print(site.getsitepackages()[-1])'`
-          coveralls --basedir $SITE_DIR
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
