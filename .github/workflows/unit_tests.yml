@@ -137,7 +137,7 @@ jobs:
       - name: Coveralls Parallel
         uses: coverallsapp/github-action@v2
         with:
-          flag-name: matrix.NAME
+          flag-name: ${{ matrix.NAME }}
           parallel: true
       - name: Build docs
         run: |
