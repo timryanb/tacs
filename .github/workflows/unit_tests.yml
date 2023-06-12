@@ -134,7 +134,7 @@ jobs:
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
           testflo --timeout 240 .  --coverage --coverpkg tacs;
-      - name: Submit coverage
+      - name: Create Coveralls
         env:
             COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
             COVERALLS_SERVICE_NAME: "github"
@@ -172,7 +172,7 @@ jobs:
         #       $ source $CONDA/etc/profile.d/conda.sh
         #       $ conda activate test
 
-  finish:
+  submit_coveralls:
     needs: unit_test_and_docs
     if: ${{ always() }}
     runs-on: ubuntu-latest
