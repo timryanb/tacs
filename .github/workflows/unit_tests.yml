@@ -135,11 +135,11 @@ jobs:
           fi
           testflo --timeout 240 .  --coverage --coverpkg tacs;
       - name: Submit coverage
-          env:
+        env:
             COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
             COVERALLS_SERVICE_NAME: "github"
             COVERALLS_PARALLEL: true
-          run: |
+        run: |
             coveralls
       - name: Build docs
         run: |
