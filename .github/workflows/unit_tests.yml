@@ -173,8 +173,8 @@ jobs:
         #       $ conda activate test
 
   submit_coveralls:
+    name: Finish Coveralls
     needs: unit_test_and_docs
-    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
