@@ -6,5 +6,5 @@ omit =
 exclude_lines =
     pragma: no cover
 
-[run]
-plugins = Cython.Coverage
+#[run]
+#plugins = Cython.Coverage
