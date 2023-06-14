@@ -3,8 +3,10 @@ omit =
     */tests/*
     */docs/*
     */examples/*
+    *__init__.py
 exclude_lines =
     pragma: no cover
 
-#[run]
-#plugins = Cython.Coverage
+[run]
+plugins = Cython.Coverage
+source = tacs

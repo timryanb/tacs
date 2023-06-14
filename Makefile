@@ -69,30 +69,26 @@ debug:
 		echo "dtype = np.double" >> tacs/TacsDefs.pxi; \
 	fi
 
-interface:
-	@if [ "${PIP}" = "" ]; then \
-		echo "DeprecationWarning: PIP environment variable not set in Makefile.in. See Makefile.in.info for how to set this. Using setup.py install for now."; \
-		${PYTHON} setup.py build_ext --inplace; \
-	else \
-		${PIP} install -e .\[all\]; \
-	fi
-
-complex_interface:
-	@if [ "${PIP}" = "" ]; then \
-		echo "DeprecationWarning: PIP environment variable not set in Makefile.in. See Makefile.in.info for how to set this. Using setup.py install for now."; \
-		${PYTHON} setup.py build_ext --inplace --define TACS_USE_COMPLEX; \
-	else \
-		CFLAGS=-DTACS_USE_COMPLEX ${PIP} install -e .\[all\]; \
-	fi
-
 complex: TACS_IS_COMPLEX=true
 complex: default
 
 complex_debug: TACS_IS_COMPLEX=true
 complex_debug: debug
 
+interface:
+	CFLAGS=${PIP_FLAGS} ${PIP} install -e .\[all\] --verbose;
+
+complex_interface: PIP_FLAGS+=" -DTACS_USE_COMPLEX"
+complex_interface: interface
+
+interface_debug: PIP_FLAGS+=" -DCYTHON_TRACE=1"
+interface_debug: interface
+
+complex_interface_debug: PIP_FLAGS=" -DCYTHON_TRACE=1"
+complex_interface_debug: complex_interface
+
 clean:
-	${RM} lib/libtacs.a lib/libtacs.s${SO_EXT}
+	${RM} lib/libtacs.a lib/libtacs.${SO_EXT}
 	${RM} tacs/*.${SO_EXT} tacs/*.cpp
 	@for subdir in $(TACS_SUBDIRS) ; do \
 	  echo "making $@ in $$subdir"; \
