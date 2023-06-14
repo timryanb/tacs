@@ -38,13 +38,13 @@ jobs:
           # real versions
           - NAME: Real
             OPTIONAL: 'debug'
-            INTERFACE: 'interface'
+            INTERFACE: 'interface_debug'
             PUBLISH_DOCS: true
 
           # complex versions
           - NAME: Complex
             OPTIONAL: 'complex_debug'
-            INTERFACE: 'complex_interface'
+            INTERFACE: 'complex_interface_debug'
             PUBLISH_DOCS: false
 
     name: TACS ${{ matrix.NAME }} Build/Test/Docs
