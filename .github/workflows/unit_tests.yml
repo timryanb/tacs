@@ -88,9 +88,10 @@ jobs:
           conda install -c conda-forge metis -q -y;
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
-          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
+          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ \
+            METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" PIP_CFLAGS="-pg -ftest-coverage";
           cd $TACS_DIR;
-          make ${{ matrix.INTERFACE }};
+          make ${{ matrix.INTERFACE }} PIP_CFLAGS="-pg -ftest-coverage";
           cd $TACS_DIR/examples;
           make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
       - name: Install f5totec/f5tovtk

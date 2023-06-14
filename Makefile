@@ -75,20 +75,17 @@ complex: default
 complex_debug: TACS_IS_COMPLEX=true
 complex_debug: debug
 
-_interface:
+interface:
 	CFLAGS="${PIP_CFLAGS}" ${PIP} install -e .\[all\];
-
-interface: PIP_CFLAGS+=${EXTRA_CC_FLAGS}
-interface: _interface;
-
-interface_debug: PIP_CFLAGS+=${EXTRA_DEBUG_CC_FLAGS}
-interface_debug: _interface
 
 complex_interface: PIP_CFLAGS+=-DTACS_USE_COMPLEX
 complex_interface: interface
 
-complex_interface_debug: PIP_CFLAGS+=-DTACS_USE_COMPLEX
-complex_interface_debug: interface_debug
+interface_debug: PIP_CFLAGS=-DCYTHON_TRACE\=1
+interface_debug: interface
+
+complex_interface_debug: PIP_CFLAGS=-DCYTHON_TRACE\=1
+complex_interface_debug: complex_interface
 
 clean:
 	${RM} lib/libtacs.a lib/libtacs.${SO_EXT}
