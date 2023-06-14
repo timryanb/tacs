@@ -78,7 +78,7 @@ complex_debug: debug
 interface:
 	CFLAGS="${CFLAGS} ${PIP_CFLAGS}" ${PIP} install -e .\[all\]
 
-interface_debug: PIP_CFLAGS+=-DCYTHON_TRACE\=1 -pg -ftest-coverage
+interface_debug: PIP_CFLAGS+=-DCYTHON_TRACE\=1
 interface_debug: interface
 
 complex_interface: PIP_CFLAGS+=-DTACS_USE_COMPLEX
