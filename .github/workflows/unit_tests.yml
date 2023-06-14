@@ -89,9 +89,9 @@ jobs:
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
           make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ \
-            METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" PIP_CFLAGS="-pg -ftest-coverage";
+            METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
           cd $TACS_DIR;
-          make ${{ matrix.INTERFACE }} PIP_CFLAGS="-pg -ftest-coverage";
+          make ${{ matrix.INTERFACE }};
           cd $TACS_DIR/examples;
           make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
       - name: Install f5totec/f5tovtk
