@@ -76,7 +76,7 @@ complex_debug: TACS_IS_COMPLEX=true
 complex_debug: debug
 
 interface:
-	CFLAGS="${PIP_FLAGS}" ${PIP} install -e .\[all\] --verbose;
+	CFLAGS="${PIP_FLAGS}" ${PIP} install -e .\[all\];
 
 complex_interface: PIP_FLAGS+=-DTACS_USE_COMPLEX
 complex_interface: interface
