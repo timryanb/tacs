@@ -81,7 +81,7 @@ _interface:
 interface:
 interface: _interface
 
-interface_debug: PIP_CFLAGS+=-DCYTHON_TRACE\=1\ -pg\ -ftest-coverage
+interface_debug: PIP_CFLAGS+=-DCYTHON_TRACE\=1\
 interface_debug: _interface
 
 complex_interface: PIP_CFLAGS+=-DTACS_USE_COMPLEX
