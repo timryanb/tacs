@@ -18,7 +18,7 @@ MAKE = make -j 8
 AR_FLAGS = rcs
 
 # Flags for debugging and regular compilation versions
-EXTRA_DEBUG_CC_FLAGS = -fPIC -g -pg -ftest-coverage
+EXTRA_DEBUG_CC_FLAGS = -fPIC -g
 EXTRA_CC_FLAGS = -fPIC -O3
 
 # Use this if you have problems with mpich

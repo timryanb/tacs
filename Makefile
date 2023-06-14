@@ -78,10 +78,10 @@ complex_debug: debug
 _interface:
 	CFLAGS="${CFLAGS} ${PIP_CFLAGS}" ${PIP} install -e .\[all\]
 
-interface: PIP_CFLAGS+=${EXTRA_CC_FLAGS}
+interface:
 interface: _interface
 
-interface_debug: PIP_CFLAGS+=${EXTRA_DEBUG_CC_FLAGS}
+interface_debug: PIP_FLAGS+=-DCYTHON_TRACE\=1
 interface_debug: _interface
 
 complex_interface: PIP_CFLAGS+=-DTACS_USE_COMPLEX
