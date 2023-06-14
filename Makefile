@@ -76,15 +76,15 @@ complex_debug: TACS_IS_COMPLEX=true
 complex_debug: debug
 
 interface:
-	CFLAGS="${PIP_FLAGS}" ${PIP} install -e .\[all\];
+	CFLAGS="${PIP_FLAGS}" ${PIP} install -e .\[all\] --verbose;
 
-complex_interface: PIP_FLAGS+=" -DTACS_USE_COMPLEX"
+complex_interface: PIP_FLAGS+=-DTACS_USE_COMPLEX
 complex_interface: interface
 
-interface_debug: PIP_FLAGS+=" -DCYTHON_TRACE=1"
+interface_debug: PIP_FLAGS=-DCYTHON_TRACE\=1
 interface_debug: interface
 
-complex_interface_debug: PIP_FLAGS=" -DCYTHON_TRACE=1"
+complex_interface_debug: PIP_FLAGS=-DCYTHON_TRACE\=1
 complex_interface_debug: complex_interface
 
 clean:
