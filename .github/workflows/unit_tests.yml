@@ -108,6 +108,8 @@ jobs:
         run: |
           # Install petsc for openmdao tests
           conda install -c conda-forge petsc=3.12 petsc4py -q -y;
+          # Install Coveralls for test coverage
+          pip install coveralls cpp-coveralls;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real' ]]; then
             cd $TACS_DIR/extern/
@@ -141,9 +143,8 @@ jobs:
             COVERALLS_SERVICE_NAME: "github"
             COVERALLS_PARALLEL: true
         run: |
-            pip install coveralls cpp-coveralls;
             python -m coveralls;
-            cpp-coveralls -i ./src --gcov-options '\-lp';
+            cpp-coveralls --exclude lib --exclude extern  --exclude examples --gcov-options '\-lp';
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
