@@ -140,7 +140,9 @@ jobs:
             COVERALLS_SERVICE_NAME: "github"
             COVERALLS_PARALLEL: true
         run: |
-            coveralls
+            pip install coveralls cpp-coveralls;
+            python -m coveralls;
+            cpp-coveralls -i ./src --gcov-options '\-lp';
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
