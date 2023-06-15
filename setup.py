@@ -85,6 +85,7 @@ for mod in ["TACS", "elements", "constitutive", "functions"]:
             library_dirs=lib_dirs,
             runtime_library_dirs=runtime_lib_dirs,
             extra_compile_args=["-pg", "--coverage"],
+            extra_link_args=["-lgcov", "-fprofile-arcs"],
         )
     )
 
