@@ -10,6 +10,7 @@
 #
 #  http://www.apache.org/licenses/LICENSE-2.0
 
+# cython: linetrace=True
 # distutils: language=c++
 
 # For MPI capabilities
