@@ -107,8 +107,6 @@ jobs:
         run: |
           # Install petsc for openmdao tests
           conda install -c conda-forge petsc=3.12 petsc4py -q -y;
-          # Install coveralls for publishing coverage
-          conda install -c conda-forge coveralls -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real' ]]; then
             cd $TACS_DIR/extern/
