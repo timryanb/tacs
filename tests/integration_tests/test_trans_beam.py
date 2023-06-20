@@ -95,6 +95,7 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
             problem.setOption("L2ConvergenceRel", 1e-15)
             problem.setOption("jacAssemblyFreq", 1)
             problem.setOption("printTiming", True)
+            problem.setOption("printLevel", 3)
 
         # Add Functions
         for problem in tacs_probs:
