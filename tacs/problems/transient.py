@@ -977,12 +977,8 @@ class TransientProblem(TACSProblem):
             if isinstance(Fext, tacs.TACS.Vec):
                 FVec.axpy(1.0, Fext)
             elif isinstance(Fext, np.ndarray):
-                if Fext.ndim > 1:
-                    Fext = Fext.ravel()
-                FextVec = self.assembler.createVec()
-                Fext_array = FextVec.getArray()
-                Fext_array[:] = Fext
-                FVec.axpy(1.0, FextVec)
+                FVec_array = FVec.getArray()
+                FVec_array[:] += Fext.ravel()
 
         # set the auxiliary elements for this time step (tractions/pressures)
         self.assembler.setAuxElements(self.auxElems[timeIndex])
