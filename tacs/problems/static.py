@@ -103,6 +103,11 @@ class StaticProblem(TACSProblem):
         ],
     }
 
+    # Jacobian factors for stiffness matrix
+    alpha = 1.0
+    beta = 0.0
+    gamma = 0.0
+
     def __init__(
         self,
         name,
@@ -149,6 +154,8 @@ class StaticProblem(TACSProblem):
 
         # Create problem-specific variables
         self._createVariables()
+        # Create solver objects
+        self._createSolver()
 
     def _createVariables(self):
         """Internal to create the variable required by TACS"""
@@ -172,6 +179,8 @@ class StaticProblem(TACSProblem):
         # State variable vector
         self.u = self.assembler.createVec()
         self.u_array = self.u.getArray()
+        # Additional Vecs for updates
+        self.update = self.assembler.createVec()
         # Auxiliary element object for applying tractions/pressure
         self.auxElems = tacs.TACS.AuxElements()
         # Counter for number of calls to `solve` method
@@ -185,6 +194,8 @@ class StaticProblem(TACSProblem):
         # Load scaling factor
         self._loadScale = 1.0
 
+    def _createSolver(self):
+        """Internal to create PCScMat and KSM solver"""
         opt = self.getOption
 
         # Tangent Stiffness --- process the ordering option here:
@@ -194,14 +205,6 @@ class StaticProblem(TACSProblem):
         self.K = self.assembler.createSchurMat(ordering)
         # Artificial stiffness for RBE numerical stabilization to stabilize PC
         self.rbeArtificialStiffness = self.assembler.createSchurMat(ordering)
-
-        # Additional Vecs for updates
-        self.update = self.assembler.createVec()
-
-        # Setup PCScMat and KSM solver
-        self.alpha = 1.0
-        self.beta = 0.0
-        self.gamma = 0.0
 
         # Computes stiffness matrix w/o art. terms
         # Set artificial stiffness factors in rbe class to zero
@@ -304,7 +307,7 @@ class StaticProblem(TACSProblem):
                 pass
             # Reset solver for all other option changes
             else:
-                self._createVariables()
+                self._createSolver()
 
     @property
     def loadScale(self):
