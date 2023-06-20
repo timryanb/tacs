@@ -31,9 +31,9 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
 
     FUNC_REFS = {
         "constant_force_mass": 200.0,
-        "constant_force_x_disp": 12.246377,
-        "constant_force_y_disp": 12.246377,
-        "constant_force_z_disp": 12.246377,
+        "constant_force_x_disp": 12.246377298943205,
+        "constant_force_y_disp": 12.246377298943205,
+        "constant_force_z_disp": 12.246377298943205,
         "gravity_mass": 200.0,
         "gravity_x_disp": 0.23025850929940442,
         "gravity_y_disp": 0.23025850929940442,
