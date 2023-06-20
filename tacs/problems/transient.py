@@ -13,6 +13,7 @@ other pieces of information.
 # =============================================================================
 import os
 import time
+from numbers import Number
 
 import numpy as np
 
@@ -828,34 +829,25 @@ class TransientProblem(TACSProblem):
         """
 
         if vars is not None:
-            if isinstance(vars, np.ndarray):
-                vars0Array = self.vars0.getArray()
-                vars0Array[:] = vars[:]
-            elif isinstance(vars, tacs.TACS.Vec):
-                self.vars0.copyValues(vars)
-            else:  # assume type=float
+            if isinstance(vars, np.ndarray) or isinstance(vars, Number):
                 vars0Array = self.vars0.getArray()
                 vars0Array[:] = vars
+            elif isinstance(vars, tacs.TACS.Vec):
+                self.vars0.copyValues(vars)
 
         if dvars is not None:
-            if isinstance(dvars, np.ndarray):
-                dvars0Array = self.dvars0.getArray()
-                dvars0Array[:] = dvars[:]
-            elif isinstance(dvars, tacs.TACS.Vec):
-                self.dvars0.copyValues(dvars)
-            else:  # assume type=float
+            if isinstance(dvars, np.ndarray) or isinstance(dvars, Number):
                 dvars0Array = self.dvars0.getArray()
                 dvars0Array[:] = dvars
+            elif isinstance(dvars, tacs.TACS.Vec):
+                self.dvars0.copyValues(dvars)
 
         if ddvars is not None:
-            if isinstance(ddvars, np.ndarray):
-                ddvars0Array = self.ddvars0.getArray()
-                ddvars0Array[:] = ddvars[:]
-            elif isinstance(ddvars, tacs.TACS.Vec):
-                self.ddvars0.copyValues(ddvars)
-            else:  # assume type=float
+            if isinstance(ddvars, np.ndarray) or isinstance(vars, Number):
                 ddvars0Array = self.ddvars0.getArray()
                 ddvars0Array[:] = ddvars
+            elif isinstance(ddvars, tacs.TACS.Vec):
+                self.ddvars0.copyValues(ddvars)
 
     def _updateAssemblerVars(self):
         """
