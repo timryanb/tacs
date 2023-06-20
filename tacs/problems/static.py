@@ -1327,12 +1327,11 @@ class StaticProblem(TACSProblem):
         self.rhs.copyValues(self.F)  # Fixed loads
 
         # Add external loads, if specified
-        if Fext is not None:
-            if isinstance(Fext, tacs.TACS.Vec):
-                self.rhs.axpy(1.0, Fext)
-            elif isinstance(Fext, np.ndarray):
-                rhsArray = self.rhs.getArray()
-                rhsArray[:] = rhsArray[:] + Fext[:]
+        if isinstance(Fext, tacs.TACS.Vec):
+            self.rhs.axpy(1.0, Fext)
+        elif isinstance(Fext, np.ndarray):
+            rhsArray = self.rhs.getArray()
+            rhsArray[:] = rhsArray[:] + Fext[:]
 
         # Zero out forces on DOF that are subject to BCs
         self.assembler.applyBCs(self.rhs)

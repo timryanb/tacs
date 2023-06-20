@@ -913,12 +913,11 @@ class TransientProblem(TACSProblem):
         # set the loads - do not change self.F[timeIndex] in place
         FVec = self.temp
         FVec.copyValues(self.F[timeIndex])
-        if Fext is not None:
-            if isinstance(Fext, tacs.TACS.Vec):
-                FVec.axpy(1.0, Fext)
-            elif isinstance(Fext, np.ndarray):
-                FVec_array = FVec.getArray()
-                FVec_array[:] += Fext.ravel()
+        if isinstance(Fext, tacs.TACS.Vec):
+            FVec.axpy(1.0, Fext)
+        elif isinstance(Fext, np.ndarray):
+            FVec_array = FVec.getArray()
+            FVec_array[:] += Fext.ravel()
 
         # set the auxiliary elements for this time step (tractions/pressures)
         self.assembler.setAuxElements(self.auxElems[timeIndex])
