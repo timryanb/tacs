@@ -158,6 +158,9 @@ class TransientProblem(TACSProblem):
         self.dvars0 = self.assembler.createVec()
         self.ddvars0 = self.assembler.createVec()
 
+        # Create temporary vec for holding intermediate values
+        self.temp = self.assembler.createVec()
+
         # Get time integration solver attributes
         order = self.getOption("integrationOrder")
         solverType = self.getOption("timeIntegrator")
@@ -875,18 +878,14 @@ class TransientProblem(TACSProblem):
         initSolveTime = time.time()
 
         # Loop over every time instance and solve transient problem
-        if self.numStages is None:
-            for i in range(self.numSteps + 1):
-                # Set the auxiliary elements for this time step (tractions/pressures)
-                self.assembler.setAuxElements(self.auxElems[i])
-                self.integrator.iterate(i, forces=self.F[i])
-        else:
-            for i in range(self.numSteps + 1):
+        for i in range(self.numSteps + 1):
+            if self.numStages is None:
+                self.iterate(timeStep=i)
+            else:
                 for j in range(self.numStages):
                     # Set the auxiliary elements for this time step (tractions/pressures)
                     timeIndex = i * self.numStages + j
-                    self.assembler.setAuxElements(self.auxElems[timeIndex])
-                    self.integrator.iterateStage(i, j, forces=self.F[timeIndex])
+                    self.iterate(timeStep=i, timeStage=j)
 
         solveTime = time.time()
 
@@ -972,7 +971,7 @@ class TransientProblem(TACSProblem):
             timeIndex = timeStep * self.numStages + timeStage
 
         # set the loads - do not change self.F[timeIndex] in place
-        FVec = self.assembler.createVec()
+        FVec = self.temp
         FVec.copyValues(self.F[timeIndex])
         if Fext is not None:
             if isinstance(Fext, tacs.TACS.Vec):
