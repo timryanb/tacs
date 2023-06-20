@@ -881,12 +881,7 @@ class TransientProblem(TACSProblem):
         """
         startTime = time.time()
 
-        self.callCounter += 1
-
-        setupProblemTime = time.time()
-
-        # Set problem vars to assembler
-        self._updateAssemblerVars()
+        self.prepIterativeSolve()
 
         initSolveTime = time.time()
 
@@ -915,11 +910,7 @@ class TransientProblem(TACSProblem):
             self._pp("|")
             self._pp(
                 "| %-30s: %10.3f sec"
-                % ("TACS Setup Time", setupProblemTime - startTime)
-            )
-            self._pp(
-                "| %-30s: %10.3f sec"
-                % ("TACS Solve Init Time", initSolveTime - setupProblemTime)
+                % ("TACS Solve Init Time", initSolveTime - startTime)
             )
             self._pp(
                 "| %-30s: %10.3f sec" % ("TACS Solve Time", solveTime - initSolveTime)
