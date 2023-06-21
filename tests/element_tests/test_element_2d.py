@@ -59,9 +59,12 @@ class ElementTest(unittest.TestCase):
         self.bases = [
             elements.LinearTriangleBasis(),
             elements.QuadraticTriangleBasis(),
+            elements.CubicTriangleBasis(),
             elements.LinearQuadBasis(),
             elements.QuadraticQuadBasis(),
             elements.CubicQuadBasis(),
+            elements.QuarticQuadBasis(),
+            elements.QuinticQuadBasis(),
         ]
 
         # Create stiffness (need class)
