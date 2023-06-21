@@ -64,8 +64,10 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
         tacs_probs = tacs_probs.values()
         # Set convergence to be tight for test
         for problem in tacs_probs:
+            problem.printDefaultOptions()
             problem.setOption("L2Convergence", 1e-20)
             problem.setOption("L2ConvergenceRel", 1e-20)
+            problem.printOptions()
 
         # Add Functions
         for problem in tacs_probs:
