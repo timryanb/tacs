@@ -1,4 +1,5 @@
 [![Build, unit tests, and docs](https://github.com/smdogroup/tacs/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/smdogroup/tacs/actions/workflows/unit_tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/timryanb/tacs/badge.svg?branch=coveralls)](https://coveralls.io/github/timryanb/tacs?branch=coveralls)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 

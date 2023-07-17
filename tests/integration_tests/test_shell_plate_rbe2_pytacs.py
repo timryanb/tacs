@@ -95,5 +95,8 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
             # Set convergence tol to be tight
             problem.setOption("L2Convergence", 1e-20)
             problem.setOption("L2ConvergenceRel", 1e-20)
+            # Debugging print options
+            problem.setOption("printTiming", True)
+            problem.setOption("useMonitor", True)
 
         return problems.values(), fea_assembler

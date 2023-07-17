@@ -13,6 +13,7 @@ other pieces of information.
 # =============================================================================
 import os
 import time
+from numbers import Number
 
 import numpy as np
 
@@ -156,6 +157,9 @@ class TransientProblem(TACSProblem):
         self.vars0 = self.assembler.createVec()
         self.dvars0 = self.assembler.createVec()
         self.ddvars0 = self.assembler.createVec()
+
+        # Create temporary vec for holding intermediate values
+        self.temp = self.assembler.createVec()
 
         # Get time integration solver attributes
         order = self.getOption("integrationOrder")
@@ -339,6 +343,36 @@ class TransientProblem(TACSProblem):
             timeStages = np.empty(1)
         return timeStages
 
+    def _getTimeIndex(self, timeStep, timeStage=None):
+        """
+        Get the time index corresponding to specified time step or time stage.
+
+        Parameters
+        ----------
+
+        timeStep : int
+            Time step to get index for.
+
+        timeStage : int or None
+            Time stage index to get index for. Default is None, which is applicable only for
+            multi-step methods like BDF. For multi-stage methods like DIRK, this index must
+            be specified.
+
+        Returns
+        ----------
+        timeIndex : int
+            Time index.
+        """
+        if self.numStages is None:
+            timeIndex = timeStep
+        else:
+            assert timeStage is not None, (
+                "Time stage index must be specified for %s integrator type"
+                % self.getOption("timeIntegrator").upper()
+            )
+            timeIndex = timeStep * self.numStages + timeStage
+        return timeIndex
+
     ####### Load adding methods ########
 
     def addLoadToComponents(
@@ -397,16 +431,7 @@ class TransientProblem(TACSProblem):
             In Thermoelasticity with varsPerNode = 7,
                 F = [fx, fy, fz, mx, my, mz, Qdot] # forces + moments + heat rate
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addLoadToComponents(self.F[timeIndex], compIDs, F, averageLoad)
 
     def addLoadToNodes(
@@ -459,16 +484,7 @@ class TransientProblem(TACSProblem):
             In Thermoelasticity with varsPerNode = 7,
                 F = [fx, fy, fz, mx, my, mz, Qdot] # forces + moments + heat rate
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addLoadToNodes(self.F[timeIndex], nodeIDs, F, nastranOrdering)
 
     def addLoadToRHS(self, timeStep, Fapplied, timeStage=None):
@@ -500,16 +516,7 @@ class TransientProblem(TACSProblem):
             be specified.
 
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addLoadToRHS(self.F[timeIndex], Fapplied)
 
     def addTractionToComponents(
@@ -542,16 +549,7 @@ class TransientProblem(TACSProblem):
             Indicates which face (side) of element to apply traction to.
             Note: not required for certain elements (i.e. shells)
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addTractionToComponents(
             self.auxElems[timeIndex], compIDs, tractions, faceIndex
         )
@@ -596,16 +594,7 @@ class TransientProblem(TACSProblem):
             Flag signaling whether elemIDs are in TACS (default)
             or NASTRAN ordering
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addTractionToElements(
             self.auxElems[timeIndex], elemIDs, tractions, faceIndex, nastranOrdering
         )
@@ -641,16 +630,7 @@ class TransientProblem(TACSProblem):
             Indicates which face (side) of element to apply pressure to.
             Note: not required for certain elements (i.e. shells)
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addPressureToComponents(
             self.auxElems[timeIndex], compIDs, pressures, faceIndex
         )
@@ -695,16 +675,7 @@ class TransientProblem(TACSProblem):
             Flag signaling whether elemIDs are in TACS (default)
             or NASTRAN ordering
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addPressureToElements(
             self.auxElems[timeIndex], elemIDs, pressures, faceIndex, nastranOrdering
         )
@@ -729,16 +700,7 @@ class TransientProblem(TACSProblem):
             multi-step methods like BDF. For multi-stage methods like DIRK, this index must
             be specified.
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addInertialLoad(self.auxElems[timeIndex], inertiaVector)
 
     def addCentrifugalLoad(self, timeStep, omegaVector, rotCenter, timeStage=None):
@@ -764,16 +726,7 @@ class TransientProblem(TACSProblem):
             multi-step methods like BDF. For multi-stage methods like DIRK, this index must
             be specified.
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addCentrifugalLoad(self.auxElems[timeIndex], omegaVector, rotCenter)
 
     def addLoadFromBDF(self, timeStep, loadID, timeStage=None, scale=1.0):
@@ -799,16 +752,7 @@ class TransientProblem(TACSProblem):
         scale : float
             Factor to scale the BDF loads by before adding to problem.
         """
-        timeIndex = 0
-        if self.numStages is None:
-            timeIndex = timeStep
-        else:
-            assert timeStage is not None, (
-                "Time stage index must be specified for %s integrator type"
-                % self.getOption("timeIntegrator").upper()
-            )
-            timeIndex = timeStep * self.numStages + timeStage
-
+        timeIndex = self._getTimeIndex(timeStep, timeStage)
         self._addLoadFromBDF(self.F[timeIndex], self.auxElems[timeIndex], loadID, scale)
 
     ####### Transient solver methods ########
@@ -827,35 +771,23 @@ class TransientProblem(TACSProblem):
             Initial conditions of the second time-derivative of the state variables
         """
 
-        if vars is not None:
-            if isinstance(vars, np.ndarray):
-                vars0Array = self.vars0.getArray()
-                vars0Array[:] = vars[:]
-            elif isinstance(vars, tacs.TACS.Vec):
-                self.vars0.copyValues(vars)
-            else:  # assume type=float
-                vars0Array = self.vars0.getArray()
-                vars0Array[:] = vars
+        if isinstance(vars, np.ndarray) or isinstance(vars, Number):
+            vars0Array = self.vars0.getArray()
+            vars0Array[:] = vars
+        elif isinstance(vars, tacs.TACS.Vec):
+            self.vars0.copyValues(vars)
 
-        if dvars is not None:
-            if isinstance(dvars, np.ndarray):
-                dvars0Array = self.dvars0.getArray()
-                dvars0Array[:] = dvars[:]
-            elif isinstance(dvars, tacs.TACS.Vec):
-                self.dvars0.copyValues(dvars)
-            else:  # assume type=float
-                dvars0Array = self.dvars0.getArray()
-                dvars0Array[:] = dvars
+        if isinstance(dvars, np.ndarray) or isinstance(dvars, Number):
+            dvars0Array = self.dvars0.getArray()
+            dvars0Array[:] = dvars
+        elif isinstance(dvars, tacs.TACS.Vec):
+            self.dvars0.copyValues(dvars)
 
-        if ddvars is not None:
-            if isinstance(ddvars, np.ndarray):
-                ddvars0Array = self.ddvars0.getArray()
-                ddvars0Array[:] = ddvars[:]
-            elif isinstance(ddvars, tacs.TACS.Vec):
-                self.ddvars0.copyValues(ddvars)
-            else:  # assume type=float
-                ddvars0Array = self.ddvars0.getArray()
-                ddvars0Array[:] = ddvars
+        if isinstance(ddvars, np.ndarray) or isinstance(ddvars, Number):
+            ddvars0Array = self.ddvars0.getArray()
+            ddvars0Array[:] = ddvars
+        elif isinstance(ddvars, tacs.TACS.Vec):
+            self.ddvars0.copyValues(ddvars)
 
     def _updateAssemblerVars(self):
         """
@@ -881,28 +813,19 @@ class TransientProblem(TACSProblem):
         """
         startTime = time.time()
 
-        self.callCounter += 1
-
-        setupProblemTime = time.time()
-
-        # Set problem vars to assembler
-        self._updateAssemblerVars()
+        self.prepIterativeSolve()
 
         initSolveTime = time.time()
 
         # Loop over every time instance and solve transient problem
-        if self.numStages is None:
-            for i in range(self.numSteps + 1):
-                # Set the auxiliary elements for this time step (tractions/pressures)
-                self.assembler.setAuxElements(self.auxElems[i])
-                self.integrator.iterate(i, forces=self.F[i])
-        else:
-            for i in range(self.numSteps + 1):
+        for i in range(self.numSteps + 1):
+            if self.numStages is None:
+                self.iterate(timeStep=i)
+            else:
                 for j in range(self.numStages):
                     # Set the auxiliary elements for this time step (tractions/pressures)
                     timeIndex = i * self.numStages + j
-                    self.assembler.setAuxElements(self.auxElems[timeIndex])
-                    self.integrator.iterateStage(i, j, forces=self.F[timeIndex])
+                    self.iterate(timeStep=i, timeStage=j)
 
         solveTime = time.time()
 
@@ -915,11 +838,7 @@ class TransientProblem(TACSProblem):
             self._pp("|")
             self._pp(
                 "| %-30s: %10.3f sec"
-                % ("TACS Setup Time", setupProblemTime - startTime)
-            )
-            self._pp(
-                "| %-30s: %10.3f sec"
-                % ("TACS Solve Init Time", initSolveTime - setupProblemTime)
+                % ("TACS Solve Init Time", initSolveTime - startTime)
             )
             self._pp(
                 "| %-30s: %10.3f sec" % ("TACS Solve Time", solveTime - initSolveTime)
@@ -992,18 +911,13 @@ class TransientProblem(TACSProblem):
             timeIndex = timeStep * self.numStages + timeStage
 
         # set the loads - do not change self.F[timeIndex] in place
-        FVec = self.assembler.createVec()
+        FVec = self.temp
         FVec.copyValues(self.F[timeIndex])
-        if Fext is not None:
-            if isinstance(Fext, tacs.TACS.Vec):
-                FVec.axpy(1.0, Fext)
-            elif isinstance(Fext, np.ndarray):
-                if Fext.ndim > 1:
-                    Fext = Fext.ravel()
-                FextVec = self.assembler.createVec()
-                Fext_array = FextVec.getArray()
-                Fext_array[:] = Fext
-                FVec.axpy(1.0, FextVec)
+        if isinstance(Fext, tacs.TACS.Vec):
+            FVec.axpy(1.0, Fext)
+        elif isinstance(Fext, np.ndarray):
+            FVec_array = FVec.getArray()
+            FVec_array[:] += Fext.ravel()
 
         # set the auxiliary elements for this time step (tractions/pressures)
         self.assembler.setAuxElements(self.auxElems[timeIndex])

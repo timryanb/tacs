@@ -31,9 +31,9 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
 
     FUNC_REFS = {
         "constant_force_mass": 200.0,
-        "constant_force_x_disp": 2.343553337720806,
-        "constant_force_y_disp": 2.343553337720806,
-        "constant_force_z_disp": 2.343553337720806,
+        "constant_force_x_disp": 12.246377298943205,
+        "constant_force_y_disp": 12.246377298943205,
+        "constant_force_z_disp": 12.246377298943205,
         "gravity_mass": 200.0,
         "gravity_x_disp": 0.23025850929940442,
         "gravity_y_disp": 0.23025850929940442,
@@ -76,6 +76,8 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
         timeSteps = problem.getTimeSteps()
         for step_i, time in enumerate(timeSteps):
             problem.addLoadToNodes(step_i, 0, f, nastranOrdering=False)
+        # Set initial velocity for each dof
+        problem.setInitConditions(dvars=1.0)
         all_problems.append(problem)
 
         # Create case 2 transient problem
