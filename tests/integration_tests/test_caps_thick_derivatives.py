@@ -29,7 +29,7 @@ class TestCaps2TacsSizing(unittest.TestCase):
         # build the tacs model with constraints, loads, properties, analysis functions, mesh, etc.
         comm = MPI.COMM_WORLD
         tacs_model = caps2tacs.TacsModel.build(
-            csm_file=csm_path, comm=comm, problem_name="capsStruct2"
+            csm_file=csm_path, comm=comm, problem_name="capsStruct2", verbosity=0,
         )
         tacs_model.mesh_aim.set_mesh(  # need a refined-enough mesh for the derivative test to pass
             edge_pt_min=15,
