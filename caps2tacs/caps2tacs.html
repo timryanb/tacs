@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Theory &#8212; TACS  documentation</title>
+    <title>caps2tacs &#8212; TACS  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinxdoc.css?v=0a676766" />
     <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -14,8 +14,8 @@
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Beam and shell elements in TACS" href="shell_element.html" />
-    <link rel="prev" title="Beam optimization with MPhys" href="../examples/Example-Beam_Optimization.html" /> 
+    <link rel="next" title="Installation of ESP/CAPS" href="main.html" />
+    <link rel="prev" title="TacsBuilder class" href="../mphys/builder.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -27,13 +27,14 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="shell_element.html" title="Beam and shell elements in TACS"
+          <a href="main.html" title="Installation of ESP/CAPS"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../examples/Example-Beam_Optimization.html" title="Beam optimization with MPhys"
+          <a href="../mphys/builder.html" title="TacsBuilder class"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TACS  documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Theory</a></li> 
+          <li class="nav-item nav-item-1"><a href="../interfaces.html" accesskey="U">Interfaces</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">caps2tacs</a></li> 
       </ul>
     </div>  
 
@@ -42,14 +43,24 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="theory">
-<h1>Theory<a class="headerlink" href="#theory" title="Permalink to this heading">¶</a></h1>
+  <section id="caps2tacs">
+<h1>caps2tacs<a class="headerlink" href="#caps2tacs" title="Permalink to this heading">¶</a></h1>
+<p>The caps2tacs module is a python interface for running TACS analysis on geometries built in ESP/CAPS (Engineering Sketch Pad).
+Caps2tacs is built on top of the pytacs interface and tacsAIM (Analysis Interface Module) from ESP/CAPS.
+Caps2tacs is used in FUNtoFEM for sizing and shape optimization of an aerodynmamic structure under oneway-coupled and fully-coupled
+aerostructural optimizations. Caps2tacs also provides thermoelastic properties through ESP/CAPS and TACS. For each structural
+design, caps2tacs + the tacsAIM build nastran files for the mesh *.bdf, *.dat which are located in the ESP/CAPS work directory
+usually under <code class="docutils literal notranslate"><span class="pre">capsStruct/Scratch/tacs</span></code>. Output files can also be stored there as well such as *.f5 files.</p>
+<p>Developer:
+* Sean Engelstad</p>
+<p>For more examples using caps2tacs for thermoelastic analysis and involving CFD, please see the
+<a class="reference external" href="https://github.com/smdogroup/funtofem/">FUNtoFEM github</a>.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="shell_element.html">Beam and shell elements in TACS</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shell_element.html#director-implementation">Director implementation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shell_element.html#beam-element-implementation">Beam element implementation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="shell_element.html#shell-element-implementation">Shell element implementation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">Installation of ESP/CAPS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#intro">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#examples">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html#testing">Testing</a></li>
 </ul>
 </div>
 </section>
@@ -63,13 +74,13 @@
         <div class="sphinxsidebarwrapper">
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="../examples/Example-Beam_Optimization.html"
-                          title="previous chapter">Beam optimization with MPhys</a></p>
+    <p class="topless"><a href="../mphys/builder.html"
+                          title="previous chapter">TacsBuilder class</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="shell_element.html"
-                          title="next chapter">Beam and shell elements in TACS</a></p>
+    <p class="topless"><a href="main.html"
+                          title="next chapter">Installation of ESP/CAPS</a></p>
   </div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
@@ -95,13 +106,14 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="shell_element.html" title="Beam and shell elements in TACS"
+          <a href="main.html" title="Installation of ESP/CAPS"
              >next</a> |</li>
         <li class="right" >
-          <a href="../examples/Example-Beam_Optimization.html" title="Beam optimization with MPhys"
+          <a href="../mphys/builder.html" title="TacsBuilder class"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TACS  documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Theory</a></li> 
+          <li class="nav-item nav-item-1"><a href="../interfaces.html" >Interfaces</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">caps2tacs</a></li> 
       </ul>
     </div>
  <script type="text/javascript">
