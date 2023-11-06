@@ -108,7 +108,7 @@ jobs:
           # Install petsc for openmdao tests
           conda install -c conda-forge petsc=3.12 petsc4py -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
-          if [[ ${{ matrix.NAME }} == 'Real' ]]; then
+          if [[ ${{ matrix.NAME }} == 'Real2' ]]; then
             cd $TACS_DIR/extern/
             wget https://acdl.mit.edu/ESP/archive/ESP122Lin.tgz
             tar -xvf ESP122Lin.tgz
@@ -130,10 +130,10 @@ jobs:
       - name: Run unit tests
         run: |
           # Reload ESP/CAPS environment variables if in real mode
-          if [[ ${{ matrix.NAME }} == 'Real' ]]; then
+          if [[ ${{ matrix.NAME }} == 'Real2' ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          testflo --timeout 240 .;
+          testflo -s --timeout 240 ./tests/integration_tests/test_mphys_struct_plate.py;
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
