@@ -93,8 +93,8 @@ jobs:
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+          conda install -c conda-forge compilers -q -y;
           conda install -c anaconda openmpi openmpi-mpicxx openmpi-mpicc -q -y;
-          conda install -c conda-forge sysroot_linux-64=2.17 -q -y;
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis=5.1.0 -q -y;
