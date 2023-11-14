@@ -20,7 +20,7 @@ jobs:
   # This job is called test_docs.
   unit_test_and_docs:
     # Run on Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.OS }}
     timeout-minutes: 40
     # Necessary to prevent mpi tests failing due to lack of slots
     env:
@@ -36,13 +36,27 @@ jobs:
       matrix:
         include:
           # real versions
-          - NAME: Real
+          - NAME: Real-Ubuntu
+            OS: ubuntu-latest
             OPTIONAL: 'debug'
             INTERFACE: 'interface'
             PUBLISH_DOCS: true
 
+          - NAME: Real-MacOS
+            OS: macos-latest
+            OPTIONAL: 'debug'
+            INTERFACE: 'interface'
+            PUBLISH_DOCS: false
+
           # complex versions
-          - NAME: Complex
+          - NAME: Complex-Ubuntu
+            OS: ubuntu-latest
+            OPTIONAL: 'complex_debug'
+            INTERFACE: 'complex_interface'
+            PUBLISH_DOCS: false
+
+          - NAME: Complex-MacOS
+            OS: ubuntu-latest
             OPTIONAL: 'complex_debug'
             INTERFACE: 'complex_interface'
             PUBLISH_DOCS: false
@@ -79,10 +93,8 @@ jobs:
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-          # zlib 1.2.12 apparently breaks this install, so we pin an older version
-          conda install zlib=1.2.11;
           conda install -c anaconda openmpi -q -y;
-          conda install gxx_linux-64=9.3.0 -q -y;
+          conda install -c conda-forge compilers -q -y;
           conda install -c anaconda openblas -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis=5.1.0 -q -y;
@@ -108,7 +120,7 @@ jobs:
           # Install petsc for openmdao tests
           conda install -c conda-forge petsc=3.12 petsc4py -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
-          if [[ ${{ matrix.NAME }} == 'Real' ]]; then
+          if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
             cd $TACS_DIR/extern/
             wget https://acdl.mit.edu/ESP/archive/ESP122Lin.tgz
             tar -xvf ESP122Lin.tgz
@@ -130,7 +142,7 @@ jobs:
       - name: Run unit tests
         run: |
           # Reload ESP/CAPS environment variables if in real mode
-          if [[ ${{ matrix.NAME }} == 'Real' ]]; then
+          if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
           testflo --timeout 240 .;
