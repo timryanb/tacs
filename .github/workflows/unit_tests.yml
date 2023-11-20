@@ -94,8 +94,7 @@ jobs:
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
           conda install -c conda-forge mamba -q -y;
-          mamba install -c conda-forge sysroot_linux-64=2.17 ld_impl_linux-64 -q -y;
-          mamba install -c conda-forge openmpi openmpi-mpicxx openmpi-mpicc mpi4py -q -y;
+          mamba install -c conda-forge openmpi openmpi-mpicxx openmpi-mpicc -q -y;
           mamba install -c anaconda openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
@@ -120,7 +119,7 @@ jobs:
       - name: Install optional dependencies
         run: |
           # Install petsc for openmdao tests
-          mamba install -c conda-forge petsc=3.12 petsc4py -q -y;
+          mamba install -c conda-forge petsc=3.18 petsc4py -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
             cd $TACS_DIR/extern/
