@@ -56,7 +56,7 @@ jobs:
             PUBLISH_DOCS: false
 
           - NAME: Complex-MacOS
-            OS: ubuntu-latest
+            OS: macos-latest
             OPTIONAL: 'complex_debug'
             INTERFACE: 'complex_interface'
             PUBLISH_DOCS: false
