@@ -88,16 +88,16 @@ jobs:
         with:
           auto-update-conda: true
           python-version: 3.9
+          use-mamba: true
 
       - name: Install TACS
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-          conda install -c conda-forge mamba -q -y;
           if [[ ${{ matrix.OS }} == 'ubuntu-latest' ]]; then
           mamba install -c conda-forge sysroot_linux-64=2.17 -q -y;
           fi
-          mamba install -c conda-forge libcxx -q -y;
+          mamba install -c conda-forge compilers=1.5.2 -q -y;
           mamba install -c conda-forge openmpi openmpi-mpicxx openmpi-mpicc -q -y;
           mamba install -c anaconda openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
