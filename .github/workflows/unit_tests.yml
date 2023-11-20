@@ -94,7 +94,7 @@ jobs:
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
           conda install -c conda-forge mamba -q -y;
-          if [[ ${{ matrix.OS }} == ubuntu-latest ]]; then
+          if [[ ${{ matrix.OS }} == 'ubuntu-latest' ]]; then
           mamba install -c conda-forge sysroot_linux-64=2.17 -q -y;
           fi
           mamba install -c conda-forge libcxx -q -y;
