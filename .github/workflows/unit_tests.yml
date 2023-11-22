@@ -88,7 +88,6 @@ jobs:
         with:
           auto-update-conda: true
           python-version: 3.9
-          use-mamba: true
 
       - name: Install TACS
         run: |
@@ -104,6 +103,7 @@ jobs:
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
           conda list;
+          mpicxx --version;
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
           make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
