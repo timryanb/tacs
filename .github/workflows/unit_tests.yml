@@ -94,7 +94,7 @@ jobs:
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
           conda install -c conda-forge mamba -q -y;
-          mamba install -c conda-forge compilers -q -y;
+          mamba install -c conda-forge cxx-compiler -q -y;
           mamba install -c anaconda openmpi -q -y;
           mamba install -c anaconda openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
