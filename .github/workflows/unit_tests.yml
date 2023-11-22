@@ -94,16 +94,11 @@ jobs:
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
           conda install -c conda-forge mamba -q -y;
-          if [[ ${{ matrix.OS }} == 'ubuntu-latest' ]]; then
-          mamba install -c conda-forge sysroot_linux-64=2.17 -q -y;
-          fi
-          #mamba install -c conda-forge clang_osx-64 -q -y;
-          mamba install -c conda-forge mpich=4.1.2 mpich-mpicxx mpich-mpicc -q -y;
+          mamba install -c anaconda openmpi -q -y;
           mamba install -c anaconda openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
           conda list;
-          mpicxx --version;
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
           make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
