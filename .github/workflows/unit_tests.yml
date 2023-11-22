@@ -89,12 +89,6 @@ jobs:
           auto-update-conda: true
           python-version: 3.9
 
-      - name: xcode install
-        if: ${{ matrix.OS }} == 'macos-latest'
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '14.2.0'
-
       - name: Install TACS
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
