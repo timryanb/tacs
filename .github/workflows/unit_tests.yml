@@ -99,7 +99,7 @@ jobs:
           mamba install -c conda-forge sysroot_linux-64=2.17 -q -y;
           fi
           mamba install -c conda-forge clang_osx-64 -q -y;
-          mamba install -c conda-forge mpich mpich-mpicxx mpich-mpicc -q -y;
+          mamba install -c conda-forge mpich=4.1.2 mpich-mpicxx mpich-mpicc -q -y;
           mamba install -c anaconda openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
