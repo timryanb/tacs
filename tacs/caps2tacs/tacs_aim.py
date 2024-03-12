@@ -9,7 +9,7 @@ import os, numpy as np
 from .proc_decorator import root_broadcast, parallel
 from .materials import Material
 from .constraints import Constraint
-from .property import ShellProperty, Property
+from .property import BaseProperty
 from .loads import Load
 from .variables import ShapeVariable, ThicknessVariable
 from .egads_aim import EgadsAim
@@ -75,10 +75,10 @@ class TacsAim:
         elif isinstance(obj, ThicknessVariable):
             self._design_variables.append(obj)
             if obj.can_make_shell:
-                self._properties.append(obj.shell_property)
+                self._properties.append(obj.auto_property)
         elif isinstance(obj, ShapeVariable):
             self._design_variables.append(obj)
-        elif isinstance(obj, Property):
+        elif isinstance(obj, BaseProperty):
             self._properties.append(obj)
         elif isinstance(obj, Constraint):
             self._constraints.append(obj)
@@ -108,7 +108,9 @@ class TacsAim:
                 if shape_var.name == this_shape_var.name:
                     return rank
         # if not found in for loop trigger error
-        raise AssertionError(f"failed to find shape var {shape_var} on rank {self.comm.rank}")
+        raise AssertionError(
+            f"failed to find shape var {shape_var} on rank {self.comm.rank}"
+        )
 
     @property
     def local_shape_vars(self) -> list:
@@ -130,7 +132,7 @@ class TacsAim:
         self,
         large_format: bool = True,
         static: bool = True,
-        barrier:bool=True,
+        barrier: bool = True,
     ):
         # make sure there is at least one material, property, constraint, etc.
         assert len(self._materials) > 0
@@ -185,13 +187,14 @@ class TacsAim:
                 # link the egads aim to the tacs aim
                 self.aim.input["Mesh"].link(self._mesh_aim.aim.output["Surface_Mesh"])
 
-                # add the design variables to the DesignVariable and DesignVariableRelation properties
+                # Add the design variables to the DesignVariable and DesignVariableRelation properties
+                # for active variables only.
                 DV_dict = {}
-                if len(self.thickness_variables) > 0:
+                if len(self.active_thickness_variables) > 0:
                     self.aim.input.Design_Variable_Relation = {
                         dv.name: dv.DVR_dictionary
                         for dv in self._design_variables
-                        if isinstance(dv, ThicknessVariable)
+                        if isinstance(dv, ThicknessVariable) and dv._active
                     }
 
                     # register all thickness variables to each proc
@@ -206,7 +209,8 @@ class TacsAim:
                             DV_dict[dv.name] = dv.DV_dictionary
 
                 # update the DV dict
-                self.aim.input.Design_Variable = DV_dict
+                if DV_dict:
+                    self.aim.input.Design_Variable = DV_dict
 
         if self._dict_options is not None:
             self._set_dict_options()
@@ -266,9 +270,16 @@ class TacsAim:
         return [dv for dv in self.variables if isinstance(dv, ShapeVariable)]
 
     @property
+    def active_thickness_variables(self) -> List[ThicknessVariable]:
+        """
+        Return only active sorted thickness variables.
+        """
+        return [dv for dv in self.thickness_variables if dv._active]
+
+    @property
     def thickness_variables(self) -> List[ThicknessVariable]:
         """
-        return sorted thickness vars so that the TACS derivatives can be appropriately obtained
+        Return sorted thickness vars so that the TACS derivatives can be appropriately obtained.
         """
         thick_var_names = [
             dv.name for dv in self.variables if isinstance(dv, ThicknessVariable)
@@ -355,17 +366,18 @@ class TacsAim:
         # update property thicknesses by the modified thickness variables
         for property in self._properties:
             for dv in self._design_variables:
-                if isinstance(property, ShellProperty) and isinstance(
+                if isinstance(property, BaseProperty) and isinstance(
                     dv, ThicknessVariable
                 ):
                     if property.caps_group == dv.caps_group:
-                        property.membrane_thickness == dv.value
+                        property.membrane_thickness = dv.value
                         break
 
         # input new design var and property cards
-        self.aim.input.Design_Variable = {
-            dv.name: dv.DV_dictionary for dv in self._design_variables
-        }
+        if len([_ for _ in self._design_variables if _._active]) > 0:
+            self.aim.input.Design_Variable = {
+                dv.name: dv.DV_dictionary for dv in self._design_variables
+            }
         self.aim.input.Property = {
             prop.caps_group: prop.dictionary for prop in self._properties
         }

@@ -2,27 +2,19 @@
 Sean Engelstad, Febuary 2023
 GT SMDO Lab, Dr. Graeme Kennedy
 Caps to TACS example
-
-Update : November 2023
-You can now run this with active_procs=[0,1] and conda-mpirun -n 2 python 1_steady_analysis.py
-to test out running 2 tacs aims in parallel.
-Or just run python 1_steady_analysis.py instead.
 """
 
 from tacs import caps2tacs
 from mpi4py import MPI
+import numpy as np
+import matplotlib.pyplot as plt
 
 # run a steady elastic structural analysis in TACS using the tacsAIM wrapper caps2tacs submodule
 # -------------------------------------------------------------------------------------------------
 # 1: build the tacs aim, egads aim wrapper classes
 
 comm = MPI.COMM_WORLD
-
-print(f"proc on rank {comm.rank}")
-
-tacs_model = caps2tacs.TacsModel.build(
-    csm_file="simple_naca_wing.csm", comm=comm, active_procs=[0]
-)
+tacs_model = caps2tacs.TacsModel.build(csm_file="simple_naca_wing.csm", comm=comm)
 tacs_model.mesh_aim.set_mesh(
     edge_pt_min=15,
     edge_pt_max=20,
@@ -31,25 +23,51 @@ tacs_model.mesh_aim.set_mesh(
     max_dihedral_angle=15,
 ).register_to(tacs_model)
 
-aluminum = caps2tacs.Isotropic.aluminum().register_to(tacs_model)
+carbon_fiber = caps2tacs.Orthotropic.carbon_fiber().register_to(tacs_model)
 
 # setup the thickness design variables + automatic shell properties
 nribs = int(tacs_model.get_config_parameter("nribs"))
 nspars = int(tacs_model.get_config_parameter("nspars"))
+# makes unidirectional laminate composite properties automatically
 for irib in range(1, nribs + 1):
-    caps2tacs.ThicknessVariable(
-        caps_group=f"rib{irib}", value=0.05, material=aluminum
+    caps_group = f"rib{irib}"
+    thick = 0.05
+    caps2tacs.CompositeProperty(
+        caps_group=caps_group,
+        ply_materials=[carbon_fiber] * 4,
+        ply_thicknesses=[thick / 4] * 4,
+        ply_angles=[0, -45, 45, 90],
     ).register_to(tacs_model)
+    # caps2tacs.ThicknessVariable(
+    #     caps_group=f"rib{irib}",
+    #     value=thick,
+    # ).register_to(tacs_model)
 for ispar in range(1, nspars + 1):
-    caps2tacs.ThicknessVariable(
-        caps_group=f"spar{ispar}", value=0.05, material=aluminum
+    caps_group = f"spar{ispar}"
+    thick = 0.04
+    caps2tacs.CompositeProperty(
+        caps_group=caps_group,
+        ply_materials=[carbon_fiber] * 4,
+        ply_thicknesses=[thick / 4] * 4,
+        ply_angles=[0, -45, 45, 90],
     ).register_to(tacs_model)
-caps2tacs.ThicknessVariable(
-    caps_group="OML", value=0.03, material=aluminum
-).register_to(tacs_model)
+    # caps2tacs.ThicknessVariable(
+    #     caps_group=caps_group,
+    #     value=thick,
+    # ).register_to(tacs_model)
 
-# SHAPE VAR FOR DEBUGGING, CAN REMOVE THIS
-caps2tacs.ShapeVariable("rib_a1", value=1.0).register_to(tacs_model)
+caps_group = "OML"
+thick = 0.03
+caps2tacs.CompositeProperty(
+    caps_group=caps_group,
+    ply_materials=[carbon_fiber] * 4,
+    ply_thicknesses=[thick / 4] * 4,
+    ply_angles=[0, -45, 45, 90],
+).register_to(tacs_model)
+# caps2tacs.ThicknessVariable(
+#     caps_group=caps_group,
+#     value=thick,
+# ).register_to(tacs_model)
 
 # add constraints and loads
 caps2tacs.PinConstraint("root").register_to(tacs_model)
@@ -61,11 +79,11 @@ caps2tacs.AnalysisFunction.ksfailure(ksWeight=50.0, safetyFactor=1.5).register_t
 )
 caps2tacs.AnalysisFunction.mass().register_to(tacs_model)
 
+caps2tacs.ShapeVariable("rib_a1", value=1.0).register_to(tacs_model)
+
 # run the pre analysis to build tacs input files
 # alternative is to call tacs_aim.setup_aim().pre_analysis() with tacs_aim = tacs_model.tacs_aim
 tacs_model.setup(include_aim=True)
-
-comm.Barrier()
 
 # ----------------------------------------------------------------------------------
 # 2. Run the TACS steady elastic structural analysis, forward + adjoint
@@ -75,11 +93,15 @@ method = 1
 
 # show both ways of performing the structural analysis in more or less detail
 if method == 1:  # less detail version
-    print(f"tacs - preanalysis rank {comm.rank}", flush=True)
     tacs_model.pre_analysis()
-    print(f"tacs - run analysis rank {comm.rank}", flush=True)
     tacs_model.run_analysis()
-    print(f"tacs - post analysis rank {comm.rank}", flush=True)
+
+    # assembler =
+    # sx = np.array([0 for _ in range(8)])
+    # sx[0] = 1.0
+    # sy = np.array([0 for _ in range(8)])
+    # sy[1] = 1.0
+
     tacs_model.post_analysis()
 
     print("Tacs model static analysis outputs...\n")
@@ -103,7 +125,7 @@ elif method == 2:  # longer way that directly uses pyTACS & static problem routi
         SPs[caseID].evalFunctions(tacs_funcs, evalFuncs=function_names)
         SPs[caseID].evalFunctionsSens(tacs_sens, evalFuncs=function_names)
         SPs[caseID].writeSolution(
-            baseName="tacs_output", outputDir=tacs_model.analysis_dir(proc=0)
+            baseName="tacs_output", outputDir=tacs_model.analysis_dir
         )
 
     # print the output analysis functions and sensitivities
