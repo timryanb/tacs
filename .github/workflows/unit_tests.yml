@@ -100,7 +100,7 @@ jobs:
       - name: Setup MacOS
         if: ${{ matrix.OS == 'macos-latest' }}
         run: |
-          sudo xcode-select -s /Library/Developer/CommandLineTools;
+          mamba install -c conda-forge clang=18.0 -q -y;
 
       - name: Install TACS
         run: |
