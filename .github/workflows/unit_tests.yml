@@ -89,6 +89,8 @@ jobs:
           auto-update-conda: true
           python-version: 3.9
           mamba-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
 
       - name: Setup Linux
         if: ${{ matrix.OS == 'ubuntu-latest' }}
