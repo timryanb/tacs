@@ -100,7 +100,7 @@ jobs:
       - name: Setup MacOS
         if: ${{ matrix.OS == 'macos-latest' }}
         run: |
-          mamba install -c conda-forge clang=18.0 -q -y;
+          mamba install -c conda-forge clang -q -y;
 
       - name: Install TACS
         run: |
