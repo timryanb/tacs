@@ -138,6 +138,7 @@ class OpenMDAOTestCase:
                                 form=self.fd_form,
                                 step=self.dh,
                             )
+                            print(data)
                             assert_check_totals(data, atol=self.atol, rtol=self.rtol)
 
         def cleanup_fwd_data(self, data):
