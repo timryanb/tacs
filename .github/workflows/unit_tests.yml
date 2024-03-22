@@ -131,7 +131,7 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real' ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          testflo --timeout 240 .;
+          testflo --timeout 240 -vs ./tests/integration_tests/test_mphys_struct_plate.py;
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;

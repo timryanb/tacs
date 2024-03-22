@@ -122,6 +122,10 @@ problem.addInertialLoad(g)
 # Solve structural problem
 problem.solve()
 
+uNorm = problem.u.norm()
+if comm.rank == 0:
+    print(f"{problem.name:>10s}: {uNorm=:.16e}")
+
 # Evaluate functions
 funcs = {}
 problem.evalFunctions(funcs)
