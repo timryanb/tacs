@@ -1032,6 +1032,7 @@ void TACSBlockCyclicMat::addAllValues(int csr_bsize, int nvars,
   int *send_ivals = new int[max_send_size];
   int *send_jvals = new int[max_send_size];
   TacsScalar *send_vals = new TacsScalar[b2 * max_send_size];
+  memset(send_vals, 0, b2 * max_send_size * sizeof(TacsScalar));
 
   // Iterate over each process
   for (int k = 0; k < size; k++) {
@@ -1083,6 +1084,7 @@ void TACSBlockCyclicMat::addAllValues(int csr_bsize, int nvars,
       recv_ivals = new int[nrecv];
       recv_jvals = new int[nrecv];
       recv_vals = new TacsScalar[b2 * nrecv];
+      memset(recv_vals, 0, b2 * nrecv * sizeof(TacsScalar));
     }
 
     MPI_Gatherv(send_ivals, send_count, MPI_INT, recv_ivals, recv_count,
@@ -1231,6 +1233,7 @@ void TACSBlockCyclicMat::addAlltoallValues(int csr_bsize, int nvars,
   memset(send_counts, 0, size * sizeof(int));
   int *send_index = new int[2 * send_ptr[size]];
   TacsScalar *send_vals = new TacsScalar[b2 * send_ptr[size]];
+  memset(send_vals, 0, b2 * send_ptr[size] * sizeof(TacsScalar));
 
   // Go back through and copy over values to pass to all the processes
   for (int ip = 0; ip < nvars; ip++) {
@@ -1287,6 +1290,7 @@ void TACSBlockCyclicMat::addAlltoallValues(int csr_bsize, int nvars,
 
   int *recv_index = new int[2 * recv_ptr[size]];
   TacsScalar *recv_vals = new TacsScalar[b2 * recv_ptr[size]];
+  memset(recv_vals, 0, b2 * recv_ptr[size] * sizeof(TacsScalar));
 
   MPI_Alltoallv(send_index, send_counts2, send_ptr2, MPI_INT, recv_index,
                 recv_counts2, recv_ptr2, MPI_INT, comm);
@@ -1508,6 +1512,7 @@ void TACSBlockCyclicMat::mult(TacsScalar *x, TacsScalar *y) {
 
   // Allocate temporary space (if needed)
   TacsScalar *tx = new TacsScalar[cbptr[ncols]];
+  memset(tx, 0, cbptr[ncols] * sizeof(TacsScalar));
   TacsScalar *ty = new TacsScalar[rbptr[nrows]];
   memset(ty, 0, rbptr[nrows] * sizeof(TacsScalar));
 
@@ -1857,6 +1862,7 @@ void TACSBlockCyclicMat::applyFactor(TacsScalar *x) {
   if (proc_row >= 0) {
     // The temporary array used to store in-coming values
     xlocal = new TacsScalar[max_bsize];
+    memset(xlocal, 0, max_bsize * sizeof(TacsScalar));
 
     // Temporary vector of x-values on this processor
     tx = new TacsScalar[cbptr[nrows]];
@@ -2445,21 +2451,30 @@ void TACSBlockCyclicMat::factor() {
 
   int *temp_piv = new int[max_bsize];
   TacsScalar *temp_diag = new TacsScalar[max_bsize * max_bsize];
+  memset(temp_diag, 0, max_bsize * max_bsize * sizeof(TacsScalar));
   TacsScalar *temp_block = new TacsScalar[max_bsize * max_bsize];
+  memset(temp_block, 0, max_bsize * max_bsize * sizeof(TacsScalar));
   int lwork = 128 * max_bsize;
   TacsScalar *work = new TacsScalar[lwork];
+  memset(work, 0, lwork * sizeof(TacsScalar));
 
   // Buffers to handle the recieves information
   TacsScalar *Ubuff = new TacsScalar[max_ubuff_size];
+  memset(Ubuff, 0, max_ubuff_size * sizeof(TacsScalar));
   TacsScalar *Lbuff = new TacsScalar[max_lbuff_size];
+  memset(Lbuff, 0, max_lbuff_size * sizeof(TacsScalar));
 
   // Send information for rows owning U
   MPI_Request *U_send_request = new MPI_Request[nprows - 1];
+  memset(U_send_request, 0, (nprows - 1) * sizeof(MPI_Request));
   MPI_Status *U_send_status = new MPI_Status[nprows - 1];
+  memset(U_send_status, 0, (nprows - 1) * sizeof(MPI_Status));
 
   // Send information for columns owning L
   MPI_Request *L_send_request = new MPI_Request[npcols - 1];
+  memset(L_send_request, 0, (npcols - 1) * sizeof(MPI_Request));
   MPI_Status *L_send_status = new MPI_Status[npcols - 1];
+  memset(L_send_status, 0, (npcols - 1) * sizeof(MPI_Status));
 
   double t_update = 0.0;
   double t_recv_wait = 0.0;
