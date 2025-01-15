@@ -123,10 +123,9 @@ jobs:
       - name: Install optional dependencies
         run: |
           # Install petsc for openmdao tests
-          mamba install -c conda-forge petsc petsc4py -q -y;
+          mamba install -c conda-forge petsc>=3.19 petsc4py -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
-            mamba install -c conda-forge m2-liblzma -q -y;
             cd $TACS_DIR/extern/
             wget https://acdl.mit.edu/ESP/archive/ESP122Lin.tgz
             tar -xvf ESP122Lin.tgz
