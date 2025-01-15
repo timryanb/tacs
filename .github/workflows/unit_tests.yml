@@ -88,8 +88,6 @@ jobs:
         with:
           auto-update-conda: true
           python-version: 3.9
-          channels: conda-forge,defaults
-          channel-priority: true
 
       - name: Install TACS
         run: |
