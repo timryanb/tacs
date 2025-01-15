@@ -88,7 +88,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: 3.9
-          mamba-version: "*"
+          mamba-version: 1.5.9
           channels: conda-forge,defaults
           channel-priority: true
 
