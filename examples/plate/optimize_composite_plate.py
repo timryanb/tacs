@@ -1,15 +1,17 @@
 """
 Mass minimization of uCRM wingbox subject to a constant vertical force
 """
+
 import os
 
 import openmdao.api as om
 import numpy as np
-from mphys import Multipoint
-from mphys.scenario_structural import ScenarioStructural
+from mphys.core import Multipoint, MPhysVariables
+from mphys.scenarios import ScenarioStructural
 
 from tacs import elements, constitutive, functions
 from tacs.mphys import TacsBuilder
+from tacs.mphys.utils import add_tacs_constraints
 
 # BDF file containing mesh
 bdf_file = os.path.join(os.path.dirname(__file__), "partitioned_plate.bdf")
@@ -105,7 +107,12 @@ def constraint_setup(scenario_name, fea_assembler, constraint_list):
     constr = fea_assembler.createDVConstraint("ply_fractions")
     allComponents = fea_assembler.selectCompIDs()
     constr.addConstraint(
-        "sum", allComponents, dvIndices=[0, 1, 2, 3], dvWeights=[1.0, 1.0, 1.0, 1.0]
+        "sum",
+        allComponents,
+        dvIndices=[0, 1, 2, 3],
+        dvWeights=[1.0, 1.0, 1.0, 1.0],
+        lower=1.0,
+        upper=1.0,
     )
     constraint_list.append(constr)
 
@@ -117,7 +124,6 @@ class PlateModel(Multipoint):
             element_callback=element_callback,
             problem_setup=problem_setup,
             constraint_setup=constraint_setup,
-            coupled=False,
             check_partials=True,
         )
         struct_builder.initialize(self.comm)
@@ -130,9 +136,15 @@ class PlateModel(Multipoint):
         self.mphys_add_scenario(
             "pressure_load", ScenarioStructural(struct_builder=struct_builder)
         )
-        self.mphys_connect_scenario_coordinate_source("mesh", "pressure_load", "struct")
+        self.connect(
+            f"mesh.{MPhysVariables.Structures.Mesh.COORDINATES}",
+            f"pressure_load.{MPhysVariables.Structures.COORDINATES}",
+        )
 
         self.connect("dv_struct", "pressure_load.dv_struct")
+
+    def configure(self):
+        add_tacs_constraints(self.pressure_load)
 
 
 ################################################################################
@@ -146,10 +158,11 @@ model = prob.model
 # Declare design variables, objective, and constraint
 model.add_design_var("dv_struct", lower=0.0, upper=1.0)
 model.add_objective("pressure_load.compliance")
-model.add_constraint("pressure_load.ply_fractions.sum", equals=1.0, linear=True)
 
 # Configure optimizer
-prob.driver = om.ScipyOptimizeDriver(debug_print=["objs", "nl_cons"], maxiter=100)
+prob.driver = om.ScipyOptimizeDriver(
+    debug_print=["objs", "nl_cons", "ln_cons"], maxiter=100
+)
 prob.driver.options["optimizer"] = "SLSQP"
 
 # Setup OpenMDAO problem

@@ -2,8 +2,8 @@ import os
 
 import numpy as np
 import openmdao.api as om
-from mphys.multipoint import Multipoint
-from mphys.scenario_structural import ScenarioStructural
+from mphys.core import Multipoint, MPhysVariables
+from mphys.scenarios import ScenarioStructural
 
 import tacs.mphys
 from openmdao_analysis_base_test import OpenMDAOTestCase
@@ -28,10 +28,18 @@ FUNC_REFS = {
 }
 
 # Inputs to check total sensitivities wrt
-wrt = ["mesh.fea_mesh.x_struct0", "dv_struct", "f_struct"]
+wrt = [
+    f"mesh.fea_mesh.{MPhysVariables.Structures.Mesh.COORDINATES}",
+    "dv_struct",
+    MPhysVariables.Structures.Loads.AERODYNAMIC,
+]
 
 # KS function weight
 ksweight = 10.0
+
+# Adjacency constraint bounds
+adj_lb = -2.5e-3
+adj_ub = 2.5e-3
 
 
 class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
@@ -105,7 +113,7 @@ class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
             """
             # Setup adjacency constraints for panel thicknesses
             constr = fea_assembler.createAdjacencyConstraint("adjacency")
-            constr.addConstraint("PANEL")
+            constr.addConstraint("PANEL", lower=-2.5e-3, upper=2.5e-3)
             constr_list = [constr]
             return constr_list
 
@@ -115,7 +123,7 @@ class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
             problem_setup=problem_setup,
             constraint_setup=constraint_setup,
             check_partials=True,
-            coupled=True,
+            coupling_loads=MPhysVariables.Structures.Loads.AERODYNAMIC,
             write_solution=False,
         )
         self.tacs_builder = tacs_builder
@@ -135,15 +143,30 @@ class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
 
                 f_size = tacs_builder.get_ndof() * tacs_builder.get_number_of_nodes()
                 forces = self.add_subsystem("forces", om.IndepVarComp(), promotes=["*"])
-                forces.add_output("f_struct", val=np.ones(f_size), distributed=True)
+                forces.add_output(
+                    MPhysVariables.Structures.Loads.AERODYNAMIC,
+                    val=np.ones(f_size),
+                    distributed=True,
+                )
 
                 self.add_subsystem("mesh", tacs_builder.get_mesh_coordinate_subsystem())
                 self.mphys_add_scenario(
                     "analysis", ScenarioStructural(struct_builder=tacs_builder)
                 )
-                self.connect("mesh.x_struct0", "analysis.x_struct0")
+                self.connect(
+                    f"mesh.{MPhysVariables.Structures.Mesh.COORDINATES}",
+                    f"analysis.{MPhysVariables.Structures.COORDINATES}",
+                )
                 self.connect("dv_struct", "analysis.dv_struct")
-                self.connect("f_struct", "analysis.f_struct")
+                self.connect(
+                    MPhysVariables.Structures.Loads.AERODYNAMIC,
+                    f"analysis.{MPhysVariables.Structures.Loads.AERODYNAMIC}",
+                )
+
+            def configure(self):
+                tacs.mphys.utils.add_tacs_constraints(self.analysis)
+                self.add_constraint("analysis.ks_vmfailure", upper=1.0)
+                self.add_objective("analysis.mass")
 
         prob = om.Problem()
         prob.model = Top()
@@ -157,12 +180,23 @@ class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
         """
         return FUNC_REFS, wrt
 
+    # def test_add_tacs_constraints(self):
+    #     # prob = self.setup_problem(dtype=float)
+    #     # prob.setup()
+    #     prob = self.prob
+    #     constraints = prob.model.get_constraints()
+    #     self.assertIn("analysis.adjacency.PANEL", constraints)
+    #     adjacency = constraints["analysis.adjacency.PANEL"]
+    #     self.assertTrue(adjacency["linear"])
+    #     lower_bound = adjacency["lower"]
+    #     upper_bound = adjacency["upper"]
+    #     np.testing.assert_equal(lower_bound, adj_lb)
+    #     np.testing.assert_equal(upper_bound, adj_ub)
+
     def test_get_tagged_indices(self):
         """
         Test the get_tagged_indices method
         """
-        prob = self.setup_problem(dtype=float)
-        prob.setup()
 
         # We want to test that:
         # - For each comp_id, get_tagged_indices returns the same indices as `getLocalNodeIDsForComps`
@@ -192,3 +226,9 @@ class ProblemTest(OpenMDAOTestCase.OpenMDAOTest):
         trueNodeIDs = FEAAssembler.getLocalNodeIDsForComps([compIDs[0], compIDs[-1]])
         taggedIndIDs = self.tacs_builder.get_tagged_indices(tags)
         self.assertEqual(sorted(trueNodeIDs), sorted(taggedIndIDs))
+
+
+if __name__ == "__main__":
+    import unittest
+
+    unittest.main()

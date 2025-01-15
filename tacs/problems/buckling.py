@@ -802,6 +802,18 @@ class BucklingProblem(TACSProblem):
             states[:] = eigVector.getArray()
         return eigVal, eigVector.getArray()
 
+    def getModalError(self, index):
+        """
+        Return the error associated with a particular mode
+
+        Parameters
+        ----------
+        index: int
+            Mode index to return solution for
+        """
+        eigVal, err = self.buckleSolver.extractEigenvalue(index)
+        return err
+
     def addXptSens(self, indices, xptSensList, scale=1.0):
         """
         Add partial sensitivity contribution due to nodal coordinates for eigenvalue
