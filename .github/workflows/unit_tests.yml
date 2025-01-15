@@ -96,9 +96,10 @@ jobs:
         run: |
           export TACS_DIR=${GITHUB_WORKSPACE};
           echo "TACS_DIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-          mamba install -c conda-forge sysroot_linux-64=2.28 -q -y;
+          if [[ ${{ matrix.OS }} == 'ubuntu-latest' ]]; then
+            mamba install -c conda-forge sysroot_linux-64=2.28 -q -y;
+          fi
           mamba install -c conda-forge openmpi openmpi-mpicxx -q -y;
-          mpicxx --version;
           mamba install -c conda-forge openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
@@ -125,6 +126,7 @@ jobs:
           mamba install -c conda-forge petsc petsc4py -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
+            mamba install -c conda-forge m2-liblzma -q -y;
             cd $TACS_DIR/extern/
             wget https://acdl.mit.edu/ESP/archive/ESP122Lin.tgz
             tar -xvf ESP122Lin.tgz
