@@ -88,6 +88,7 @@ jobs:
         with:
           auto-update-conda: true
           python-version: 3.9
+          conda-remove-defaults: true
 
       - name: Install TACS
         run: |
@@ -97,6 +98,7 @@ jobs:
             conda install -c conda-forge sysroot_linux-64=2.17 -q -y;
             conda install -c conda-forge openblas -q -y;
           fi
+          conda install -c conda-forge "numpy<2" -q -y;
           conda install -c conda-forge openmpi openmpi-mpicxx -q -y;
           conda install -c conda-forge lapack -q -y;
           conda install -c conda-forge metis=5.1.0 -q -y;
@@ -110,7 +112,7 @@ jobs:
       - name: Install f5totec/f5tovtk
         run: |
           # Compile f5totec/f5tovtk
-          conda install -c smdogroup -c conda-forge tecio "numpy<2" -q -y;
+          conda install -c smdogroup -c conda-forge tecio -q -y;
           cd $TACS_DIR/extern/f5totec;
           make TACS_DIR=$TACS_DIR TECIO_INCLUDE=-I${CONDA_PREFIX}/include/ TECIO_LIB=${CONDA_PREFIX}/lib/libtecio.a\
             METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
