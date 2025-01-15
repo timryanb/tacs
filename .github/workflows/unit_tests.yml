@@ -99,7 +99,7 @@ jobs:
           mamba install -c conda-forge sysroot_linux-64=2.28 -q -y;
           mamba install -c conda-forge openmpi openmpi-mpicxx -q -y;
           mpicxx --version;
-          mamba install -c anaconda openblas -q -y;
+          mamba install -c conda-forge openblas -q -y;
           mamba install -c conda-forge lapack -q -y;
           mamba install -c conda-forge metis=5.1.0 -q -y;
           cd $TACS_DIR;
@@ -122,7 +122,7 @@ jobs:
       - name: Install optional dependencies
         run: |
           # Install petsc for openmdao tests
-          mamba install -c conda-forge petsc=3.19 petsc4py -q -y;
+          mamba install -c conda-forge petsc petsc4py -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
             cd $TACS_DIR/extern/
