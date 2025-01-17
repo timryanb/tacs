@@ -25,27 +25,43 @@ jobs:
           - OS: ubuntu-latest
             TARGET: linux-64
             SCALAR: real
+            ARCH: x64
+
+          - OS: ubuntu-24.04-arm
+            TARGET: linux-aarch64
+            SCALAR: real
+            ARCH: aarch64
 
           - OS: macos-latest
             TARGET: osx-64
             SCALAR: real
+            ARCH: x64
 
           - OS: macos-latest
             TARGET: osx-arm64
             SCALAR: real
+            ARCH: arm64
 
           # complex versions
           - OS: ubuntu-latest
             TARGET: linux-64
             SCALAR: complex
+            ARCH: x64
+
+          - OS: ubuntu-24.04-arm
+            TARGET: linux-aarch64
+            SCALAR: complex
+            ARCH: aarch64
 
           - OS: macos-latest
             TARGET: osx-64
             SCALAR: complex
+            ARCH: x64
 
           - OS: macos-latest
             TARGET: osx-arm64
             SCALAR: complex
+            ARCH: arm64
 
     name: TACS Conda Package Deployment (${{ matrix.TARGET }}, ${{ matrix.SCALAR }})
 
@@ -76,16 +92,7 @@ jobs:
           miniconda-version: "latest"
           auto-update-conda: true
           python-version: 3.9
-          architecture: x64
-
-      - name: Setup miniconda (macos-latest)
-        if: ${{ matrix.TARGET == 'osx-arm64' }}
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniconda-version: "latest"
-          auto-update-conda: true
-          python-version: 3.9
-          architecture: arm64
+          architecture: ${{ matrix.ARCH }}
 
       - name: Build TACS package
         run: |
