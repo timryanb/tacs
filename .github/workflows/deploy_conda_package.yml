@@ -91,6 +91,7 @@ jobs:
         with:
           miniconda-version: "latest"
           auto-update-conda: true
+          mamba-version: "<2.0"
           python-version: 3.9
           architecture: ${{ matrix.ARCH }}
 
