@@ -1111,6 +1111,8 @@ class pyTACS(BaseUI):
                         f"Unrecognized LAM type '{propInfo.lam}' for PCOMP number {propertyID}."
                     )
 
+                con.setDrillingRegularization(1e-1)
+
             elif propInfo.type == "PSOLID":  # Nastran solid property
                 if "T" in elemDict[propertyID]["dvs"]:
                     thickness = elemDict[propertyID]["dvs"]["T"].dvids_ref[0].xinit
@@ -1165,7 +1167,7 @@ class pyTACS(BaseUI):
                 if propInfo.Type == "BAR":
                     w = propInfo.dim[0]
                     t = propInfo.dim[1]
-                    con = tacs.constitutive.IsoRectangleBeamConstitutive(mat, w=w, t=t)
+                    con = tacs.constitutive.IsoRectangleBeamConstitutive(mat, w=w, t=t, tOffset=-0.5)
 
                 elif propInfo.Type == "TUBE":
                     r1 = propInfo.dim[0]
@@ -1206,16 +1208,10 @@ class pyTACS(BaseUI):
             # Set up transform object which may be required for certain elements
             transform = None
             if propInfo.type in ["PSHELL", "PCOMP"]:
-                mcid = elemDict[propertyID]["elements"][0].theta_mcid_ref
-                if mcid:
-                    if mcid.type == "CORD2R":
-                        refAxis = mcid.i
-                        transform = tacs.elements.ShellRefAxisTransform(refAxis)
-                    else:  # Don't support spherical/cylindrical yet
-                        raise self._TACSError(
-                            "Unsupported material coordinate system type "
-                            f"'{mcid.type}' for property number {propertyID}."
-                        )
+                elem0 = elemDict[propertyID]["elements"][0]
+                if elem0.theta_mcid is not None:
+                    _, _, refAxis, _, _ = elem0.material_coordinate_system()
+                    transform = tacs.elements.ShellRefAxisTransform(refAxis)
             elif propInfo.type in ["PBAR", "PBARL"]:
                 refAxis = elemDict[propertyID]["elements"][0].g0_vector
                 transform = tacs.elements.BeamRefAxisTransform(refAxis)

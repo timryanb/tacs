@@ -234,8 +234,8 @@ void TACSIsoRectangleBeamConstitutive::evalStress(int elemIndex,
   TacsScalar Iz = 1.0 / 12.0 * width * t3 + delta_y * delta_y * A;
   TacsScalar Iyz = -delta_y * delta_z * A;
   // Torsion constant for rectangle
-  TacsScalar a = width / 2.0;
-  TacsScalar b = thickness / 2.0;
+  TacsScalar a = std::max(thickness, width) / 2.0;
+  TacsScalar b = std::min(thickness, width) / 2.0;
   TacsScalar b3 = b * b * b;
   TacsScalar b4 = b * b3;
   TacsScalar a4 = a * a * a * a;
@@ -265,8 +265,8 @@ void TACSIsoRectangleBeamConstitutive::evalTangentStiffness(
   TacsScalar Iz = 1.0 / 12.0 * width * t3 + delta_y * delta_y * A;
   TacsScalar Iyz = -delta_y * delta_z * A;
   // Torsion constant for rectangle
-  TacsScalar a = width / 2.0;
-  TacsScalar b = thickness / 2.0;
+  TacsScalar a = std::max(thickness, width) / 2.0;
+  TacsScalar b = std::min(thickness, width) / 2.0;
   TacsScalar b3 = b * b * b;
   TacsScalar b4 = b * b3;
   TacsScalar a4 = a * a * a * a;
@@ -297,8 +297,8 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
   TacsScalar A = thickness * width;
   TacsScalar delta_y = t_offset * thickness;
   TacsScalar delta_z = w_offset * width;
-  TacsScalar a = width / 2.0;
-  TacsScalar b = thickness / 2.0;
+  TacsScalar a = std::max(thickness, width) / 2.0;
+  TacsScalar b = std::min(thickness, width) / 2.0;
   TacsScalar b3 = b * b * b;
   TacsScalar b4 = b * b3;
   TacsScalar a4 = a * a * a * a;
@@ -312,13 +312,22 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
     TacsScalar dIy = width * width * thickness / 4.0 +
                      2.0 * ddelta_z * delta_z * A + delta_z * delta_z * dA;
     TacsScalar dIyz = -delta_y * ddelta_z * A + -delta_y * delta_z * dA;
-    TacsScalar da = 0.5;
-    TacsScalar da4 = 4.0 * a * a * a * da;
-    TacsScalar dJ =
-        da * b3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
-        a * b3 * (3.36 * b / a * da / a * (1.0 - b4 / a4 / 12.0)) +
-        a * b3 * (3.36 * b / a * (-b4 / a4 / 12.0 * da4 / a4));
-
+    if (thickness >= width) { 
+      TacsScalar da = 0.5;
+      TacsScalar da4 = 4.0 * a * a * a * da;
+      TacsScalar dJ =
+          da * b3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (3.36 * b / a * da / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (3.36 * b / a * (-b4 / a4 / 12.0 * da4 / a4));
+    } else {
+      TacsScalar db = 0.5;
+      TacsScalar db3 = 3.0 * b * b * db;
+      TacsScalar db4 = 4.0 * b3 * db;
+      TacsScalar dJ =
+          a * db3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (-3.36 * db / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (-3.36 * b / a * (-db4 / a4 / 12.0));
+    }
     dfdx[index] +=
         scale *
         (E *
@@ -339,13 +348,22 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
                      2.0 * ddelta_y * delta_y * A + delta_y * delta_y * dA;
     TacsScalar dIy = width * width * width / 12.0 + delta_z * delta_z * dA;
     TacsScalar dIyz = -ddelta_y * delta_z * A + -delta_y * delta_z * dA;
-    TacsScalar db = 0.5;
-    TacsScalar db3 = 3.0 * b * b * db;
-    TacsScalar db4 = 4.0 * b3 * db;
-    TacsScalar dJ =
-        a * db3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
-        a * b3 * (-3.36 * db / a * (1.0 - b4 / a4 / 12.0)) +
-        a * b3 * (-3.36 * b / a * (-db4 / a4 / 12.0));
+    if (thickness >= width) {
+      TacsScalar db = 0.5;
+      TacsScalar db3 = 3.0 * b * b * db;
+      TacsScalar db4 = 4.0 * b3 * db;
+      TacsScalar dJ =
+          a * db3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (-3.36 * db / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (-3.36 * b / a * (-db4 / a4 / 12.0));
+    } else {
+      TacsScalar da = 0.5;
+      TacsScalar da4 = 4.0 * a * a * a * da;
+      TacsScalar dJ =
+          b * da3 * (16.0 / 3.0 - 3.36 * a / b * (1.0 - a4 / b4 / 12.0)) +
+          b * a3 * (-3.36 * da / b * (1.0 - a4 / b4 / 12.0)) +
+          b * a3 * (-3.36 * a / b * (-da4 / b4 / 12.0));
+    }
 
     dfdx[index] +=
         scale *
