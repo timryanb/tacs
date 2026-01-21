@@ -312,10 +312,11 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
     TacsScalar dIy = width * width * thickness / 4.0 +
                      2.0 * ddelta_z * delta_z * A + delta_z * delta_z * dA;
     TacsScalar dIyz = -delta_y * ddelta_z * A + -delta_y * delta_z * dA;
+    TacsScalar dJ = 0.0;
     if (thickness >= width) { 
       TacsScalar da = 0.5;
       TacsScalar da4 = 4.0 * a * a * a * da;
-      TacsScalar dJ =
+      dJ =
           da * b3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (3.36 * b / a * da / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (3.36 * b / a * (-b4 / a4 / 12.0 * da4 / a4));
@@ -323,7 +324,7 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
       TacsScalar db = 0.5;
       TacsScalar db3 = 3.0 * b * b * db;
       TacsScalar db4 = 4.0 * b3 * db;
-      TacsScalar dJ =
+      dJ =
           a * db3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (-3.36 * db / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (-3.36 * b / a * (-db4 / a4 / 12.0));
@@ -348,21 +349,22 @@ void TACSIsoRectangleBeamConstitutive::addStressDVSens(
                      2.0 * ddelta_y * delta_y * A + delta_y * delta_y * dA;
     TacsScalar dIy = width * width * width / 12.0 + delta_z * delta_z * dA;
     TacsScalar dIyz = -ddelta_y * delta_z * A + -delta_y * delta_z * dA;
+    TacsScalar dJ = 0.0;
     if (thickness >= width) {
       TacsScalar db = 0.5;
       TacsScalar db3 = 3.0 * b * b * db;
       TacsScalar db4 = 4.0 * b3 * db;
-      TacsScalar dJ =
+      dJ =
           a * db3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (-3.36 * db / a * (1.0 - b4 / a4 / 12.0)) +
           a * b3 * (-3.36 * b / a * (-db4 / a4 / 12.0));
     } else {
       TacsScalar da = 0.5;
       TacsScalar da4 = 4.0 * a * a * a * da;
-      TacsScalar dJ =
-          b * da3 * (16.0 / 3.0 - 3.36 * a / b * (1.0 - a4 / b4 / 12.0)) +
-          b * a3 * (-3.36 * da / b * (1.0 - a4 / b4 / 12.0)) +
-          b * a3 * (-3.36 * a / b * (-da4 / b4 / 12.0));
+      dJ =
+          da * b3 * (16.0 / 3.0 - 3.36 * b / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (3.36 * b / a * da / a * (1.0 - b4 / a4 / 12.0)) +
+          a * b3 * (3.36 * b / a * (-b4 / a4 / 12.0 * da4 / a4));
     }
 
     dfdx[index] +=
