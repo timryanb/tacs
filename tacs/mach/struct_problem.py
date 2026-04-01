@@ -333,9 +333,11 @@ class StructProblem(BaseStructProblem):
         """
         self._matVecSolve[:] = value
 
-    def _convertFromMassStructDVDict(self, dvDict):
+    def _convertDesignDictToVec(self, dvDict):
         """
-        Convert the design variable dictionary from seperate mass and struct design variables to a single struct_mass design variable vector.
+        Convert the design variable dictionary from 
+        seperate mass and struct design variables 
+        to a single struct_mass design variable vector.
         """
         xnew = self.staticProblem.getDesignVars()
         if self.comm.rank == 0:
@@ -346,9 +348,19 @@ class StructProblem(BaseStructProblem):
                 xnew[self.structDVList] = dvDict[self.varName]
         return xnew
 
-    def _convertToMassStructDVDict(self, dvArray):
+    def convertDesignVecToDict(self, dvVec):
         """
-        Convert the design variable dictionary from seperate mass and struct design variables to a single struct_mass design variable vector.
+        Convert a design vector to a dictionary format.
+
+        Parameters
+        ----------
+        dvVec : tacs.TACS.Vec or numpy.ndarray
+            Design vector to convert.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the design vector with variable name as key.
         """
         dvDict = {}
         if self.comm.rank == 0:
@@ -425,7 +437,7 @@ class StructProblem(BaseStructProblem):
             Dictionary of variables which may or may not contain the
             design variable names this object needs
         """
-        x = self._convertFromMassStructDVDict(x)
+        x = self._convertDesignDictToVec(x)
         self.staticProblem.setDesignVars(x)
 
         for constr in self.constraints:
@@ -470,10 +482,10 @@ class StructProblem(BaseStructProblem):
         value = self.getOrigDesignVars()
         lb, ub = self.getDesignVarRange()
         scale = self.getDesignVarScales()
-        valueDict = self._convertToMassStructDVDict(value)
-        lbDict = self._convertToMassStructDVDict(lb)
-        ubDict = self._convertToMassStructDVDict(ub)
-        scaleDict = self._convertToMassStructDVDict(scale)
+        valueDict = self.convertDesignVecToDict(value)
+        lbDict = self.convertDesignVecToDict(lb)
+        ubDict = self.convertDesignVecToDict(ub)
+        scaleDict = self.convertDesignVecToDict(scale)
         
         if includeMassDVs:
             for dvName in self.massDVDict:
@@ -728,7 +740,7 @@ class StructProblem(BaseStructProblem):
             funcKey = f"{self.name}_{funcName}"
             if oldVarName in funcsSens[funcKey]:
                 sens = funcsSens[funcKey].pop(oldVarName)
-                newSens = self._convertToMassStructDVDict(sens)
+                newSens = self.convertDesignVecToDict(sens)
                 funcsSens[funcKey].update(newSens)
     
     @updateDVGeo
@@ -807,7 +819,7 @@ class StructProblem(BaseStructProblem):
         for conKey in sens:
             if oldVarName in sens[conKey]:
                 oldSens = sens[conKey].pop(oldVarName)
-                newSens = self._convertToMassStructDVDict(oldSens)
+                newSens = self.convertDesignVecToDict(oldSens)
                 sens[conKey].update(newSens)
 
         fconSens.update(sens)
@@ -1243,7 +1255,7 @@ class StructProblem(BaseStructProblem):
             )
 
         # Convert result back into a dictionary
-        prodDict = self._convertToMassStructDVDict(prodDV.getArray())
+        prodDict = self.convertDesignVecToDict(prodDV.getArray())
 
         if self.DVGeo is not None:
             prodXpt = self.FEAAssembler.createNodeVec(asBVec=True)
@@ -1454,7 +1466,7 @@ class StructProblem(BaseStructProblem):
             [self._matVecSolve], [dvProd], scale=1.0
         )
         # Convert result back into a dictionary
-        prodDict = self._convertToMassStructDVDict(dvProd.getArray())
+        prodDict = self.convertDesignVecToDict(dvProd.getArray())
 
         if self.DVGeo is not None:
             xptProd = self.FEAAssembler.createNodeVec(asBVec=True)
@@ -1468,28 +1480,6 @@ class StructProblem(BaseStructProblem):
             prodDict.update(xdot)
 
         return prodDict
-
-    def convertDesignVecToDict(self, dvVec):
-        """
-        Convert a design vector to a dictionary format.
-
-        Parameters
-        ----------
-        dvVec : tacs.TACS.Vec or numpy.ndarray
-            Design vector to convert.
-
-        Returns
-        -------
-        dict
-            Dictionary containing the design vector with variable name as key.
-        """
-        if isinstance(dvVec, tacs.TACS.Vec):
-            dvVec = dvVec.getArray()
-
-        dvVals = self.comm.bcast(dvVec, root=0)
-        dvDict = {self.staticProblem.getVarName(): dvVals}
-
-        return dvDict
 
     def writeSolution(self, outputDir=None, baseName=None, number=None):
         """
