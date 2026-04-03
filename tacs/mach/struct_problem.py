@@ -365,8 +365,8 @@ class StructProblem(BaseStructProblem):
         dvDict = {}
         if self.comm.rank == 0:
             for dvName in self.massDVDict:
-                dvDict[dvName] = dvArray[..., self.massDVDict[dvName]["num"]]
-            dvDict[self.varName] = dvArray[..., self.structDVList]
+                dvDict[dvName] = dvVec[..., self.massDVDict[dvName]["num"]]
+            dvDict[self.varName] = dvVec[..., self.structDVList]
         return self.comm.bcast(dvDict, root=0)
 
     def getVarName(self):
