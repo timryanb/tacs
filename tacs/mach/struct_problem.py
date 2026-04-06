@@ -546,11 +546,11 @@ class StructProblem(BaseStructProblem):
                 wrt = list(fconSens[conName].keys())
 
                 # we may want to remove specific dvs from the wrt list
-                if exclude_wrt is not None:
-                    if isinstance(exclude_wrt, str):
-                        exclude_wrt = [exclude_wrt]
+                if excludeWRT is not None:
+                    if isinstance(excludeWRT, str):
+                        excludeWRT = [excludeWRT]
 
-                    for name in exclude_wrt:
+                    for name in excludeWRT:
                         if name in wrt:
                             wrt.remove(name)
                             fconSens[conName].pop(name)
