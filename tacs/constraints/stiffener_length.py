@@ -295,7 +295,9 @@ class StiffenerLengthConstraint(TACSConstraint):
                 self.x.getArray(), self.Xpts.getArray()
             )
 
-    def evalConstraintsSens(self, funcsSens, evalCons=None):
+    def evalConstraintsSens(
+        self, funcsSens, evalCons=None, includeDVSens=True, includeXptSens=True
+    ):
         """This is the main routine for returning useful (sensitivity)
         information from constraint. The derivatives of the constraints
         corresponding to the strings in evalCons are evaluated and
@@ -314,6 +316,10 @@ class StiffenerLengthConstraint(TACSConstraint):
             Dictionary into which the derivatives are saved.
         evalCons : iterable object containing strings
             The constraints the user wants returned
+        includeDVSens : bool, optional
+            Flag to include design variable sensitivities in output. Default is True.
+        includeXptSens : bool, optional
+            Flag to include node location sensitivities in output. Default is True.
 
         Examples
         --------
@@ -334,8 +340,11 @@ class StiffenerLengthConstraint(TACSConstraint):
             xSens, XptSens = self.constraintList[conName].evalConSens(
                 self.x.getArray(), self.Xpts.getArray()
             )
-            # Get sparse Jacobian for dv sensitivity
-            funcsSens[key] = {self.varName: xSens, self.coordName: XptSens}
+            funcsSens[key] = {}
+            if includeDVSens:
+                funcsSens[key][self.varName] = xSens
+            if includeXptSens:
+                funcsSens[key][self.coordName] = XptSens
 
 
 class SparseLengthConstraint(object):
@@ -500,7 +509,18 @@ class SparseLengthConstraint(object):
         coordJacVals = []
         coordJacRows = []
         coordJacCols = []
-        Lexact = self._computeExactLength(Xpts)
+        # Need end node positions to form dX for the sensitivity
+        stiffenerEndLocations = np.zeros([self.nCon, 2, 3], dtype=self.dtype)
+        for con_i in range(self.nCon):
+            for end_j in range(2):
+                if self.allEndNodeOwnerProc[con_i, end_j] == self.comm.rank:
+                    localNodeID = self.allEndNodeLocalIDs[con_i, end_j]
+                    stiffenerEndLocations[con_i, end_j, :] = Xpts[
+                        3 * localNodeID : 3 * localNodeID + 3
+                    ]
+        stiffenerEndLocations = self.comm.allreduce(stiffenerEndLocations)
+        dX = stiffenerEndLocations[:, 1, :] - stiffenerEndLocations[:, 0, :]
+        Lexact = np.sqrt(np.sum(dX * dX, axis=1))
 
         for con_i in range(self.nCon):
             # Sensitivity w.r.t. design variables (derivative = 1.0)
@@ -510,13 +530,13 @@ class SparseLengthConstraint(object):
                 dvJacCols.append(self.lengthLocalDVNums[con_i])
 
             # Sensitivity w.r.t. node coordinates
+            # d(Ldiff)/d(X_end1) = -dX/L,  d(Ldiff)/d(X_end0) = +dX/L
             for end_j in range(2):
                 if self.allEndNodeOwnerProc[con_i, end_j] == self.comm.rank:
                     localNodeID = self.allEndNodeLocalIDs[con_i, end_j]
-                    # Derivative of length w.r.t. node coordinates
-                    val = -Xpts[3 * localNodeID : 3 * localNodeID + 3] / Lexact[con_i]
+                    val = -dX[con_i] / Lexact[con_i]
                     if end_j == 0:
-                        val *= -1
+                        val = -val
                     coordJacVals.extend(val)
                     coordJacRows.extend([con_i, con_i, con_i])
                     coordJacCols.extend(
