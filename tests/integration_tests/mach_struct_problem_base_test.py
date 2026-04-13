@@ -93,7 +93,9 @@ class MACHStructProblemTestCase:
             """
             # Create temporary dv vec for doing fd/cs
             for dv_name in dv_pert_vec.keys():
-                dv_pert_vec[dv_name] = np.ones_like(dv_pert_vec[dv_name], dtype=self.dtype)
+                dv_pert_vec[dv_name] = np.ones_like(
+                    dv_pert_vec[dv_name], dtype=self.dtype
+                )
 
             # Define perturbation array that moves all geometric design variables
             for dv_name in geo_dvs_pert_vec.keys():
