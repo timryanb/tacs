@@ -56,6 +56,62 @@ During coupled adjoint computation the following state vectors are managed by ``
    * - ``matVecRHS`` / ``matVecSolve``
      - Scratch vectors used for matrix–vector products in the coupled direct/adjoint system.
 
+Mass Design Variables
+---------------------
+
+In many multidisciplinary problems a structural model contains both element-level
+sizing variables (e.g. shell thicknesses) *and* scalar masses that represent
+non-structural components such as fuel, engines, or payload.  These concentrated
+masses are modelled in TACS as CONM2 elements and their mass values can be
+exposed as design variables via :meth:`~tacs.pytacs.pyTACS.assignMassDV`.
+
+``StructProblem`` automatically detects these *mass DVs* at construction time and
+separates them from the structural sizing DVs.  The two groups are registered with
+the optimizer under distinct keys:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Group
+     - Optimizer key
+   * - Structural DVs (thicknesses, etc.)
+     - ``"struct"`` — a single vector variable group containing all
+       structural (non-mass) DVs.
+   * - Each mass DV
+     - ``"{problemName}_{dvName}"`` — one scalar variable group per mass DV,
+       e.g. ``"cruise_fuelMass"``.
+
+This split is useful when multiple ``StructProblem`` instances share the same
+structural sizing variables but carry different concentrated masses.  For example,
+a full-fuel and a zero-fuel load case can share a common thickness vector while
+each independently controlling its own fuel mass DV.
+
+Registering a mass DV
+~~~~~~~~~~~~~~~~~~~~~
+
+Mass DVs are created through :meth:`~tacs.pytacs.pyTACS.assignMassDV` on the
+:class:`~tacs.pytacs.pyTACS` assembler *before* the ``StructProblem`` is
+constructed:
+
+.. code-block:: python
+
+   # Add a global DV and link it to a CONM2 element (Nastran ID 101)
+   FEAAssembler.addGlobalDV("fuelMass", value=5000.0, lower=0.0, upper=10000.0, scale=1e-3)
+   FEAAssembler.assignMassDV("fuelMass", eIDs=101)
+
+   # Initialize pytacs assembler
+   FEAAssembler.initialize()
+
+   staticProblem = FEAAssembler.createStaticProblem("cruise")
+
+   # StructProblem picks up the mass DV automatically
+   sp = StructProblem(staticProblem, FEAAssembler)
+
+The ``StructProblem`` constructor will detect ``"fuelMass"`` as a mass DV and
+expose it to the optimizer as ``"cruise_fuelMass"`` (prefixed with the
+problem name).
+
 StructProblem Class
 -------------------
 
