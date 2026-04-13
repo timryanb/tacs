@@ -570,9 +570,9 @@ class StructProblem(BaseStructProblem):
 
         # Convert the flat TACS arrays into the split dict format so each group
         # can be passed to addVarGroup with the correct bounds and scales.
-        value = self.getOrigDesignVars()
-        lb, ub = self.getDesignVarRange()
-        scale = self.getDesignVarScales()
+        valueDict = self.getOrigDesignVars()
+        lbDict, ubDict = self.getDesignVarRange()
+        scaleDict = self.getDesignVarScales()
 
         # Register each mass DV as its own scalar variable group so it can be
         # identified and shared with other disciplines in a coupled optimisation.
