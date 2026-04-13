@@ -73,16 +73,37 @@ class StructProblem(BaseStructProblem):
         self.loadFile = loadFile
         self.constraints = []
         self.constraintsAddToPyOpt = []
+
+        # Keep a copy of the original varName (used when forwarding calls to the
+        # underlying StaticProblem).
         self.varName = self.staticProblem.varName
+
+        # --- Split the flat TACS DV vector into mass DVs and structural DVs ---
+        #
+        # globalDVs is a dict of {dvName: {"num": int, "isMassDV": bool, ...}}
+        # where "num" is the index of that DV in the flat TACS design vector.
+        #
+        # massDVDict collects every global DV that was registered via
+        # pyTACS.assignMassDV() (i.e. controls a CONM2 point-mass element).
+        # Keys are namespaced as "{problemName}_{dvName}" so that multiple
+        # StructProblems can coexist in the same optimisation without key collisions.
         globalDVs = self.FEAAssembler.getGlobalDVs()
         self.massDVDict = {}
         for dvName in globalDVs:
             if globalDVs[dvName]["isMassDV"]:
                 self.massDVDict[f"{self.name}_{dvName}"] = globalDVs[dvName]
+
+        # structDVList holds the flat-vector indices of every DV that is NOT a
+        # mass DV.  These are the element-level sizing variables (thicknesses, etc.)
+        # that will be grouped together under a single optimizer variable group.
         structDVList = np.arange(FEAAssembler.getTotalNumDesignVars())
         for dv_name in self.massDVDict:
             structDVList = np.delete(structDVList, self.massDVDict[dv_name]["num"])
         self.structDVList = structDVList.tolist()
+
+        # Override the StaticProblem's varName so that structural DVs are keyed
+        # as "mass_struct" in the dv dict, distinguishing them from the
+        # split mass and struct dv keys.
         self.staticProblem.setVarName("mass_struct")
 
         if self.staticProblem.assembler != self.FEAAssembler.assembler:
@@ -335,37 +356,76 @@ class StructProblem(BaseStructProblem):
 
     def _convertDesignDictToVec(self, dvDict):
         """
-        Convert the design variable dictionary from 
-        seperate mass and struct design variables 
-        to a single struct_mass design variable vector.
+        Assemble the flat TACS design vector from the split optimizer dictionary.
+
+        The optimizer sees two groups of variables:
+
+        * One scalar entry per mass DV, keyed ``"{problemName}_{dvName}"``
+          (ex. "cruise_fuelMass").
+        * A single array of structural DVs, keyed ``self.varName``
+          (ex. ``"struct"``).
+
+        This method writes each group back into the correct positions of the flat
+        TACS design vector so it can be forwarded to
+        :meth:`~tacs.problems.StaticProblem.setDesignVars`.
+
+        Parameters
+        ----------
+        dvDict : dict
+            Optimizer design variable dictionary.  May contain any subset of the
+            expected keys; missing keys leave the corresponding entries in the
+            returned vector unchanged.
+
+        Returns
+        -------
+        numpy.ndarray
+            Full flat TACS design variable vector with updated entries.
         """
+        # Start from the current TACS DV values so that any keys absent from
+        # dvDict are left at their existing values rather than zeroed out.
         xnew = self.staticProblem.getDesignVars()
         if self.comm.rank == 0:
+            # Write each mass DV scalar into its reserved index in the flat vector.
             for dvName in self.massDVDict:
                 if dvName in dvDict:
                     xnew[self.massDVDict[dvName]["num"]] = dvDict[dvName]
+            # Write the structural DV block into the remaining indices.
             if self.varName in dvDict:
                 xnew[self.structDVList] = dvDict[self.varName]
         return xnew
 
     def convertDesignVecToDict(self, dvVec):
         """
-        Convert a design vector to a dictionary format.
+        Split the flat TACS design vector into the optimizer dictionary format.
+
+        This is the inverse of :meth:`_convertDesignDictToVec`.  The flat vector
+        is split into:
+
+        * One scalar entry per mass DV, keyed ``"{problemName}_{dvName}"``
+          (ex. "cruise_fuelMass").
+        * A single array of structural DVs, keyed ``self.varName``
+          (ex. ``"struct"``).
 
         Parameters
         ----------
         dvVec : tacs.TACS.Vec or numpy.ndarray
-            Design vector to convert.
+            Full flat TACS design variable vector to split.
 
         Returns
         -------
         dict
-            Dictionary containing the design vector with variable name as key.
+            Design variable dictionary suitable for passing to pyoptsparse.
+            Broadcast to all MPI ranks.
         """
+        if isinstance(dvVec, tacs.TACS.Vec):
+            dvVec = dvVec.getArray()
+
         dvDict = {}
         if self.comm.rank == 0:
+            # Extract each mass DV scalar from its reserved index.
             for dvName in self.massDVDict:
                 dvDict[dvName] = dvVec[..., self.massDVDict[dvName]["num"]]
+            # Extract the structural DV block from the remaining indices.
             dvDict[self.varName] = dvVec[..., self.structDVList]
         return self.comm.bcast(dvDict, root=0)
 
@@ -380,6 +440,18 @@ class StructProblem(BaseStructProblem):
             Name of the design variables used in setDesignVars() dict.
         """
         return self.varName
+
+    def getMassDVNames(self):
+        """
+        Get name for the mass design variables in pyOpt. Only needed
+        if more than 1 pytacs object is used in an optimization
+
+        Returns
+        ----------
+        massDVNames : list[str]
+            Name of the design variables used in setDesignVars() dict.
+        """
+        return list(self.massDVDict.keys())
 
     def setDVGeo(self, DVGeo, pointSetKwargs=None):
         """
@@ -467,18 +539,37 @@ class StructProblem(BaseStructProblem):
         self.constraints.append(constr)
         self.constraintsAddToPyOpt.append(addToPyOpt)
 
-    def addVariablesPyOpt(self, optProb, includeMassDVs=True):
+    def addVariablesPyOpt(self, optProb, excludeDVs=None):
         """
-        Add the current set of variables to the optProb object.
+        Register structural and mass design variables with a pyoptsparse problem.
+
+        The flat TACS design vector is split into two groups (see class docstring):
+
+        * **Mass DVs** — each registered as a scalar variable group named
+          ``"{problemName}_{dvName}"``.
+        * **Structural DVs** — registered as a single vector variable group named
+          ``self.varName`` (``"struct"``).  Skipped if the group already
+          exists in ``optProb`` (prevents duplicate registration when multiple
+          StructProblems share the same assembler).
+
+        Any DV name present in ``excludeDVs`` is silently skipped.  This is useful
+        when a mass DV is owned by another discipline and already registered in
+        ``optProb``, or when a particular DV should be held fixed.
 
         Parameters
         ----------
-        optProb : pyOpt_optimization class
-            Optimization problem definition to which variables are added
-        includeMassDVs : bool
-            Flag to include mass design variables in the optimization.
-            Defaults to True.
+        optProb : pyoptsparse.Optimization
+            Optimization problem to which variables are added.
+        excludeDVs : list of str or None, optional
+            DV names to skip.  Accepts both mass DV keys
+            (``"{problemName}_{dvName}"``) and the structural DV key
+            (``self.varName``).  Defaults to ``None`` (register everything).
         """
+        if excludeDVs is None:
+            excludeDVs = []
+
+        # Convert the flat TACS arrays into the split dict format so each group
+        # can be passed to addVarGroup with the correct bounds and scales.
         value = self.getOrigDesignVars()
         lb, ub = self.getDesignVarRange()
         scale = self.getDesignVarScales()
@@ -486,34 +577,70 @@ class StructProblem(BaseStructProblem):
         lbDict = self.convertDesignVecToDict(lb)
         ubDict = self.convertDesignVecToDict(ub)
         scaleDict = self.convertDesignVecToDict(scale)
-        
-        if includeMassDVs:
-            for dvName in self.massDVDict:
-                optProb.addVarGroup(dvName, 1, "c", value=valueDict[dvName], lower=lbDict[dvName], upper=ubDict[dvName], scale=scaleDict[dvName])
 
+        # Register each mass DV as its own scalar variable group so it can be
+        # identified and shared with other disciplines in a coupled optimisation.
+        for dvName in self.massDVDict:
+            if dvName not in excludeDVs:
+                optProb.addVarGroup(
+                    dvName,
+                    1,
+                    "c",
+                    value=valueDict[dvName],
+                    lower=lbDict[dvName],
+                    upper=ubDict[dvName],
+                    scale=scaleDict[dvName],
+                )
+
+        # Register the structural DV block only if it is non-empty, not excluded,
+        # and has not already been added (e.g. by a second StructProblem using the
+        # same assembler).
         ndv = len(valueDict[self.varName])
-        if ndv > 0 and self.varName not in optProb.variables:
-            optProb.addVarGroup(self.varName, ndv, "c", value=valueDict[self.varName], lower=lbDict[self.varName], upper=ubDict[self.varName], scale=scaleDict[self.varName])
+        if (
+            ndv > 0
+            and self.varName not in excludeDVs
+            and self.varName not in optProb.variables
+        ):
+            optProb.addVarGroup(
+                self.varName,
+                ndv,
+                "c",
+                value=valueDict[self.varName],
+                lower=lbDict[self.varName],
+                upper=ubDict[self.varName],
+                scale=scaleDict[self.varName],
+            )
 
-    def addConstraintsPyOpt(self, optProb, nonLinear=True, linear=True, includeMassDVs=True, excludeWRT=None):
+    def addConstraintsPyOpt(
+        self, optProb, nonLinear=True, linear=True, excludeWRT=None
+    ):
         """
-        Add any linear constraints that were generated during setup to
-        the specified pyOpt problem.
+        Register structural constraints with a pyoptsparse problem.
+
+        Evaluates all attached constraints and their sensitivities once to
+        determine the sparsity pattern, then calls ``optProb.addConGroup`` for
+        each constraint that was added with ``addToPyOpt=True``.
+
+        By default, constraint Jacobian columns include mass DV keys.  Set
+        ``includeMassDVs=False`` to strip them from the ``wrt`` list — useful
+        when a mass DV is owned by another discipline and the structural Jacobian
+        w.r.t. that DV is zero or handled elsewhere.
 
         Parameters
         ----------
-        optProb : :class:`Optimization <pyoptsparse.pyOpt_optimization.Optimization>` instance
-            Optimization problem object to add constraints to
-        nonLinear : bool
-            Flag to include non-linear constraints.
-        linear : bool
-            Flag to include linear constraints.
-        includeMassDVs : bool
-            Flag to include mass design variables in the optimization.
-            Defaults to True.
-        excludeWRT : list or str
-            DV names to exclude from the w.r.t. list when adding the constraint
-            to the opt problem.
+        optProb : pyoptsparse.Optimization
+            Optimization problem object to add constraints to.
+        nonLinear : bool, optional
+            Include non-linear constraints. Defaults to ``True``.
+        linear : bool, optional
+            Include linear constraints. Defaults to ``True``.
+        includeMassDVs : bool, optional
+            Include mass DV columns in the constraint Jacobian ``wrt`` list.
+            Defaults to ``True``.
+        excludeWRT : list of str or str, optional
+            Additional DV names to remove from the ``wrt`` list for every
+            constraint.  Useful for DVs whose structural sensitivity is
+            analytically zero and should not contribute a Jacobian block.
         """
         fcon = {}
         fconSens = {}
@@ -536,11 +663,6 @@ class StructProblem(BaseStructProblem):
             if conAddToPyOpt[conName] and nCon > 0:
                 # Save the nonlinear constraint name
                 lb, ub = conBounds[conName]
-
-                if includeMassDVs is False:
-                    for key in self.massDVDict:
-                        if key in fconSens[conName]:
-                            fconSens[conName].pop(key)
 
                 # Just evaluate the constraint to get the jacobian structure
                 wrt = list(fconSens[conName].keys())
@@ -586,9 +708,6 @@ class StructProblem(BaseStructProblem):
 
         Parameters
         ----------
-        Fext : numpy.ndarray or tacs.TACS.Vec, optional
-            Distributed array containing additional loads (ex. aerodynamic forces for aerostructural coupling)
-            to applied to RHS of the static problem, by default None
         damp : float
             Value to use to damp the solution update.
         useAitkenAcceleration : bool
@@ -642,7 +761,7 @@ class StructProblem(BaseStructProblem):
         # Set load scale back
         self.staticProblem.setLoadScale(loadScale0)
 
-        return successFlag
+        return damp
 
     @updateDVGeo
     def evalFunctions(self, funcs, evalFuncs=None, ignoreMissing=False):
@@ -690,7 +809,7 @@ class StructProblem(BaseStructProblem):
                     constr.evalConstraints(fcon, evalCons, ignoreMissing)
 
     @updateDVGeo
-    def evalFunctionsSens(self, funcsSens, evalFuncs=None, includeXptSens=False):
+    def evalFunctionsSens(self, funcsSens, evalFuncs=None):
         """
         Evaluate the sensitivity of the desired functions
 
@@ -700,13 +819,13 @@ class StructProblem(BaseStructProblem):
             Dictionary into which the function sensitivities are saved
         evalFuncs : iterable object containing strings
             The functions that the user wants evaluated
-        includeXptSens : bool
-            Flag to include sensitivities with respect to the node locations.
         """
         if evalFuncs is None:
             evalFuncs = self.evalFuncs
 
-        self.staticProblem.evalFunctionsSens(funcsSens, evalFuncs)
+        self.staticProblem.evalFunctionsSens(
+            funcsSens, evalFuncs, includeXptSens=self._includeXptSens
+        )
 
         for funcName in evalFuncs:
             funcKey = f"{self.name}_{funcName}"
@@ -728,13 +847,7 @@ class StructProblem(BaseStructProblem):
                     )
                     funcsSens[funcKey].update(dIdx)
 
-        # Pop out the node sensitivities if requested
-        elif not includeXptSens:
-            for funcName in evalFuncs:
-                funcKey = f"{self.name}_{funcName}"
-                if coordName in funcsSens[funcKey]:
-                    funcsSens[funcKey].pop(coordName).reshape(-1, 3)
-
+        # Convert old variable names to seperate mass/struct dv keys
         oldVarName = self.staticProblem.varName
         for funcName in evalFuncs:
             funcKey = f"{self.name}_{funcName}"
@@ -742,7 +855,7 @@ class StructProblem(BaseStructProblem):
                 sens = funcsSens[funcKey].pop(oldVarName)
                 newSens = self.convertDesignVecToDict(sens)
                 funcsSens[funcKey].update(newSens)
-    
+
     @updateDVGeo
     def evalConstraintsSens(
         self,
@@ -750,7 +863,6 @@ class StructProblem(BaseStructProblem):
         evalCons=None,
         nonLinear=True,
         linear=False,
-        includeXptSens=False,
     ):
         """
         This is the main routine for returning useful (sensitivity)
@@ -769,14 +881,14 @@ class StructProblem(BaseStructProblem):
             Flag to include non-linear constraints.
         linear : bool
             Flag to include linear constraints.
-        includeXptSens : bool
-            Flag to include sensitivities with respect to the node locations.
         """
         sens = {}
         for constr in self.constraints:
             if evalCons is None or constr.name in evalCons:
                 if (linear and constr.isLinear) or (nonLinear and not constr.isLinear):
-                    constr.evalConstraintsSens(sens, evalCons)
+                    constr.evalConstraintsSens(
+                        sens, evalCons, includeXptSens=self._includeXptSens
+                    )
 
         for conKey in sens:
             dvKey = self.staticProblem.getVarName()
@@ -784,8 +896,8 @@ class StructProblem(BaseStructProblem):
                 sens[conKey][dvKey] = self.comm.bcast(sens[conKey][dvKey], root=0)
 
         # Compute the DVGeo sensitivities if requested
-        coordName = self.staticProblem.getCoordName()
         if self.DVGeo is not None:
+            coordName = self.staticProblem.getCoordName()
             self.DVGeo.computeTotalJacobian(self.ptSetName, config=self.name)
             for conKey in sens:
                 if coordName in sens[conKey]:
@@ -809,12 +921,6 @@ class StructProblem(BaseStructProblem):
                     # Update sensitivity dict with new DVGeo sensitivities
                     sens[conKey].update(dIdx_dict)
 
-        # Pop out the node sensitivities if requested
-        elif not includeXptSens:
-            for conKey in sens:
-                if coordName in sens[conKey]:
-                    sens[conKey].pop(coordName).reshape(-1, 3)
-
         oldVarName = self.staticProblem.varName
         for conKey in sens:
             if oldVarName in sens[conKey]:
@@ -834,6 +940,18 @@ class StructProblem(BaseStructProblem):
             Number of degrees of freedom of each node in the domain.
         """
         return self.staticProblem.getVarsPerNode()
+
+    @property
+    def _includeXptSens(self):
+        """
+        Check if nodal sensitivities should be included (i.e. if DVGeo is set).
+
+        Returns
+        -------
+        bool
+            True if nodal sensitivities should be included, False otherwise.
+        """
+        return self.DVGeo is not None
 
     def getNumNodes(self):
         """

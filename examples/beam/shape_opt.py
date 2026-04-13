@@ -26,7 +26,7 @@ import numpy as np
 import os
 
 from pygeo import DVGeometry
-from pyoptsparse import Optimization, SNOPT
+from pyoptsparse import Optimization, OPT
 
 from tacs.mach import StructProblem
 from tacs import pyTACS
@@ -38,16 +38,16 @@ ffd_file = os.path.join(os.path.dirname(__file__), "ffd_8_linear.fmt")
 # Beam thickness
 t = 0.01  # m
 # Length of beam
-L = 1.0
+L = 1.0  # m
 
 # Material properties
 rho = 2780.0  # kg /m^3
-E = 70.0e9
+E = 70.0e9  # Pa
 nu = 0.0
 ys = 420.0e6
 
 # Shear force applied at tip
-V = 2.5e4
+V = 2.5e4  # N
 
 
 # Callback function used to setup TACS element objects and DVs
@@ -106,7 +106,6 @@ def structObj(x):
     DVGeo.setDesignVars(x)
     structProb.solve()
     structProb.evalFunctions(funcs)
-    # structProb.evalConstraints(funcs)
     structProb.writeSolution()
     if structProb.comm.rank == 0:
         print(x)
@@ -119,7 +118,6 @@ def structSens(x, funcs):
     """Evaluate the objective and constraint sensitivities"""
     funcsSens = {}
     structProb.evalFunctionsSens(funcsSens)
-    # structProb.evalConstraintsSens(funcsSens)
     for func in funcsSens:
         funcsSens[func].pop("struct")
     return funcsSens, False
@@ -129,7 +127,6 @@ def structSens(x, funcs):
 optProb = Optimization("Mass min", structObj)
 optProb.addObj("tip_shear_mass")
 structProb.addVariablesPyOpt(optProb)
-# structProb.addConstraintsPyOpt(optProb)
 DVGeo.addVariablesPyOpt(optProb)
 optProb.addCon("tip_shear_ks_vmfailure", upper=1.0)
 
@@ -148,7 +145,14 @@ optOptions = {
     "Penalty parameter": 1e3,
 }
 
-opt = SNOPT(options=optOptions)
+opt = OPT(
+    "SLSQP",
+    options={
+        "MAXIT": 100,
+        "IPRINT": 1,
+        "IFILE": os.path.join(os.path.dirname(__file__), "SLSQP.out"),
+    },
+)
 
 # Finally run the actual optimization
 sol = opt(optProb, sens=structSens, storeSens=False)
