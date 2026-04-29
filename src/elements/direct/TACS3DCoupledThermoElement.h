@@ -1384,7 +1384,7 @@ void TACS3DCoupledThermoElement<NUM_NODES>::addResidual(
         b += 3;
       }
     }  // end if conduction
-  }    // end for int n = 0; n < numGauss
+  }  // end for int n = 0; n < numGauss
 }
 /*
   Get the Jacobian of the governing equations- the exact Jacobian of the
@@ -1465,10 +1465,10 @@ void TACS3DCoupledThermoElement<NUM_NODES>::addJacobian(
                   (bi[0] * bs[0] + bi[1] * bs[1] + bi[2] * bs[2] +
                    bi[3] * bs[3] + bi[4] * bs[4] + bi[5] * bs[5]);
             }  // end for int ii = 0; ii < 2
-          }    // end for int i = 0; i < NUM_NODES
-        }      // end for int jj = 0; jj < 3
-      }        // end for int j = 0; j < NUM_NODES
-    }          // end if alpha != 0.0
+          }  // end for int i = 0; i < NUM_NODES
+        }  // end for int jj = 0; jj < 3
+      }  // end for int j = 0; j < NUM_NODES
+    }  // end if alpha != 0.0
     // ----------------------------------------------------------------
     if (gamma != 0.0) {
       // Get value of the mass/area at this point
@@ -1535,11 +1535,11 @@ void TACS3DCoupledThermoElement<NUM_NODES>::addJacobian(
               mat[NUM_VARIABLES * (4 * j + jj) + (4 * i + ii)] +=
                   alpha * h * (bi[0] * bs[0] + bi[1] * bs[1] + bi[2] * bs[2]);
             }  // end for int ii = 3; ii < 4
-          }    // end for int i = 0; i < NUM_NODES
-        }      // end for int jj = 3; jj < 4
-      }        // end for int j = 0; j < NUM_NODES
-    }          // end if conduction
-  }            // end for int n = 0; n < numGauss
+          }  // end for int i = 0; i < NUM_NODES
+        }  // end for int jj = 3; jj < 4
+      }  // end for int j = 0; j < NUM_NODES
+    }  // end if conduction
+  }  // end for int n = 0; n < numGauss
 }
 
 /*

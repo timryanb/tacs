@@ -253,7 +253,7 @@ void TacsExtendArray(int **_array, int oldlen, int newlen) {
   int *oldarray = *_array;
   int *newarray = new int[newlen];
   memcpy(newarray, oldarray, oldlen * sizeof(int));
-  delete[] * _array;
+  delete[] *_array;
   *_array = newarray;
 }
 
@@ -264,7 +264,7 @@ void TacsExtendArray(TacsScalar **_array, int oldlen, int newlen) {
   TacsScalar *oldarray = *_array;
   TacsScalar *newarray = new TacsScalar[newlen];
   memcpy(newarray, oldarray, oldlen * sizeof(TacsScalar));
-  delete[] * _array;
+  delete[] *_array;
   *_array = newarray;
 }
 
@@ -996,6 +996,12 @@ TacsScalar ksAggregationSens(const TacsScalar f[], const int numVals,
       maxVal = f[ii];
     }
   }
+  return ksAggregationSens(f, maxVal, numVals, ksWeight, dKSdf);
+}
+
+TacsScalar ksAggregationSens(const TacsScalar f[], const TacsScalar maxVal,
+                             const int numVals, const double ksWeight,
+                             TacsScalar dKSdf[]) {
   TacsScalar sum = 0.0;
   memset(dKSdf, 0, numVals * sizeof(TacsScalar));
   for (int ii = 0; ii < numVals; ii++) {

@@ -1025,7 +1025,7 @@ void TACS2DCoupledThermoElement<NUM_NODES>::addResidual(
         b += 2;
       }
     }  // end if conduction
-  }    // end for int n = 0; n < numGauss
+  }  // end for int n = 0; n < numGauss
 }
 /*
   Add the Jacobian of the governing equations - the exact Jacobian of
@@ -1098,10 +1098,10 @@ void TACS2DCoupledThermoElement<NUM_NODES>::addJacobian(
               mat[NUM_VARIABLES * (3 * j + jj) + (3 * i + ii)] +=
                   alpha * h * (bi[0] * bs[0] + bi[1] * bs[1] + bi[2] * bs[2]);
             }  // end for int ii = 0; ii < 2
-          }    // end for int i = 0; i < NUM_NODES
-        }      // end for int ii = 0; ii < 2
-      }        // end for int j = 0; j < NUM_NODES
-    }          // end if alpha != 0.0
+          }  // end for int i = 0; i < NUM_NODES
+        }  // end for int ii = 0; ii < 2
+      }  // end for int j = 0; j < NUM_NODES
+    }  // end if alpha != 0.0
     // ----------------------------------------------------------------
     if (gamma != 0.0) {
       // Get value of the mass/area at this point
@@ -1164,11 +1164,11 @@ void TACS2DCoupledThermoElement<NUM_NODES>::addJacobian(
               mat[NUM_VARIABLES * (3 * j + jj) + (3 * i + ii)] +=
                   alpha * h * (bi[0] * bs[0] + bi[1] * bs[1]);
             }  // end for int ii = 2; ii < 3
-          }    // end for int i = 0; i < NUM_NODES
-        }      // end for int jj = 2; jj < 3
+          }  // end for int i = 0; i < NUM_NODES
+        }  // end for int jj = 2; jj < 3
       }
     }  // end if conduction
-  }    // end for int n = 0; n < numGauss
+  }  // end for int n = 0; n < numGauss
 }
 /*
   Add the product of the adjoint vector times the derivative of the

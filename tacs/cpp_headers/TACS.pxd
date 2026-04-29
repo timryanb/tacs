@@ -33,6 +33,7 @@ cdef extern from "TACSElementTypes.h":
         TACS_OUTPUT_EXTRAS
         TACS_OUTPUT_LOADS
         TACS_OUTPUT_COORDINATE_FRAME
+        TACS_OUTPUT_REACTIONS
 
     enum ElementType:
         TACS_ELEMENT_NONE
@@ -71,6 +72,8 @@ cdef extern from "TACSElementTypes.h":
         TACS_PENTA_ELEMENT
         TACS_PENTA_QUADRATIC_ELEMENT
         TACS_PENTA_CUBIC_ELEMENT
+        TACS_RBE2_ELEMENT
+        TACS_RBE3_ELEMENT
 
     enum ElementMatrixType:
         TACS_STIFFNESS_MATRIX
@@ -123,6 +126,7 @@ cdef extern from "KSM.h":
         TACSVec *createVec()
         void zeroEntries()
         void mult(TACSVec *x, TACSVec *y)
+        void multTranspose(TACSVec *x, TACSVec *y)
         void copyValues(TACSMat *mat)
         void scale(TacsScalar alpha)
         void axpy(TacsScalar alpha, TACSMat *mat)
@@ -364,7 +368,7 @@ cdef extern from "TACSAssembler.h":
         double getSimulationTime()
         void applyBCs(TACSVec*)
         void applyBCs(TACSMat*)
-        void setBCs(TACSVec*)
+        void setBCs(TACSVec*, const TacsScalar)
         void zeroVariables()
         void zeroDotVariables()
         void zeroDDotVariables()
@@ -374,22 +378,24 @@ cdef extern from "TACSAssembler.h":
         void getInitConditions(TACSBVec*, TACSBVec*, TACSBVec*)
         void setInitConditions(TACSBVec*, TACSBVec*, TACSBVec*)
         void evalEnergies(TacsScalar*, TacsScalar*)
-        void assembleRes(TACSBVec *residual, TacsScalar loadScale)
+        void assembleRes(TACSBVec *residual, TacsScalar loadScale, bool applyBCs)
+        void computeReactions(TACSBVec *tmp, TACSBVec *reactions)
         void assembleJacobian(double alpha, double beta, double gamma,
                               TACSBVec *residual, TACSMat *A,
                               MatrixOrientation matOr,
-                              TacsScalar loadScale)
+                              TacsScalar loadScale,
+                              bool applyBCs)
         void assembleMatType(ElementMatrixType matType,
                              TACSMat *A, MatrixOrientation matOr,
-                             TacsScalar loadScale)
+                             TacsScalar loadScale, bool applyBCs)
         void assembleMatCombo(ElementMatrixType*, TacsScalar*, int,
                               TACSMat*, MatrixOrientation matOr,
-                              TacsScalar loadScale)
+                              TacsScalar loadScale, bool applyBCs)
         void addJacobianVecProduct(TacsScalar scale,
                                    double alpha, double beta, double gamma,
                                    TACSBVec *x, TACSBVec *y,
                                    MatrixOrientation matOr,
-                                   TacsScalar loadScale)
+                                   TacsScalar loadScale, bool applyBCs)
         void evalFunctions(int numFuncs, TACSFunction **functions,
                            TacsScalar *funcVals)
         void addDVSens(double coef, int numFuncs, TACSFunction **funcs,
@@ -412,7 +418,7 @@ cdef extern from "TACSAssembler.h":
                                       TACSBVec *dfdx)
         void evalMatSVSensInnerProduct(ElementMatrixType matType,
                                        TACSBVec *psi, TACSBVec *phi,
-                                       TACSBVec *res)
+                                       TACSBVec *res, bool applyBCs)
 
         void testElement(int elemNum, int print_level, double dh,
                          double rtol, double atol)

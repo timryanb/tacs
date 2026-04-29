@@ -249,8 +249,8 @@ class TACSBucklingGaussianProcessModel : public TACSGaussianProcessModel {
                                    const TacsScalar alpha[],
                                    const TacsScalar theta[])
       : TACSGaussianProcessModel(n_train, N_PARAM, affine, Xtrain, alpha,
-                                 theta){};
-  ~TACSBucklingGaussianProcessModel(){};
+                                 theta) {};
+  ~TACSBucklingGaussianProcessModel() {};
 
   /**
    * @brief test the backpropagation of the kernel() method and its sens routine
