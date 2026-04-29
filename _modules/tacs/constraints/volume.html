@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tacs.constraints.volume &#8212; TACS  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css?v=87629129" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css?v=34905f61" />
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <script src="../../../_static/documentation_options.js?v=d048f138"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -431,7 +431,9 @@
 
 <div class="viewcode-block" id="VolumeConstraint.evalConstraintsSens">
 <a class="viewcode-back" href="../../../pytacs/volume.html#tacs.constraints.VolumeConstraint.evalConstraintsSens">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evalConstraintsSens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">funcsSens</span><span class="p">,</span> <span class="n">evalCons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evalConstraintsSens</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">funcsSens</span><span class="p">,</span> <span class="n">evalCons</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">includeDVSens</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">includeXptSens</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is the main routine for returning useful (sensitivity)</span>
 <span class="sd">        information from constraint. The derivatives of the constraints</span>
@@ -445,6 +447,10 @@
 <span class="sd">            Dictionary into which the derivatives are saved.</span>
 <span class="sd">        evalCons : iterable object containing strings</span>
 <span class="sd">            The constraints the user wants returned</span>
+<span class="sd">        includeDVSens : bool, optional</span>
+<span class="sd">            Flag to include design variable sensitivities in output. Default is True.</span>
+<span class="sd">        includeXptSens : bool, optional</span>
+<span class="sd">            Flag to include node location sensitivities in output. Default is True.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -458,24 +464,23 @@
         <span class="c1"># Otherwise, output them all</span>
         <span class="n">evalCons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processEvalCons</span><span class="p">(</span><span class="n">evalCons</span><span class="p">)</span>
 
-        <span class="c1"># Get number of dvs/coords on this proc</span>
-        <span class="n">nDVs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumDesignVars</span><span class="p">()</span>
-        <span class="n">ncoords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumCoordinates</span><span class="p">()</span>
-
         <span class="c1"># Loop through each requested constraint set</span>
         <span class="k">for</span> <span class="n">conName</span> <span class="ow">in</span> <span class="n">evalCons</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">conName</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="c1"># DV sensitivities are always zero for this constraint,</span>
             <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">varName</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
-                <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nDVs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Get nodal sensitivity</span>
-            <span class="n">xptSens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">]</span><span class="o">.</span><span class="n">evalConSens</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Xpts</span><span class="p">)</span>
-            <span class="n">xpt_array</span> <span class="o">=</span> <span class="n">xptSens</span><span class="o">.</span><span class="n">getArray</span><span class="p">()</span>
-            <span class="c1"># Reshape from 1d array to a 1 by N column vector</span>
-            <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="n">xpt_array</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncoords</span><span class="p">)</span></div>
+            <span class="k">if</span> <span class="n">includeDVSens</span><span class="p">:</span>
+                <span class="c1"># DV sensitivities are always zero for this constraint</span>
+                <span class="n">nDVs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumDesignVars</span><span class="p">()</span>
+                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">varName</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
+                    <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nDVs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">includeXptSens</span><span class="p">:</span>
+                <span class="c1"># Get nodal sensitivity</span>
+                <span class="n">ncoords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumCoordinates</span><span class="p">()</span>
+                <span class="n">xptSens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">]</span><span class="o">.</span><span class="n">evalConSens</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Xpts</span><span class="p">)</span>
+                <span class="n">xpt_array</span> <span class="o">=</span> <span class="n">xptSens</span><span class="o">.</span><span class="n">getArray</span><span class="p">()</span>
+                <span class="c1"># Reshape from 1d array to a 1 by N column vector</span>
+                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="n">xpt_array</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncoords</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VolumeConstraint.writeVisualization">
@@ -561,7 +566,7 @@
                 <span class="p">)</span>
 
                 <span class="c1"># Create new zone</span>
-                <span class="n">zoneInfo</span> <span class="o">=</span> <span class="n">Zone</span><span class="p">(</span><span class="n">tecInfo</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
+                <span class="n">zoneInfo</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">Zone</span><span class="p">(</span><span class="n">tecInfo</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
 
                 <span class="c1"># Setup header info</span>
                 <span class="n">zoneInfo</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">constrName</span>
@@ -599,14 +604,15 @@
                     <span class="k">if</span> <span class="s2">&quot;CQUAD&quot;</span> <span class="ow">in</span> <span class="n">elemInfo</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
                         <span class="n">quadConn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newConn</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="s2">&quot;CTRI&quot;</span> <span class="ow">in</span> <span class="n">elemInfo</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
-                        <span class="n">triConn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newConn</span><span class="p">)</span>
+                        <span class="n">newConn</span> <span class="o">=</span> <span class="p">[</span><span class="n">newConn</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">newConn</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">newConn</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">newConn</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+                        <span class="n">quadConn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newConn</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="s2">&quot;CHEXA&quot;</span> <span class="ow">in</span> <span class="n">elemInfo</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
                         <span class="n">hexConn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newConn</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="s2">&quot;CTETRA&quot;</span> <span class="ow">in</span> <span class="n">elemInfo</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
                         <span class="n">tetConn</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newConn</span><span class="p">)</span>
 
                 <span class="c1"># Set all node/connectivity info to zone</span>
-                <span class="n">zoneInfo</span><span class="o">.</span><span class="n">xyz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nodeXYZ</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+                <span class="n">zoneInfo</span><span class="o">.</span><span class="n">zone_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">nodeXYZ</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
                 <span class="n">zoneInfo</span><span class="o">.</span><span class="n">quad_elements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">quadConn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">)</span>
                 <span class="n">zoneInfo</span><span class="o">.</span><span class="n">tri_elements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">triConn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">)</span>
                 <span class="n">zoneInfo</span><span class="o">.</span><span class="n">hexa_elements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hexConn</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">)</span>

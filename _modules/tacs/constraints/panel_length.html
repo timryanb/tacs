@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>tacs.constraints.panel_length &#8212; TACS  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css?v=87629129" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinxdoc.css?v=34905f61" />
     <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
     <script src="../../../_static/documentation_options.js?v=d048f138"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -97,7 +97,12 @@
                 <span class="n">edge</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">endInd</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">startInd</span><span class="p">]</span>
                 <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">direction</span><span class="p">,</span> <span class="o">-</span><span class="n">edge</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">rhs</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">startInd</span><span class="p">]</span> <span class="o">-</span> <span class="n">points</span><span class="p">[</span><span class="n">pointInd</span><span class="p">]</span>
-                <span class="n">sol</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+                <span class="n">sol</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+
+                <span class="c1"># Check the rank since if the lines are parallel we won&#39;t get a good solution, in this case we just skip this edge</span>
+                <span class="k">if</span> <span class="n">rank</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
                 <span class="n">alpha</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="n">beta</span> <span class="o">=</span> <span class="n">sol</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
                 <span class="c1"># Only compute the length if the intersection occurs within the true bounds of the edge</span>
@@ -107,7 +112,7 @@
                     <span class="n">newLength</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">direction</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
                     <span class="k">if</span> <span class="p">(</span>
                         <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">newLength</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
-                        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">newLength</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">res</span>
+                        <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">newLength</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="p">):</span>
                         <span class="n">length</span> <span class="o">=</span> <span class="n">newLength</span>
     <span class="k">return</span> <span class="n">length</span>
@@ -598,7 +603,7 @@
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 <span class="sd">        &gt;&gt;&gt; funcs = {}</span>
-<span class="sd">        &gt;&gt;&gt; adjConstraint.evalConstraints(funcs, &#39;LE_SPAR&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; plConstraint.evalConstraints(funcs, &#39;LE_SPAR&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; funcs</span>
 <span class="sd">        &gt;&gt;&gt; # Result will look like (if PanelLengthConstraint has name of &#39;c1&#39;):</span>
 <span class="sd">        &gt;&gt;&gt; # {&#39;c1_LE_SPAR&#39;: array([1.325, 2.1983645, 3.1415926, ...])}</span>
@@ -658,7 +663,9 @@
 
 <div class="viewcode-block" id="PanelLengthConstraint.evalConstraintsSens">
 <a class="viewcode-back" href="../../../pytacs/panel_length.html#tacs.constraints.PanelLengthConstraint.evalConstraintsSens">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">evalConstraintsSens</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">funcsSens</span><span class="p">,</span> <span class="n">evalCons</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evalConstraintsSens</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">funcsSens</span><span class="p">,</span> <span class="n">evalCons</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">includeDVSens</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">includeXptSens</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;This is the main routine for returning useful (sensitivity)</span>
 <span class="sd">        information from constraint. The derivatives of the constraints</span>
 <span class="sd">        corresponding to the strings in evalCons are evaluated and</span>
@@ -677,6 +684,10 @@
 <span class="sd">            Dictionary into which the derivatives are saved.</span>
 <span class="sd">        evalCons : iterable object containing strings</span>
 <span class="sd">            The constraints the user wants returned</span>
+<span class="sd">        includeDVSens : bool, optional</span>
+<span class="sd">            Flag to include design variable sensitivities in output. Default is True.</span>
+<span class="sd">        includeXptSens : bool, optional</span>
+<span class="sd">            Flag to include node location sensitivities in output. Default is True.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -697,64 +708,66 @@
 
         <span class="n">nodes</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># Get number of nodes coords on this proc</span>
-        <span class="n">nCoords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumCoordinates</span><span class="p">()</span>
-
         <span class="c1"># Loop through each requested constraint set</span>
         <span class="k">for</span> <span class="n">conName</span> <span class="ow">in</span> <span class="n">evalCons</span><span class="p">:</span>
             <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">conName</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">nCon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;nCon&quot;</span><span class="p">]</span>
             <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">varName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;dvJac&quot;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintsSensUpToDate</span><span class="p">[</span><span class="n">conName</span><span class="p">]:</span>
-                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Get all of the nodes on the root proc</span>
-                <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Xpts</span><span class="o">.</span><span class="n">getArray</span><span class="p">(),</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-                            <span class="n">nodes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
-                    <span class="p">(</span><span class="n">nCon</span><span class="p">,</span> <span class="n">nCoords</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
-                <span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">coordJacVals</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-                        <span class="n">coordJacVals</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
-                    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nCon</span><span class="p">):</span>
-                        <span class="n">numPoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;boundaryNodeGlobalInds&quot;</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span>
-                        <span class="p">)</span>
-                        <span class="n">boundaryPoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">numPoints</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-
-                        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numPoints</span><span class="p">):</span>
-                            <span class="n">nodeProc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
-                                <span class="s2">&quot;boundaryNodeLocalProcs&quot;</span>
-                            <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
-                            <span class="n">localInd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
-                                <span class="s2">&quot;boundaryNodeLocalInds&quot;</span>
-                            <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
-                            <span class="n">boundaryPoints</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">nodeProc</span><span class="p">][</span><span class="n">localInd</span><span class="p">]</span>
-                        <span class="n">refAxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;refAxes&quot;</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span>
-                        <span class="n">LSens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">computePanelLengthSens</span><span class="p">(</span><span class="n">boundaryPoints</span><span class="p">,</span> <span class="n">refAxis</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numPoints</span><span class="p">):</span>
-                            <span class="n">nodeProc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
-                                <span class="s2">&quot;boundaryNodeLocalProcs&quot;</span>
-                            <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
-                            <span class="n">coordJacVals</span><span class="p">[</span><span class="n">nodeProc</span><span class="p">]</span> <span class="o">+=</span> <span class="n">LSens</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">includeDVSens</span><span class="p">:</span>
+                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">varName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;dvJac&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">includeXptSens</span><span class="p">:</span>
+                <span class="n">nCoords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getNumCoordinates</span><span class="p">()</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintsSensUpToDate</span><span class="p">[</span><span class="n">conName</span><span class="p">]:</span>
+                    <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">coordJacVals</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="n">coordJacVals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">coordJacVals</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                <span class="n">coordJacRows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;coordJacRows&quot;</span><span class="p">]</span>
-                <span class="n">coordJacCols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;coordJacCols&quot;</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
-                    <span class="p">(</span><span class="n">coordJacVals</span><span class="p">,</span> <span class="p">(</span><span class="n">coordJacRows</span><span class="p">,</span> <span class="n">coordJacCols</span><span class="p">)),</span>
-                    <span class="p">(</span><span class="n">nCon</span><span class="p">,</span> <span class="n">nCoords</span><span class="p">),</span>
-                    <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">constraintsSensUpToDate</span><span class="p">[</span><span class="n">conName</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
+                    <span class="c1"># Get all of the nodes on the root proc</span>
+                    <span class="k">if</span> <span class="n">nodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Xpts</span><span class="o">.</span><span class="n">getArray</span><span class="p">(),</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+                                <span class="n">nodes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                    <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">nCon</span><span class="p">,</span> <span class="n">nCoords</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coordJacVals</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+                            <span class="n">coordJacVals</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nCon</span><span class="p">):</span>
+                            <span class="n">numPoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;boundaryNodeGlobalInds&quot;</span><span class="p">][</span>
+                                    <span class="n">ii</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="n">boundaryPoints</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">numPoints</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+                            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numPoints</span><span class="p">):</span>
+                                <span class="n">nodeProc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
+                                    <span class="s2">&quot;boundaryNodeLocalProcs&quot;</span>
+                                <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
+                                <span class="n">localInd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
+                                    <span class="s2">&quot;boundaryNodeLocalInds&quot;</span>
+                                <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
+                                <span class="n">boundaryPoints</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">nodeProc</span><span class="p">][</span><span class="n">localInd</span><span class="p">]</span>
+                            <span class="n">refAxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;refAxes&quot;</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span>
+                            <span class="n">LSens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">computePanelLengthSens</span><span class="p">(</span><span class="n">boundaryPoints</span><span class="p">,</span> <span class="n">refAxis</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numPoints</span><span class="p">):</span>
+                                <span class="n">nodeProc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span>
+                                    <span class="s2">&quot;boundaryNodeLocalProcs&quot;</span>
+                                <span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="n">jj</span><span class="p">]</span>
+                                <span class="n">coordJacVals</span><span class="p">[</span><span class="n">nodeProc</span><span class="p">]</span> <span class="o">+=</span> <span class="n">LSens</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">coordJacVals</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">coordJacVals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">coordJacVals</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">coordJacRows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;coordJacRows&quot;</span><span class="p">]</span>
+                    <span class="n">coordJacCols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraintList</span><span class="p">[</span><span class="n">conName</span><span class="p">][</span><span class="s2">&quot;coordJacCols&quot;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">coordJacVals</span><span class="p">,</span> <span class="p">(</span><span class="n">coordJacRows</span><span class="p">,</span> <span class="n">coordJacCols</span><span class="p">)),</span>
+                        <span class="p">(</span><span class="n">nCon</span><span class="p">,</span> <span class="n">nCoords</span><span class="p">),</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">coordName</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">funcsSens</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">constraintsSensUpToDate</span><span class="p">[</span><span class="n">conName</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_getComponentBoundaryNodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compIDs</span><span class="p">):</span>
