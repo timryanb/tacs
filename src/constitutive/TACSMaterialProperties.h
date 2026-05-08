@@ -183,11 +183,7 @@ class TACSOrthotropicPly : public TACSObject {
   };
 
   void setKSWeight(TacsScalar _ksWeight);
-  void setUseMaxStrainCriterion();
-  void setUseTsaiWuCriterion();
-  void setUseModifiedTsaiWuCriterion();
-  void setUseCuntzeCriterion_UD();
-  void setUseCuntzeCriterion_Woven();
+  void setFailureCriterion(CompositeFailureCriterion fc);
 
   // Retrieve the material properties
   // --------------------------------

@@ -625,7 +625,7 @@ cdef class _OrthotropicPly:
         if _deprecated_used:
             warnings.warn(
                 f"Boolean failure criterion kwargs ({', '.join(k for k, _ in _deprecated_used)}) are deprecated. "
-                "Use 'failure_criterion=OrthotropicPly.CompositeFailureCriterion.<VALUE>' instead.",
+                "Use 'failure_criterion=constitutive.CompositeFailureCriterion.<VALUE>' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -640,19 +640,8 @@ cdef class _OrthotropicPly:
         if failure_criterion is None:
             failure_criterion = FC.TSAI_WU_MODIFIED
 
-        if failure_criterion == FC.MAX_STRAIN:
-            self.ptr.setUseMaxStrainCriterion()
-        elif failure_criterion == FC.TSAI_WU:
-            self.ptr.setUseTsaiWuCriterion()
-        elif failure_criterion == FC.TSAI_WU_MODIFIED:
-            self.ptr.setUseModifiedTsaiWuCriterion()
-        elif failure_criterion == FC.CUNTZE_UD:
-            self.ptr.setUseCuntzeCriterion_UD()
-        elif failure_criterion == FC.CUNTZE_WOVEN:
-            self.ptr.setUseCuntzeCriterion_Woven()
-        else:
-            raise ValueError(f'Unknown failure_criterion: {failure_criterion!r}')
-
+        failure_criterion = CompositeFailureCriterion(failure_criterion)
+        self.ptr.setFailureCriterion(<CompositeFailureCriterion>int(failure_criterion))
         self.props = props
 
     def __dealloc__(self):
@@ -667,29 +656,14 @@ cdef class _OrthotropicPly:
         """
         return self.props
 
-    def setUseMaxStrainCriterion(self):
+    def setFailureCriterion(self, fc):
         """
-        Set to use the maximum strain failure criterion.
-        """
-        self.ptr.setUseMaxStrainCriterion()
+        Set the failure criterion to use.
 
-    def setUseTsaiWuCriterion(self):
+        Args:
+            fc (CompositeFailureCriterion): The failure criterion enum value.
         """
-        Set to use the Tsai-Wu failure criterion.
-        """
-        self.ptr.setUseTsaiWuCriterion()
-
-    def setUseModifiedTsaiWuCriterion(self):
-        """
-        Set to use the modified Tsai-Wu failure criterion.
-        """
-        self.ptr.setUseModifiedTsaiWuCriterion()
-
-    def setUseTsaiWuCriterion(self):
-        """
-        Set to use the Tsai-Wu failure criterion.
-        """
-        self.ptr.setUseTsaiWuCriterion()
+        self.ptr.setFailureCriterion(<CompositeFailureCriterion>int(CompositeFailureCriterion(fc)))
 
 class OrthotropicPly(_OrthotropicPly):
     """

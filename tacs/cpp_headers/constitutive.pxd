@@ -54,11 +54,7 @@ cdef extern from "TACSMaterialProperties.h":
     cdef cppclass TACSOrthotropicPly(TACSObject):
         TACSOrthotropicPly(TacsScalar, TACSMaterialProperties*)
         void setKSWeight(TacsScalar)
-        void setUseMaxStrainCriterion()
-        void setUseTsaiWuCriterion()
-        void setUseModifiedTsaiWuCriterion()
-        void setUseCuntzeCriterion_UD()
-        void setUseCuntzeCriterion_Woven()
+        void setFailureCriterion(CompositeFailureCriterion)
         enum CompositeFailureCriterion:
             MAX_STRAIN
             TSAI_WU

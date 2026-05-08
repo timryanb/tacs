@@ -606,24 +606,10 @@ void TACSOrthotropicPly::setKSWeight(TacsScalar _ksWeight) {
 }
 
 /*
-  Set the failure criteria to use
+  Set the failure criterion to use
 */
-void TACSOrthotropicPly::setUseMaxStrainCriterion() {
-  failureCriterion = MAX_STRAIN;
-}
-
-void TACSOrthotropicPly::setUseTsaiWuCriterion() { failureCriterion = TSAI_WU; }
-
-void TACSOrthotropicPly::setUseModifiedTsaiWuCriterion() {
-  failureCriterion = TSAI_WU_MODIFIED;
-}
-
-void TACSOrthotropicPly::setUseCuntzeCriterion_UD() {
-  failureCriterion = CUNTZE_UD;
-}
-
-void TACSOrthotropicPly::setUseCuntzeCriterion_Woven() {
-  failureCriterion = CUNTZE_WOVEN;
+void TACSOrthotropicPly::setFailureCriterion(CompositeFailureCriterion fc) {
+  failureCriterion = fc;
 }
 
 /*
@@ -854,7 +840,7 @@ void TACSOrthotropicPly::calculateStress(TacsScalar angle,
   F11*s[0]**2 + F22*s[1]**2 +
   2.0*F12*s[0]*s[1] + F66*s[2]**2 <= 1.0
 
-  To enable this method, call `setUseTsaiWuCriterion()`
+  To enable this method, call `setFailureCriterion(TSAI_WU)`
 
   1b. The Tsai-Wu strength ratio:
 
