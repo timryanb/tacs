@@ -218,19 +218,34 @@ cdef class AverageTemperature(Function):
         self.ptr.incref()
         return
 
-class _KSTemperatureAggregationType(IntEnum):
-    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
+class KSAggregationType(IntEnum):
+    """
+    Aggregation type for KS functions. Mirrors ``KSAggregationType`` from ``TACSFunction.h``.
+
+    ``DISCRETE_AVERAGE`` is only valid for :class:`KSFailure`.
+    """
     DISCRETE = _KSAGG_DISCRETE
     CONTINUOUS = _KSAGG_CONTINUOUS
     PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
     PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
+    DISCRETE_AVERAGE = _KSAGG_DISCRETE_AVERAGE
 
 
-# Cython extension types (cdef class) are immutable — Python cannot set attributes on them
-# after definition. To expose KSAggregationType as a class attribute on each KS function
-# class, we use thin Python subclasses as the public API. The cdef classes hold all
-# C-level members and logic; the Python wrappers simply add the enum and the docstring.
-cdef class _KSTemperature(Function):
+cdef class KSTemperature(Function):
+    """
+    The following class implements the methods necessary
+    to calculate the Kreisselmeier–Steinhauser (KS) aggregation
+    of temperature over the domain of some finite element model.
+    The KS aggregation gives a smooth and differentiable approximation to the
+    maximum value.
+
+    Args:
+        assembler (Assembler): TACS Assembler object that will evaluating this function.
+        ksWeight (float, optional): The ks weight used in the calculation (keyword argument). Defaults to 80.0.
+        ks_aggregation_type (functions.KSAggregationType, optional): The type of KS aggregation to be used.
+            Defaults to ``functions.KSAggregationType.CONTINUOUS``. ``DISCRETE_AVERAGE`` is not supported.
+        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=functions.KSAggregationType.<VALUE>`` instead.
+    """
 
     cdef TACSKSTemperature *kstptr
     def __cinit__(self, Assembler assembler, **kwargs):
@@ -250,7 +265,7 @@ cdef class _KSTemperature(Function):
         if 'ftype' in kwargs:
             warnings.warn(
                 "The 'ftype' string kwarg is deprecated. "
-                "Use 'ks_aggregation_type=KSTemperature.KSAggregationType.<VALUE>' instead.",
+                "Use 'ks_aggregation_type=functions.KSAggregationType.<VALUE>' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -260,7 +275,7 @@ cdef class _KSTemperature(Function):
                 )
             self.setKSAggregationType(kwargs['ftype'])
         else:
-            ks_aggregation_type = kwargs.get('ks_aggregation_type', _KSTemperatureAggregationType.CONTINUOUS)
+            ks_aggregation_type = kwargs.get('ks_aggregation_type', KSAggregationType.CONTINUOUS)
             self.setKSAggregationType(ks_aggregation_type)
 
     def setKSAggregationType(self, ks_aggregation_type):
@@ -268,61 +283,64 @@ cdef class _KSTemperature(Function):
         Set the type of KS aggregation.
 
         Args:
-            ks_aggregation_type (KSTemperature.KSAggregationType or str): The aggregation type.
-                String values are deprecated; use ``KSTemperature.KSAggregationType`` instead.
+            ks_aggregation_type (functions.KSAggregationType or str): The aggregation type.
+                String values are deprecated; use ``functions.KSAggregationType`` instead.
+                ``DISCRETE_AVERAGE`` is not supported for this function.
+
+        Raises:
+            ValueError: If ``ks_aggregation_type`` is ``KSAggregationType.DISCRETE_AVERAGE``.
         """
         if isinstance(ks_aggregation_type, str):
             warnings.warn(
                 "Passing a string to setKSAggregationType is deprecated. "
-                "Use a KSTemperature.KSAggregationType enum value instead.",
+                "Use a functions.KSAggregationType enum value instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
             _str_map = {
-                'discrete': _KSTemperatureAggregationType.DISCRETE,
-                'continuous': _KSTemperatureAggregationType.CONTINUOUS,
-                'pnorm-discrete': _KSTemperatureAggregationType.PNORM_DISCRETE,
-                'pnorm-continuous': _KSTemperatureAggregationType.PNORM_CONTINUOUS,
+                'discrete': KSAggregationType.DISCRETE,
+                'continuous': KSAggregationType.CONTINUOUS,
+                'pnorm-discrete': KSAggregationType.PNORM_DISCRETE,
+                'pnorm-continuous': KSAggregationType.PNORM_CONTINUOUS,
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        ks_aggregation_type = _KSTemperatureAggregationType(ks_aggregation_type)
-        self.kstptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
-
-    def setLoadFactor(self, TacsScalar loadFactor):
-        self.ksptr.setLoadFactor(loadFactor)
+        ks_aggregation_type = KSAggregationType(ks_aggregation_type)
+        if ks_aggregation_type == KSAggregationType.DISCRETE_AVERAGE:
+            raise ValueError(
+                "KSAggregationType.DISCRETE_AVERAGE is only valid for KSFailure, not KSTemperature."
+            )
+        self.kstptr.setKSAggregationType(<_CKSAggregationType><int>ks_aggregation_type)
 
     def setParameter(self, double ksparam):
         self.kstptr.setParameter(ksparam)
 
-class KSTemperature(_KSTemperature):
+
+cdef class KSFailure(Function):
     """
-    The following class implements the methods necessary
-    to calculate the Kreisselmeier–Steinhauser (KS) aggregation
-    of temperature over the domain of some finite element model.
+    The following class implements the methods necessary to calculate
+    the Kreisselmeier–Steinhauser (KS) aggregation of either a stress
+    or strain failure criteria over the domain of some finite element model.
     The KS aggregation gives a smooth and differentiable approximation to the
     maximum value.
+
+    The failure load is calculated using the strain-based failure
+    criteria from the base :class:`~TACS.Constitutive` class which requires linear and
+    constant components of the strain to determine the failure load.
+
+    For most elements, unity is generally considered to be the threshold value for failure.
+    Meaning if this function returns a value > 1.0, at least one of the elements has exceeded
+    its strength criteria. While values < 1.0 implies all elements are within their strength criteria.
 
     Args:
         assembler (Assembler): TACS Assembler object that will evaluating this function.
         ksWeight (float, optional): The ks weight used in the calculation (keyword argument). Defaults to 80.0.
-        ks_aggregation_type (KSTemperature.KSAggregationType, optional): The type of KS aggregation to be used.
-            Defaults to ``KSTemperature.KSAggregationType.CONTINUOUS``.
-        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=KSTemperature.KSAggregationType.<VALUE>`` instead.
+        safetyFactor (float, optional):
+            The safety factor to apply to loads before computing the failure (keyword argument). Defaults to 1.0.
+        ks_aggregation_type (functions.KSAggregationType, optional): The type of KS aggregation to be used.
+            Defaults to ``functions.KSAggregationType.CONTINUOUS``.
+        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=functions.KSAggregationType.<VALUE>`` instead.
     """
-    KSAggregationType = _KSTemperatureAggregationType
-
-
-class _KSFailureAggregationType(IntEnum):
-    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
-    DISCRETE = _KSAGG_DISCRETE
-    CONTINUOUS = _KSAGG_CONTINUOUS
-    PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
-    PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
-    DISCRETE_AVERAGE = _KSAGG_DISCRETE_AVERAGE
-
-
-cdef class _KSFailure(Function):
 
     cdef TACSKSFailure *ksptr
     def __cinit__(self, Assembler assembler, **kwargs):
@@ -346,7 +364,7 @@ cdef class _KSFailure(Function):
         if 'ftype' in kwargs:
             warnings.warn(
                 "The 'ftype' string kwarg is deprecated. "
-                "Use 'ks_aggregation_type=KSFailure.KSAggregationType.<VALUE>' instead.",
+                "Use 'ks_aggregation_type=functions.KSAggregationType.<VALUE>' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -356,7 +374,7 @@ cdef class _KSFailure(Function):
                 )
             self.setKSAggregationType(kwargs['ftype'])
         else:
-            ks_aggregation_type = kwargs.get('ks_aggregation_type', _KSFailureAggregationType.CONTINUOUS)
+            ks_aggregation_type = kwargs.get('ks_aggregation_type', KSAggregationType.CONTINUOUS)
             self.setKSAggregationType(ks_aggregation_type)
 
     def setKSAggregationType(self, ks_aggregation_type):
@@ -364,68 +382,50 @@ cdef class _KSFailure(Function):
         Set the type of KS aggregation.
 
         Args:
-            ks_aggregation_type (KSFailure.KSAggregationType or str): The aggregation type.
-                String values are deprecated; use ``KSFailure.KSAggregationType`` instead.
+            ks_aggregation_type (functions.KSAggregationType or str): The aggregation type.
+                String values are deprecated; use ``functions.KSAggregationType`` instead.
         """
         if isinstance(ks_aggregation_type, str):
             warnings.warn(
                 "Passing a string to setKSAggregationType is deprecated. "
-                "Use a KSFailure.KSAggregationType enum value instead.",
+                "Use a functions.KSAggregationType enum value instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
             _str_map = {
-                'discrete': _KSFailureAggregationType.DISCRETE,
-                'continuous': _KSFailureAggregationType.CONTINUOUS,
-                'pnorm-discrete': _KSFailureAggregationType.PNORM_DISCRETE,
-                'pnorm-continuous': _KSFailureAggregationType.PNORM_CONTINUOUS,
-                'discrete-average': _KSFailureAggregationType.DISCRETE_AVERAGE,
+                'discrete': KSAggregationType.DISCRETE,
+                'continuous': KSAggregationType.CONTINUOUS,
+                'pnorm-discrete': KSAggregationType.PNORM_DISCRETE,
+                'pnorm-continuous': KSAggregationType.PNORM_CONTINUOUS,
+                'discrete-average': KSAggregationType.DISCRETE_AVERAGE,
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        ks_aggregation_type = _KSFailureAggregationType(ks_aggregation_type)
-        self.ksptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
+        ks_aggregation_type = KSAggregationType(ks_aggregation_type)
+        self.ksptr.setKSAggregationType(<_CKSAggregationType><int>ks_aggregation_type)
 
     def setParameter(self, double ksparam):
         self.ksptr.setParameter(ksparam)
 
-class KSFailure(_KSFailure):
+
+cdef class KSDisplacement(Function):
     """
-    The following class implements the methods necessary to calculate
-    the Kreisselmeier–Steinhauser (KS) aggregation of either a stress
-    or strain failure criteria over the domain of some finite element model.
+    The following class implements the methods to calculate the
+    Kreisselmeier–Steinhauser (KS) aggregation of the displacement in
+    a particular direction over the domain of some finite element model.
     The KS aggregation gives a smooth and differentiable approximation to the
     maximum value.
-
-    The failure load is calculated using the strain-based failure
-    criteria from the base :class:`~TACS.Constitutive` class which requires linear and
-    constant components of the strain to determine the failure load.
-
-    For most elements, unity is generally considered to be the threshold value for failure.
-    Meaning if this function returns a value > 1.0, at least one of the elements has exceeded
-    its strength criteria. While values < 1.0 implies all elements are within their strength criteria.
 
     Args:
         assembler (Assembler): TACS Assembler object that will evaluating this function.
         ksWeight (float, optional): The ks weight used in the calculation (keyword argument). Defaults to 80.0.
-        safetyFactor (float, optional):
-            The safety factor to apply to loads before computing the failure (keyword argument). Defaults to 1.0.
-        ks_aggregation_type (KSFailure.KSAggregationType, optional): The type of KS aggregation to be used.
-            Defaults to ``KSFailure.KSAggregationType.CONTINUOUS``.
-        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=KSFailure.KSAggregationType.<VALUE>`` instead.
+        direction (array-like[double], optional):
+          3d vector specifying which direction to project displacements in for KS aggregation (keyword argument).
+          Defaults to [0.0, 0.0, 0.0].
+        ks_aggregation_type (functions.KSAggregationType, optional): The type of KS aggregation to be used.
+          Defaults to ``functions.KSAggregationType.CONTINUOUS``. ``DISCRETE_AVERAGE`` is not supported.
+        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=functions.KSAggregationType.<VALUE>`` instead.
     """
-    KSAggregationType = _KSFailureAggregationType
-
-
-class _KSDisplacementAggregationType(IntEnum):
-    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
-    DISCRETE = _KSAGG_DISCRETE
-    CONTINUOUS = _KSAGG_CONTINUOUS
-    PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
-    PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
-
-
-cdef class _KSDisplacement(Function):
 
     cdef TACSKSDisplacement *ksptr
     def __cinit__(self, Assembler assembler, **kwargs):
@@ -455,7 +455,7 @@ cdef class _KSDisplacement(Function):
         if 'ftype' in kwargs:
             warnings.warn(
                 "The 'ftype' string kwarg is deprecated. "
-                "Use 'ks_aggregation_type=KSDisplacement.KSAggregationType.<VALUE>' instead.",
+                "Use 'ks_aggregation_type=functions.KSAggregationType.<VALUE>' instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -465,7 +465,7 @@ cdef class _KSDisplacement(Function):
                 )
             self.setKSAggregationType(kwargs['ftype'])
         else:
-            ks_aggregation_type = kwargs.get('ks_aggregation_type', _KSDisplacementAggregationType.CONTINUOUS)
+            ks_aggregation_type = kwargs.get('ks_aggregation_type', KSAggregationType.CONTINUOUS)
             self.setKSAggregationType(ks_aggregation_type)
 
     def setKSAggregationType(self, ks_aggregation_type):
@@ -473,49 +473,37 @@ cdef class _KSDisplacement(Function):
         Set the type of KS aggregation.
 
         Args:
-            ks_aggregation_type (KSDisplacement.KSAggregationType or str): The aggregation type.
-                String values are deprecated; use ``KSDisplacement.KSAggregationType`` instead.
+            ks_aggregation_type (functions.KSAggregationType or str): The aggregation type.
+                String values are deprecated; use ``functions.KSAggregationType`` instead.
+                ``DISCRETE_AVERAGE`` is not supported for this function.
+
+        Raises:
+            ValueError: If ``ks_aggregation_type`` is ``KSAggregationType.DISCRETE_AVERAGE``.
         """
         if isinstance(ks_aggregation_type, str):
             warnings.warn(
                 "Passing a string to setKSAggregationType is deprecated. "
-                "Use a KSDisplacement.KSAggregationType enum value instead.",
+                "Use a functions.KSAggregationType enum value instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
             _str_map = {
-                'discrete': _KSDisplacementAggregationType.DISCRETE,
-                'continuous': _KSDisplacementAggregationType.CONTINUOUS,
-                'pnorm-discrete': _KSDisplacementAggregationType.PNORM_DISCRETE,
-                'pnorm-continuous': _KSDisplacementAggregationType.PNORM_CONTINUOUS,
+                'discrete': KSAggregationType.DISCRETE,
+                'continuous': KSAggregationType.CONTINUOUS,
+                'pnorm-discrete': KSAggregationType.PNORM_DISCRETE,
+                'pnorm-continuous': KSAggregationType.PNORM_CONTINUOUS,
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        ks_aggregation_type = _KSDisplacementAggregationType(ks_aggregation_type)
-        self.ksptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
+        ks_aggregation_type = KSAggregationType(ks_aggregation_type)
+        if ks_aggregation_type == KSAggregationType.DISCRETE_AVERAGE:
+            raise ValueError(
+                "KSAggregationType.DISCRETE_AVERAGE is only valid for KSFailure, not KSDisplacement."
+            )
+        self.ksptr.setKSAggregationType(<_CKSAggregationType><int>ks_aggregation_type)
 
     def setParameter(self, double ksparam):
         self.ksptr.setParameter(ksparam)
-
-class KSDisplacement(_KSDisplacement):
-    """
-    The following class implements the methods to calculate the
-    Kreisselmeier–Steinhauser (KS) aggregation of the displacement in
-    a particular direction over the domain of some finite element model.
-    The KS aggregation gives a smooth and differentiable approximation to the
-    maximum value.
-
-    Args:
-        assembler (Assembler): TACS Assembler object that will evaluating this function.
-        ksWeight (float, optional): The ks weight used in the calculation (keyword argument). Defaults to 80.0.
-        direction (array-like[double], optional):
-          3d vector specifying which direction to project displacements in for KS aggregation (keyword argument).
-          Defaults to [0.0, 0.0, 0.0].
-        ks_aggregation_type (KSDisplacement.KSAggregationType, optional): The type of KS aggregation to be used.
-          Defaults to ``KSDisplacement.KSAggregationType.CONTINUOUS``.
-        ftype (str, optional): Deprecated. Use ``ks_aggregation_type=KSDisplacement.KSAggregationType.<VALUE>`` instead.
-    """
-    KSAggregationType = _KSDisplacementAggregationType
 
 # cdef class InducedFailure(Function):
 #     cdef TACSInducedFailure *iptr

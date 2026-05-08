@@ -21,13 +21,16 @@ cdef extern from "TACSFunction.h":
         SUB_DOMAIN
         NO_DOMAIN
 
-    enum KSAggregationType:
-        DISCRETE
-        CONTINUOUS
-        PNORM_DISCRETE
-        PNORM_CONTINUOUS
-        DISCRETE_AVERAGE
+    # Declare the C++ enum under a private Cython name to avoid conflicting with
+    # the Python IntEnum class also named KSAggregationType.
+    enum _CKSAggregationType "KSAggregationType":
+        _CKSAGG_DISCRETE "DISCRETE"
+        _CKSAGG_CONTINUOUS "CONTINUOUS"
+        _CKSAGG_PNORM_DISCRETE "PNORM_DISCRETE"
+        _CKSAGG_PNORM_CONTINUOUS "PNORM_CONTINUOUS"
+        _CKSAGG_DISCRETE_AVERAGE "DISCRETE_AVERAGE"
 
+    # Integer aliases for populating the Python IntEnum
     int _KSAGG_DISCRETE "DISCRETE"
     int _KSAGG_CONTINUOUS "CONTINUOUS"
     int _KSAGG_PNORM_DISCRETE "PNORM_DISCRETE"
@@ -62,7 +65,7 @@ cdef extern from "TACSAverageTemperature.h":
 cdef extern from "TACSKSTemperature.h":
     cdef cppclass TACSKSTemperature(TACSFunction):
         TACSKSTemperature(TACSAssembler*, double, double)
-        void setKSAggregationType(KSAggregationType ftype)
+        void setKSAggregationType(_CKSAggregationType ftype)
         double getParameter()
         void setParameter(double)
         void setMaxFailOffset(TacsScalar)
@@ -70,7 +73,7 @@ cdef extern from "TACSKSTemperature.h":
 cdef extern from "TACSKSFailure.h":
     cdef cppclass TACSKSFailure(TACSFunction):
         TACSKSFailure(TACSAssembler*, double, double, double)
-        void setKSAggregationType(KSAggregationType ftype)
+        void setKSAggregationType(_CKSAggregationType ftype)
         double getParameter()
         void setParameter(double)
         void setMaxFailOffset(TacsScalar)
@@ -78,7 +81,7 @@ cdef extern from "TACSKSFailure.h":
 cdef extern from "TACSKSDisplacement.h":
     cdef cppclass TACSKSDisplacement(TACSFunction):
         TACSKSDisplacement(TACSAssembler*, double, const double*, double)
-        void setKSAggregationType(KSAggregationType ftype)
+        void setKSAggregationType(_CKSAggregationType ftype)
         double getParameter()
         void setParameter(double)
         void setMaxDispOffset(TacsScalar)

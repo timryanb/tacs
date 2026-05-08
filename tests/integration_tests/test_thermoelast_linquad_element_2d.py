@@ -268,6 +268,6 @@ class ProblemTest(StaticTestCase.StaticTest):
             ),
         ]
         func_list[0].setKSAggregationType(
-            functions.KSFailure.KSAggregationType.CONTINUOUS
+            functions.KSAggregationType.CONTINUOUS
         )
         return func_list, FUNC_REFS

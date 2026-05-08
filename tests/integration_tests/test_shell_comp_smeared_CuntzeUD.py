@@ -150,7 +150,7 @@ class ProblemTest(PyTACSTestCase.PyTACSTest):
                 "ks_CuntzeUD_failure",
                 functions.KSFailure,
                 ksWeight=ksweight,
-                ks_aggregation_type=functions.KSFailure.KSAggregationType.DISCRETE,
+                ks_aggregation_type=functions.KSAggregationType.DISCRETE,
             )
 
         tacs_probs = list(tacs_probs)
