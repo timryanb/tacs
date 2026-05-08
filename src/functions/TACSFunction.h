@@ -36,6 +36,20 @@ enum KSAggregationType {
   DISCRETE_AVERAGE
 };
 
+/**
+ * Norm type for induced-norm failure aggregation (TACSInducedFailure).
+ */
+enum InducedNormType {
+  EXPONENTIAL,
+  POWER,
+  EXPONENTIAL_SQUARED,
+  POWER_SQUARED,
+  DISCRETE_EXPONENTIAL,
+  DISCRETE_POWER,
+  DISCRETE_EXPONENTIAL_SQUARED,
+  DISCRETE_POWER_SQUARED
+};
+
 /*
   TACSFunction is the base class used to calculate the values of
   functions of interest within TACS. This class also defines the
