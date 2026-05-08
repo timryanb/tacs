@@ -24,18 +24,18 @@ cdef extern from "TACSFunction.h":
     # Declare the C++ enum under a private Cython name to avoid conflicting with
     # the Python IntEnum class also named KSAggregationType.
     enum _CKSAggregationType "KSAggregationType":
-        _CKSAGG_DISCRETE "DISCRETE"
-        _CKSAGG_CONTINUOUS "CONTINUOUS"
+        _CKSAGG_DISCRETE "KS_DISCRETE"
+        _CKSAGG_CONTINUOUS "KS_CONTINUOUS"
         _CKSAGG_PNORM_DISCRETE "PNORM_DISCRETE"
         _CKSAGG_PNORM_CONTINUOUS "PNORM_CONTINUOUS"
-        _CKSAGG_DISCRETE_AVERAGE "DISCRETE_AVERAGE"
+        _CKSAGG_DISCRETE_AVERAGE "KS_DISCRETE_AVERAGE"
 
     # Integer aliases for populating the Python IntEnum
-    int _KSAGG_DISCRETE "DISCRETE"
-    int _KSAGG_CONTINUOUS "CONTINUOUS"
+    int _KSAGG_DISCRETE "KS_DISCRETE"
+    int _KSAGG_CONTINUOUS "KS_CONTINUOUS"
     int _KSAGG_PNORM_DISCRETE "PNORM_DISCRETE"
     int _KSAGG_PNORM_CONTINUOUS "PNORM_CONTINUOUS"
-    int _KSAGG_DISCRETE_AVERAGE "DISCRETE_AVERAGE"
+    int _KSAGG_DISCRETE_AVERAGE "KS_DISCRETE_AVERAGE"
 
 cdef extern from "TACSStructuralMass.h":
     cdef cppclass TACSStructuralMass(TACSFunction):

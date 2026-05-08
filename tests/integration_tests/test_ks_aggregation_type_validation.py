@@ -1,5 +1,5 @@
 """
-Tests that KSAggregationType.DISCRETE_AVERAGE raises ValueError when passed
+Tests that KSAggregationType.KS_DISCRETE_AVERAGE raises ValueError when passed
 to KSTemperature or KSDisplacement (constructor and setKSAggregationType).
 """
 
@@ -40,33 +40,33 @@ class TestDiscreteAverageRejection(unittest.TestCase):
         with self.assertRaises(ValueError):
             functions.KSTemperature(
                 self.assembler,
-                ks_aggregation_type=functions.KSAggregationType.DISCRETE_AVERAGE,
+                ks_aggregation_type=functions.KSAggregationType.KS_DISCRETE_AVERAGE,
             )
 
     def test_ks_temperature_setter_rejects_discrete_average(self):
         func = functions.KSTemperature(self.assembler)
         with self.assertRaises(ValueError):
-            func.setKSAggregationType(functions.KSAggregationType.DISCRETE_AVERAGE)
+            func.setKSAggregationType(functions.KSAggregationType.KS_DISCRETE_AVERAGE)
 
     def test_ks_displacement_constructor_rejects_discrete_average(self):
         with self.assertRaises(ValueError):
             functions.KSDisplacement(
                 self.assembler,
-                ks_aggregation_type=functions.KSAggregationType.DISCRETE_AVERAGE,
+                ks_aggregation_type=functions.KSAggregationType.KS_DISCRETE_AVERAGE,
             )
 
     def test_ks_displacement_setter_rejects_discrete_average(self):
         func = functions.KSDisplacement(self.assembler)
         with self.assertRaises(ValueError):
-            func.setKSAggregationType(functions.KSAggregationType.DISCRETE_AVERAGE)
+            func.setKSAggregationType(functions.KSAggregationType.KS_DISCRETE_AVERAGE)
 
     def test_ks_failure_accepts_discrete_average(self):
         """DISCRETE_AVERAGE must not be rejected for KSFailure."""
         func = functions.KSFailure(
             self.assembler,
-            ks_aggregation_type=functions.KSAggregationType.DISCRETE_AVERAGE,
+            ks_aggregation_type=functions.KSAggregationType.KS_DISCRETE_AVERAGE,
         )
-        func.setKSAggregationType(functions.KSAggregationType.DISCRETE_AVERAGE)
+        func.setKSAggregationType(functions.KSAggregationType.KS_DISCRETE_AVERAGE)
 
 
 if __name__ == "__main__":
