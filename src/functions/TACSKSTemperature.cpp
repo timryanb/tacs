@@ -48,7 +48,13 @@ const char *TACSKSTemperature::funcName = "TACSKSTemperature";
 /*
   Set the KS aggregation type
 */
-void TACSKSTemperature::setKSTemperatureType(enum KSTemperatureType type) {
+void TACSKSTemperature::setKSAggregationType(KSAggregationType type) {
+  if (type == DISCRETE_AVERAGE) {
+    fprintf(stderr,
+            "TACSKSTemperature: DISCRETE_AVERAGE aggregation is not "
+            "supported.\n");
+    return;
+  }
   ksType = type;
 }
 

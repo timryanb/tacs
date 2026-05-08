@@ -24,6 +24,18 @@ class TACSAssembler;
 #include "TACSElement.h"
 #include "TACSObject.h"
 
+/**
+ * Aggregation type for KS functions (KSFailure, KSTemperature, KSDisplacement).
+ * DISCRETE_AVERAGE is only valid for TACSKSFailure.
+ */
+enum KSAggregationType {
+  DISCRETE,
+  CONTINUOUS,
+  PNORM_DISCRETE,
+  PNORM_CONTINUOUS,
+  DISCRETE_AVERAGE
+};
+
 /*
   TACSFunction is the base class used to calculate the values of
   functions of interest within TACS. This class also defines the

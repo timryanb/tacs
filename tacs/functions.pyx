@@ -219,11 +219,11 @@ cdef class AverageTemperature(Function):
         return
 
 class _KSTemperatureAggregationType(IntEnum):
-    """Mirrors ``TACSKSTemperature::KSTemperatureType`` from ``TACSKSTemperature.h``."""
-    DISCRETE = KS_TEMPERATURE_DISCRETE
-    CONTINUOUS = KS_TEMPERATURE_CONTINUOUS
-    PNORM_DISCRETE = PNORM_TEMPERATURE_DISCRETE
-    PNORM_CONTINUOUS = PNORM_TEMPERATURE_CONTINUOUS
+    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
+    DISCRETE = _KSAGG_DISCRETE
+    CONTINUOUS = _KSAGG_CONTINUOUS
+    PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
+    PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
 
 
 # Cython extension types (cdef class) are immutable — Python cannot set attributes on them
@@ -286,17 +286,8 @@ cdef class _KSTemperature(Function):
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        TT = _KSTemperatureAggregationType
-        if ks_aggregation_type == TT.DISCRETE:
-            self.kstptr.setKSTemperatureType(KS_TEMPERATURE_DISCRETE)
-        elif ks_aggregation_type == TT.CONTINUOUS:
-            self.kstptr.setKSTemperatureType(KS_TEMPERATURE_CONTINUOUS)
-        elif ks_aggregation_type == TT.PNORM_DISCRETE:
-            self.kstptr.setKSTemperatureType(PNORM_TEMPERATURE_DISCRETE)
-        elif ks_aggregation_type == TT.PNORM_CONTINUOUS:
-            self.kstptr.setKSTemperatureType(PNORM_TEMPERATURE_CONTINUOUS)
-        else:
-            raise ValueError(f'Unknown ks_aggregation_type: {ks_aggregation_type!r}')
+        ks_aggregation_type = _KSTemperatureAggregationType(ks_aggregation_type)
+        self.kstptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
 
     def setLoadFactor(self, TacsScalar loadFactor):
         self.ksptr.setLoadFactor(loadFactor)
@@ -323,12 +314,12 @@ class KSTemperature(_KSTemperature):
 
 
 class _KSFailureAggregationType(IntEnum):
-    """Mirrors ``TACSKSFailure::KSFailureType`` from ``TACSKSFailure.h``."""
-    DISCRETE = KS_FAILURE_DISCRETE
-    CONTINUOUS = KS_FAILURE_CONTINUOUS
-    PNORM_DISCRETE = PNORM_FAILURE_DISCRETE
-    PNORM_CONTINUOUS = PNORM_FAILURE_CONTINUOUS
-    DISCRETE_AVERAGE = KS_FAILURE_DISCRETE_AVERAGE
+    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
+    DISCRETE = _KSAGG_DISCRETE
+    CONTINUOUS = _KSAGG_CONTINUOUS
+    PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
+    PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
+    DISCRETE_AVERAGE = _KSAGG_DISCRETE_AVERAGE
 
 
 cdef class _KSFailure(Function):
@@ -392,19 +383,8 @@ cdef class _KSFailure(Function):
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        FT = _KSFailureAggregationType
-        if ks_aggregation_type == FT.DISCRETE:
-            self.ksptr.setKSFailureType(KS_FAILURE_DISCRETE)
-        elif ks_aggregation_type == FT.CONTINUOUS:
-            self.ksptr.setKSFailureType(KS_FAILURE_CONTINUOUS)
-        elif ks_aggregation_type == FT.PNORM_DISCRETE:
-            self.ksptr.setKSFailureType(PNORM_FAILURE_DISCRETE)
-        elif ks_aggregation_type == FT.PNORM_CONTINUOUS:
-            self.ksptr.setKSFailureType(PNORM_FAILURE_CONTINUOUS)
-        elif ks_aggregation_type == FT.DISCRETE_AVERAGE:
-            self.ksptr.setKSFailureType(KS_FAILURE_DISCRETE_AVERAGE)
-        else:
-            raise ValueError(f'Unknown ks_aggregation_type: {ks_aggregation_type!r}')
+        ks_aggregation_type = _KSFailureAggregationType(ks_aggregation_type)
+        self.ksptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
 
     def setParameter(self, double ksparam):
         self.ksptr.setParameter(ksparam)
@@ -438,11 +418,11 @@ class KSFailure(_KSFailure):
 
 
 class _KSDisplacementAggregationType(IntEnum):
-    """Mirrors ``TACSKSDisplacement::KSDisplacementType`` from ``TACSKSDisplacement.h``."""
-    DISCRETE = KS_DISPLACEMENT_DISCRETE
-    CONTINUOUS = KS_DISPLACEMENT_CONTINUOUS
-    PNORM_DISCRETE = PNORM_DISPLACEMENT_DISCRETE
-    PNORM_CONTINUOUS = PNORM_DISPLACEMENT_CONTINUOUS
+    """Mirrors ``KSAggregationType`` from ``TACSFunction.h``."""
+    DISCRETE = _KSAGG_DISCRETE
+    CONTINUOUS = _KSAGG_CONTINUOUS
+    PNORM_DISCRETE = _KSAGG_PNORM_DISCRETE
+    PNORM_CONTINUOUS = _KSAGG_PNORM_CONTINUOUS
 
 
 cdef class _KSDisplacement(Function):
@@ -511,17 +491,8 @@ cdef class _KSDisplacement(Function):
             }
             ks_aggregation_type = _str_map[ks_aggregation_type.lower()]
 
-        DT = _KSDisplacementAggregationType
-        if ks_aggregation_type == DT.DISCRETE:
-            self.ksptr.setKSDisplacementType(KS_DISPLACEMENT_DISCRETE)
-        elif ks_aggregation_type == DT.CONTINUOUS:
-            self.ksptr.setKSDisplacementType(KS_DISPLACEMENT_CONTINUOUS)
-        elif ks_aggregation_type == DT.PNORM_DISCRETE:
-            self.ksptr.setKSDisplacementType(PNORM_DISPLACEMENT_DISCRETE)
-        elif ks_aggregation_type == DT.PNORM_CONTINUOUS:
-            self.ksptr.setKSDisplacementType(PNORM_DISPLACEMENT_CONTINUOUS)
-        else:
-            raise ValueError(f'Unknown ks_aggregation_type: {ks_aggregation_type!r}')
+        ks_aggregation_type = _KSDisplacementAggregationType(ks_aggregation_type)
+        self.ksptr.setKSAggregationType(<KSAggregationType><int>ks_aggregation_type)
 
     def setParameter(self, double ksparam):
         self.ksptr.setParameter(ksparam)

@@ -49,7 +49,9 @@ const char *TACSKSFailure::funcName = "TACSKSFailure";
 /*
   Set the KS aggregation type
 */
-void TACSKSFailure::setKSFailureType(enum KSFailureType type) { ksType = type; }
+void TACSKSFailure::setKSAggregationType(KSAggregationType type) {
+  ksType = type;
+}
 
 /*
   Retrieve the KS aggregation weight

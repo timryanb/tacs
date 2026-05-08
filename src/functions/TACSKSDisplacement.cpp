@@ -52,7 +52,13 @@ const char *TACSKSDisplacement::funcName = "TACSKSDisplacement";
 /*
   Set the KS aggregation type
 */
-void TACSKSDisplacement::setKSDisplacementType(enum KSDisplacementType type) {
+void TACSKSDisplacement::setKSAggregationType(KSAggregationType type) {
+  if (type == DISCRETE_AVERAGE) {
+    fprintf(stderr,
+            "TACSKSDisplacement: DISCRETE_AVERAGE aggregation is not "
+            "supported.\n");
+    return;
+  }
   ksType = type;
 }
 

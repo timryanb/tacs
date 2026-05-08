@@ -641,7 +641,7 @@ cdef class _OrthotropicPly:
             failure_criterion = FC.TSAI_WU_MODIFIED
 
         failure_criterion = CompositeFailureCriterion(failure_criterion)
-        self.ptr.setFailureCriterion(<CompositeFailureCriterion>int(failure_criterion))
+        self.ptr.setFailureCriterion(<_CCompositeFC><int>failure_criterion)
         self.props = props
 
     def __dealloc__(self):
@@ -663,7 +663,7 @@ cdef class _OrthotropicPly:
         Args:
             fc (CompositeFailureCriterion): The failure criterion enum value.
         """
-        self.ptr.setFailureCriterion(<CompositeFailureCriterion>int(CompositeFailureCriterion(fc)))
+        self.ptr.setFailureCriterion(<_CCompositeFC><int>CompositeFailureCriterion(fc))
 
 class OrthotropicPly(_OrthotropicPly):
     """
