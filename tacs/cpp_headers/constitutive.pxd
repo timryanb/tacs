@@ -59,7 +59,7 @@ cdef extern from "TACSMaterialProperties.h":
         void setUseModifiedTsaiWuCriterion()
         void setUseCuntzeCriterion_UD()
         void setUseCuntzeCriterion_Woven()
-        enum FailureCriterion:
+        enum CompositeFailureCriterion:
             MAX_STRAIN
             TSAI_WU
             TSAI_WU_MODIFIED

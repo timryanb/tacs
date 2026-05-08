@@ -590,7 +590,7 @@ cdef class MAT2MaterialProperties(MaterialProperties):
 
 
 class CompositeFailureCriterion(IntEnum):
-    """Mirrors ``TACSOrthotropicPly::FailureCriterion`` from ``TACSMaterialProperties.h``."""
+    """Mirrors ``TACSOrthotropicPly::CompositeFailureCriterion`` from ``TACSMaterialProperties.h``."""
     MAX_STRAIN = _COMPOSITE_FC_MAX_STRAIN
     TSAI_WU = _COMPOSITE_FC_TSAI_WU
     TSAI_WU_MODIFIED = _COMPOSITE_FC_TSAI_WU_MODIFIED
