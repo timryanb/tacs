@@ -606,13 +606,6 @@ void TACSOrthotropicPly::setKSWeight(TacsScalar _ksWeight) {
 }
 
 /*
-  Set the failure criterion to use
-*/
-void TACSOrthotropicPly::setFailureCriterion(CompositeFailureCriterion fc) {
-  failureCriterion = fc;
-}
-
-/*
   Get the density of the material
 */
 TacsScalar TACSOrthotropicPly::getDensity() { return rho; }

@@ -183,7 +183,9 @@ class TACSOrthotropicPly : public TACSObject {
   };
 
   void setKSWeight(TacsScalar _ksWeight);
-  void setFailureCriterion(CompositeFailureCriterion fc);
+  void setFailureCriterion(CompositeFailureCriterion fc) {
+    failureCriterion = fc;
+  }
 
   // Retrieve the material properties
   // --------------------------------
