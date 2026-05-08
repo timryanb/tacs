@@ -33,7 +33,7 @@ TACSKSDisplacement::TACSKSDisplacement(TACSAssembler *_assembler,
   dir[1] = _dir[1];
   dir[2] = _dir[2];
   alpha = _alpha;
-  ksType = CONTINUOUS;
+  ksType = KS_CONTINUOUS;
 
   // Initialize the maximum displacement value and KS sum to default values
   // that will be overwritten later.
@@ -53,9 +53,9 @@ const char *TACSKSDisplacement::funcName = "TACSKSDisplacement";
   Set the KS aggregation type
 */
 void TACSKSDisplacement::setKSAggregationType(KSAggregationType type) {
-  if (type == DISCRETE_AVERAGE) {
+  if (type == KS_DISCRETE_AVERAGE) {
     fprintf(stderr,
-            "TACSKSDisplacement: DISCRETE_AVERAGE aggregation is not "
+            "TACSKSDisplacement: KS_DISCRETE_AVERAGE aggregation is not "
             "supported.\n");
     return;
   }
@@ -162,10 +162,10 @@ void TACSKSDisplacement::elementWiseEval(
         }
       } else {
         // Add the displacement to the sum
-        if (ksType == DISCRETE) {
+        if (ksType == KS_DISCRETE) {
           TacsScalar fexp = exp(ksWeight * (dispProj - maxDisp));
           ksDispSum += scale * fexp;
-        } else if (ksType == CONTINUOUS) {
+        } else if (ksType == KS_CONTINUOUS) {
           TacsScalar fexp = exp(ksWeight * (dispProj - maxDisp));
           ksDispSum += scale * weight * detXd * fexp;
         } else if (ksType == PNORM_DISCRETE) {
@@ -213,10 +213,10 @@ void TACSKSDisplacement::getElementSVSens(
     if (count >= 1) {
       // Compute the sensitivity contribution
       TacsScalar factor = 0.0;
-      if (ksType == DISCRETE) {
+      if (ksType == KS_DISCRETE) {
         // d(log(ksDispSum))/dx = 1/(ksDispSum)*d(dispProj)/dx
         factor = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
-      } else if (ksType == CONTINUOUS) {
+      } else if (ksType == KS_CONTINUOUS) {
         factor = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
         factor *= weight * detXd;
       } else if (ksType == PNORM_DISCRETE) {
@@ -273,10 +273,10 @@ void TACSKSDisplacement::getElementXptSens(
       // Compute the sensitivity contribution
       TacsScalar factor = 0.0;
       TacsScalar dfddetXd = 0.0;
-      if (ksType == DISCRETE) {
+      if (ksType == KS_DISCRETE) {
         // d(log(ksDispSum))/dx = 1/(ksDispSum)*d(dispProj)/dx
         factor = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
-      } else if (ksType == CONTINUOUS) {
+      } else if (ksType == KS_CONTINUOUS) {
         TacsScalar expfact = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
         dfddetXd = weight * expfact / ksWeight;
         factor = weight * detXd * expfact;
@@ -329,10 +329,10 @@ void TACSKSDisplacement::addElementDVSens(
     if (count >= 1) {
       // Compute the sensitivity contribution
       TacsScalar factor = 0.0;
-      if (ksType == DISCRETE) {
+      if (ksType == KS_DISCRETE) {
         // d(log(ksDispSum))/dx = 1/(ksDispSum)*d(dispProj)/dx
         factor = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
-      } else if (ksType == CONTINUOUS) {
+      } else if (ksType == KS_CONTINUOUS) {
         TacsScalar expfact = exp(ksWeight * (dispProj - maxDisp)) / ksDispSum;
         factor = weight * detXd * expfact;
       } else if (ksType == PNORM_DISCRETE) {

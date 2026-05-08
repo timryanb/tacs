@@ -26,14 +26,14 @@ class TACSAssembler;
 
 /**
  * Aggregation type for KS functions (KSFailure, KSTemperature, KSDisplacement).
- * DISCRETE_AVERAGE is only valid for TACSKSFailure.
+ * KS_DISCRETE_AVERAGE is only valid for TACSKSFailure.
  */
 enum KSAggregationType {
-  DISCRETE,
-  CONTINUOUS,
+  KS_DISCRETE,
+  KS_CONTINUOUS,
   PNORM_DISCRETE,
   PNORM_CONTINUOUS,
-  DISCRETE_AVERAGE
+  KS_DISCRETE_AVERAGE
 };
 
 /**
