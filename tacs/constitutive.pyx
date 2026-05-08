@@ -598,11 +598,28 @@ class CompositeFailureCriterion(IntEnum):
     CUNTZE_WOVEN = _COMPOSITE_FC_CUNTZE_WOVEN
 
 
-# Cython extension types (cdef class) are immutable — Python cannot set attributes on them
-# after definition. To expose CompositeFailureCriterion as a class attribute, we use a
-# thin Python subclass as the public API. The cdef class holds all C-level members and
-# logic; the Python wrapper class simply adds the enum and the docstring.
-cdef class _OrthotropicPly:
+cdef class OrthotropicPly:
+    """
+    The following class holds the material stiffness and strength
+    properties for an orthotropic ply. This class is used by several
+    constitutive classes within TACS.
+
+    The interaction coefficient for the Tsai-Wu failure criterion is set
+    to zero by default. If a value of C, the failure stress under
+    combined in-plane loading, is supplied, the interaction coefficient
+    is determined. Be careful - the value can easily fall outside
+    acceptable bounds - these are tested during initialization.
+
+    Args:
+        ply_thickness (float or complex): The ply thickness.
+        props (MaterialProperties): The ply material property.
+        failure_criterion (constitutive.CompositeFailureCriterion): The failure criterion to use.
+          Defaults to ``constitutive.CompositeFailureCriterion.TSAI_WU_MODIFIED``.
+        max_strain_criterion (bool): Deprecated. Use ``failure_criterion=constitutive.CompositeFailureCriterion.MAX_STRAIN``.
+        tsai_wu_criterion (bool): Deprecated. Use ``failure_criterion=constitutive.CompositeFailureCriterion.TSAI_WU``.
+        Cuntze_criterion_UD (bool): Deprecated. Use ``failure_criterion=constitutive.CompositeFailureCriterion.CUNTZE_UD``.
+        Cuntze_criterion_Woven (bool): Deprecated. Use ``failure_criterion=constitutive.CompositeFailureCriterion.CUNTZE_WOVEN``.
+    """
 
     cdef TACSOrthotropicPly *ptr
     cdef MaterialProperties props
@@ -664,30 +681,6 @@ cdef class _OrthotropicPly:
             fc (CompositeFailureCriterion): The failure criterion enum value.
         """
         self.ptr.setFailureCriterion(<_CCompositeFC><int>CompositeFailureCriterion(fc))
-
-class OrthotropicPly(_OrthotropicPly):
-    """
-    The following class holds the material stiffness and strength
-    properties for an orthotropic ply. This class is used by several
-    constitutive classes within TACS.
-
-    The interaction coefficient for the Tsai-Wu failure criterion is set
-    to zero by default. If a value of C, the failure stress under
-    combined in-plane loading, is supplied, the interaction coefficient
-    is determined. Be careful - the value can easily fall outside
-    acceptable bounds - these are tested during initialization.
-
-    Args:
-        ply_thickness (float or complex): The ply thickness.
-        props (MaterialProperties): The ply material property.
-        failure_criterion (OrthotropicPly.CompositeFailureCriterion): The failure criterion to use.
-          Defaults to ``OrthotropicPly.CompositeFailureCriterion.TSAI_WU_MODIFIED``.
-        max_strain_criterion (bool): Deprecated. Use ``failure_criterion=OrthotropicPly.CompositeFailureCriterion.MAX_STRAIN``.
-        tsai_wu_criterion (bool): Deprecated. Use ``failure_criterion=OrthotropicPly.CompositeFailureCriterion.TSAI_WU``.
-        Cuntze_criterion_UD (bool): Deprecated. Use ``failure_criterion=OrthotropicPly.CompositeFailureCriterion.CUNTZE_UD``.
-        Cuntze_criterion_Woven (bool): Deprecated. Use ``failure_criterion=OrthotropicPly.CompositeFailureCriterion.CUNTZE_WOVEN``.
-    """
-    CompositeFailureCriterion = CompositeFailureCriterion
 
 cdef class PlaneStressConstitutive(Constitutive):
     """
@@ -1118,7 +1111,7 @@ cdef class CompositeShellConstitutive(ShellConstitutive):
             raise MemoryError()
 
         for i in range(num_plies):
-            plys[i] = (<_OrthotropicPly>ply_list[i]).ptr
+            plys[i] = (<OrthotropicPly>ply_list[i]).ptr
 
         self.cptr = new TACSCompositeShellConstitutive(num_plies, plys,
                                                        <TacsScalar*>ply_thicknesses.data,
@@ -1410,8 +1403,8 @@ cdef class BladeStiffenedShellConstitutive(StiffenedShellConstitutive):
     """
     def __cinit__(
         self,
-        _OrthotropicPly panelPly,
-        _OrthotropicPly stiffenerPly,
+        OrthotropicPly panelPly,
+        OrthotropicPly stiffenerPly,
         TacsScalar panelLength,
         TacsScalar stiffenerPitch,
         TacsScalar panelThick,
@@ -1921,8 +1914,8 @@ cdef class GPBladeStiffenedShellConstitutive(StiffenedShellConstitutive):
 
     def __cinit__(
         self,
-        _OrthotropicPly panelPly,
-        _OrthotropicPly stiffenerPly,
+        OrthotropicPly panelPly,
+        OrthotropicPly stiffenerPly,
         TacsScalar panelLength,
         TacsScalar stiffenerPitch,
         TacsScalar panelThick,
@@ -2223,7 +2216,7 @@ cdef class SmearedCompositeShellConstitutive(ShellConstitutive):
             raise MemoryError()
 
         for i in range(num_plies):
-            plys[i] = (<_OrthotropicPly>ply_list[i]).ptr
+            plys[i] = (<OrthotropicPly>ply_list[i]).ptr
 
         self.cptr = new TACSSmearedCompositeShellConstitutive(num_plies, plys,
                                                               thickness, <TacsScalar*>ply_angles.data,
@@ -2345,7 +2338,7 @@ cdef class LamParamSmearedShellConstitutive(ShellConstitutive):
     kcorr : float, optional
         Shear correction factor. Default is 5.0/6.0.
     """
-    def __cinit__(self, _OrthotropicPly ply, **kwargs):
+    def __cinit__(self, OrthotropicPly ply, **kwargs):
         _check_constitutive_kwargs(
             self, LamParamSmearedShellConstitutive, kwargs,
             required_keys=["t"],
@@ -2462,7 +2455,7 @@ cdef class LamParamFullShellConstitutive(ShellConstitutive):
     cdef TACSLamParamFullShellConstitutive* lam_cptr
     def __cinit__(
             self,
-            _OrthotropicPly ply,
+            OrthotropicPly ply,
             TacsScalar t,
             int tNum,
             TacsScalar tlb,
