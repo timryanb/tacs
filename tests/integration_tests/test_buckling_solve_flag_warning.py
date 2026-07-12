@@ -71,14 +71,24 @@ class BucklingSolveFlagWarningTest(unittest.TestCase):
 
     def test_unreachable_tolerance_reports_non_convergence(self):
         """
-        numEigs=90 (not VALIDATION's num_eigs=10): confirmed during
+        numEigs=99 (not VALIDATION's num_eigs=10): confirmed during
         implementation that num_eigs in {5, 10, 50, 70} on this mesh
         converge cleanly even at tol=1e-30 within the default
-        max_lanczos=100 budget. Requesting 90 of the default 100-vector
-        budget does force a genuine non-convergence within the iteration
-        cap, without touching max_lanczos itself (not exposed by pytacs).
+        max_lanczos=100 budget. numEigs=90 was tried first and is *not*
+        robust: SEP::solve()'s starting vector is unseeded libc rand()
+        state (SEP::SEP()/Q[0]->setRand()), so its outcome depends on how
+        many prior rand() calls happened earlier in the same process --
+        num_eigs=90 converged when this file was run in isolation but
+        failed to converge (this test's intended RED/non-convergence case)
+        when run after other eigensolver tests in the same pytest session,
+        and vice versa in a complex-scalar build. Requesting num_eigs=99 --
+        one short of the default max_lanczos=100 budget, leaving essentially
+        no slack for the Krylov process to build a margin regardless of
+        its random starting vector -- forces a genuine, seed-independent
+        non-convergence within the iteration cap, without touching
+        max_lanczos itself (not exposed by pytacs).
         """
-        problem = self._make_buckling_problem(num_eigs=90)
+        problem = self._make_buckling_problem(num_eigs=99)
         problem.setOption("L2Convergence", 1e-30)
         problem.setOption("L2ConvergenceRel", 1e-30)
 
