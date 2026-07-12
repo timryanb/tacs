@@ -633,6 +633,56 @@ class GSEPThickRestartTest(unittest.TestCase):
                 f"rel={rel:.3e} (tol={tol:.0e})",
             )
 
+    def test_memory_bound_proxy_large_max_iters(self):
+        """
+        Task 5.4's memory-boundedness proxy test (SPEC lines 885-890):
+        not a direct memory measurement (not introspectable from Python
+        without new instrumentation, per SPEC) -- constructs with a large
+        max_iters (500) and a small restart_size (20, keep=min(19, 10)=10
+        for numEigs=5, giving headroom=10 per this file's "restart_size
+        headroom" finding) and confirms solve() completes correctly and
+        without a wall-clock cliff relative to a restart_size=0 run at the
+        *same* max_iters -- the restarted run's live basis is capped at
+        restart_size regardless of max_iters, so it should not scale up
+        with max_iters the way the unrestarted run's monolithic basis
+        does. This is a proxy for "the live basis never grows past
+        restart_size," not a literal memory measurement.
+        """
+        num_eigs = 5
+        max_iters = 500
+
+        t0 = time.time()
+        flag0, eigs0, _ = self._solve_and_extract(num_eigs, max_iters, 0)
+        dt0 = time.time() - t0
+
+        t1 = time.time()
+        flag1, eigs1, _ = self._solve_and_extract(num_eigs, max_iters, 20)
+        dt1 = time.time() - t1
+
+        self.assertEqual(flag0, 1)
+        self.assertEqual(flag1, 1)
+
+        for i in range(num_eigs):
+            rel = abs(eigs1[i] - eigs0[i]) / abs(eigs0[i])
+            self.assertLess(
+                rel,
+                1e-11,
+                msg=f"idx{i}: legacy={eigs0[i]!r} restarted={eigs1[i]!r} rel={rel:.3e}",
+            )
+
+        # Proxy for "restart_size bounds the live basis independent of
+        # max_iters": the restarted run must not be dramatically slower
+        # than the unrestarted run even though both share the same
+        # max_iters=500 budget (generous multiplicative margin for
+        # run-to-run timing noise on this small mesh, mirroring the
+        # stress-case test's approach).
+        self.assertLess(
+            dt1,
+            5.0 * dt0 + 1.0,
+            msg=f"restarted solve took {dt1:.4f}s vs unrestarted {dt0:.4f}s "
+            "-- unexpected wall-clock cliff",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

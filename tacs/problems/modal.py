@@ -17,6 +17,60 @@ import numpy as np
 import tacs.TACS
 from tacs.problems.base import TACSProblem
 
+# Hard-coded max_lanczos budget for the raw FrequencyAnalysis/BucklingAnalysis
+# Lanczos constructors -- pyTACS has never exposed this as a user option
+# (VALIDATION/HANDOFF-impl.md: "pytacs's hard-coded max_lanczos=100"); kept
+# as an explicit module constant here (SPEC Item 5) so the thick-restart
+# default-size resolution below can reference the same value the
+# constructor call itself uses, rather than relying on the Cython
+# constructor's own default staying in sync with this module.
+_MAX_LANCZOS = 100
+
+
+def _resolveLanczosRestartSize(
+    num_eigs, max_lanczos, use_thick_restart, requested_size
+):
+    """
+    Resolve the raw restart_size to pass to SEP's constructor (via
+    FrequencyAnalysis/BucklingAnalysis) from pyTACS's
+    useThickRestartLanczos/lanczosRestartSize options (SPEC Item 5).
+
+    Returns 0 (disabled, byte-for-byte legacy behavior) unless
+    use_thick_restart is True. Raises ValueError proactively (Item 1's
+    guard, applied before construction) if the resolved value would not
+    exceed num_eigs.
+    """
+    if not use_thick_restart:
+        return 0
+
+    if requested_size > 0:
+        restart_size = requested_size
+    else:
+        # SPEC's own safe-default formula is
+        # `max(2*num_eigs, min(30, max_lanczos-1))`, clamped below
+        # max_lanczos. Used verbatim, this gives *zero* headroom between
+        # the restart's `keep` count and the live-basis cap whenever
+        # `2*num_eigs` is the binding term (restart_size - 1 == 2*num_eigs
+        # is the smallest value keeping keep=2*num_eigs) -- confirmed
+        # during this feature's own verification
+        # (test_gsep_thick_restart_agreement.py's module docstring,
+        # "restart_size headroom" section) to be a measurably riskier
+        # configuration (a rare Ritz-value-instability failure, not just
+        # reduced precision) than adding a modest buffer of extra
+        # iterations between restarts. This default therefore adds
+        # `headroom` beyond SPEC's literal formula -- a deliberate,
+        # evidence-based deviation, not an arbitrary embellishment.
+        headroom = max(5, num_eigs // 2)
+        base = max(2 * num_eigs, min(30, max_lanczos - 1))
+        restart_size = min(base + headroom, max_lanczos - 1)
+
+    if restart_size <= num_eigs:
+        raise ValueError(
+            f"lanczosRestartSize ({restart_size}) must be greater than "
+            f"numEigs ({num_eigs}) when useThickRestartLanczos is enabled."
+        )
+    return restart_size
+
 
 class ModalProblem(TACSProblem):
     # Default Option List
@@ -53,6 +107,19 @@ class ModalProblem(TACSProblem):
             int,
             15,
             "Max number of resets for Krylov solver used by Eigenvalue solver.",
+        ],
+        "useThickRestartLanczos": [
+            bool,
+            False,
+            "Enable bounded-memory thick-restart Lanczos instead of the "
+            "default monolithic Krylov space.",
+        ],
+        "lanczosRestartSize": [
+            int,
+            0,
+            "Basis size at which a thick restart is triggered. Must be > "
+            "numEigs if useThickRestartLanczos is set; 0 (default) means "
+            "'pick a safe default automatically'.",
         ],
         # Output Options
         "writeSolution": [bool, True, "Flag for suppressing all f5 file writing."],
@@ -170,6 +237,16 @@ class ModalProblem(TACSProblem):
         atol = self.getOption("L2Convergence")
         rtol = self.getOption("L2ConvergenceRel")
 
+        # Thick-restart Lanczos (SPEC Item 5): restart_size=0 (the default,
+        # useThickRestartLanczos=False) reproduces today's behavior
+        # byte-for-byte -- no existing caller opts in, so this is a
+        # zero-behavior-change addition.
+        use_thick_restart = self.getOption("useThickRestartLanczos")
+        requested_restart_size = self.getOption("lanczosRestartSize")
+        restart_size = _resolveLanczosRestartSize(
+            self.numEigs, _MAX_LANCZOS, use_thick_restart, requested_restart_size
+        )
+
         # Create the frequency analysis object
         self.freqSolver = tacs.TACS.FrequencyAnalysis(
             self.assembler,
@@ -177,10 +254,12 @@ class ModalProblem(TACSProblem):
             self.M,
             self.K,
             self.gmres,
+            max_lanczos=_MAX_LANCZOS,
             num_eigs=self.numEigs,
             eig_tol=atol,
             eig_atol=atol,
             eig_rtol=rtol,
+            restart_size=restart_size,
         )
 
     def _initializeFunctionList(self):

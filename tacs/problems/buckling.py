@@ -16,6 +16,7 @@ import numpy as np
 
 import tacs.TACS
 from .base import TACSProblem
+from .modal import _MAX_LANCZOS, _resolveLanczosRestartSize
 
 
 class BucklingProblem(TACSProblem):
@@ -53,6 +54,19 @@ class BucklingProblem(TACSProblem):
             int,
             15,
             "Max number of resets for Krylov solver used by Eigenvalue solver.",
+        ],
+        "useThickRestartLanczos": [
+            bool,
+            False,
+            "Enable bounded-memory thick-restart Lanczos instead of the "
+            "default monolithic Krylov space.",
+        ],
+        "lanczosRestartSize": [
+            int,
+            0,
+            "Basis size at which a thick restart is triggered. Must be > "
+            "numEigs if useThickRestartLanczos is set; 0 (default) means "
+            "'pick a safe default automatically'.",
         ],
         # Output Options
         "writeSolution": [bool, True, "Flag for suppressing all f5 file writing."],
@@ -186,6 +200,19 @@ class BucklingProblem(TACSProblem):
         self.gmres = tacs.TACS.KSM(self.aux, self.pc, subspace, restarts)
         self.gmres.setTolerances(rtol, atol)
 
+        # Thick-restart Lanczos (SPEC Item 5): restart_size=0 (the default,
+        # useThickRestartLanczos=False) reproduces today's behavior
+        # byte-for-byte -- no existing caller opts in, so this is a
+        # zero-behavior-change addition. See modal.py's
+        # _resolveLanczosRestartSize for the shared resolution logic
+        # ("thick-restart benefits any Lanczos consumer, not just modal",
+        # SPEC line 754).
+        use_thick_restart = self.getOption("useThickRestartLanczos")
+        requested_restart_size = self.getOption("lanczosRestartSize")
+        restart_size = _resolveLanczosRestartSize(
+            self.numEigs, _MAX_LANCZOS, use_thick_restart, requested_restart_size
+        )
+
         # Create the buckling analysis object
         self.buckleSolver = tacs.TACS.BucklingAnalysis(
             self.assembler,
@@ -193,8 +220,10 @@ class BucklingProblem(TACSProblem):
             self.G,
             self.K,
             self.gmres,
+            max_lanczos=_MAX_LANCZOS,
             num_eigs=self.numEigs,
             eig_tol=rtol,
+            restart_size=restart_size,
         )
 
     def _initializeFunctionList(self):
