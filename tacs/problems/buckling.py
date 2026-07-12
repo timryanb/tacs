@@ -59,7 +59,14 @@ class BucklingProblem(TACSProblem):
             bool,
             False,
             "Enable bounded-memory thick-restart Lanczos instead of the "
-            "default monolithic Krylov space.",
+            "default monolithic Krylov space. KNOWN ISSUE: at this problem-"
+            "class level (not the raw SEP/FrequencyAnalysis solver, which is "
+            "extensively verified), an unresolved rare failure mode has been "
+            "observed that can silently omit a converged eigenvalue -- see "
+            "test_modal_thick_restart_option.py's module docstring and "
+            "HANDOFF-impl.md's 'Open follow-up' section for the full "
+            "characterization. Verify results independently before relying "
+            "on this option for production use.",
         ],
         "lanczosRestartSize": [
             int,
