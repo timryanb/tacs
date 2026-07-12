@@ -387,7 +387,7 @@ static void ComputeEigsTriDiag(int n, TacsScalar *_diag, TacsScalar *_upper,
   ortho_type:  the type of orthogonalization to use FULL or LOCAL
 */
 SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
-         TACSBcMap *_bcs) {
+         TACSBcMap *_bcs, int _restart_size) {
   // Store the pointer to the eigenproblem operator
   Op = _Op;
   Op->incref();
@@ -401,27 +401,50 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
   // Store the information about the subspace vectors
   max_iters = _max_iters;
   ortho_type = _ortho_type;
-  Q = new TACSVec *[max_iters + 1];
+
+  // Thick-restart Lanczos (SPEC Item 5): restart_size <= 0 or
+  // restart_size >= max_iters means "disabled" -- alloc_size == max_iters,
+  // byte-for-byte the same allocation as before this feature. Otherwise
+  // the live basis never grows past restart_size vectors, so allocation
+  // (and therefore memory use, acceptance criterion 1) is bounded by
+  // restart_size independent of max_iters/numEigs.
+  //
+  // Restart only ever applies to the FULL-orthogonalization branch of
+  // solve() (SPEC: "Applies only to the FULL-orthogonalization branch");
+  // LOCAL falls back to today's unrestarted, verbatim max_iters-sized loop.
+  // Tying the allocation decision to the *constructor's* ortho_type keeps
+  // that fallback correct at the allocation level, not just the loop-bound
+  // level: a LOCAL-constructed SEP with restart_size > 0 allocates exactly
+  // as it always has. (A later setOrthoType() call switching between
+  // LOCAL/FULL after construction does not retroactively resize this
+  // allocation; no caller in this codebase does that.)
+  restart_size = _restart_size;
+  alloc_size =
+      (restart_size > 0 && restart_size < max_iters && ortho_type == FULL)
+          ? restart_size
+          : max_iters;
+
+  Q = new TACSVec *[alloc_size + 1];
 
   // The coefficients of the Lanczos tridiagonal system
-  Alpha = new TacsScalar[max_iters];
-  Beta = new TacsScalar[max_iters];
+  Alpha = new TacsScalar[alloc_size];
+  Beta = new TacsScalar[alloc_size];
 
   // The eigenvalues and eigenvectors of the tridiagonal system
-  eigs = new TacsScalar[max_iters];
-  eigvecs = new TacsScalar[max_iters * max_iters];
+  eigs = new TacsScalar[alloc_size];
+  eigvecs = new TacsScalar[alloc_size * alloc_size];
 
   // Permutation of the order of the eigenvalues
-  perm = new int[max_iters];
+  perm = new int[alloc_size];
 
   // Defense-in-depth (VALIDATION Decision 3): the neigs_computed guard is
   // what actually prevents an out-of-bounds read, but zero-initializing
   // here ensures that any future code path that slips past the entry guard
   // in solve() reads deterministic zeros/-1 rather than arbitrary heap
   // contents.
-  memset(eigs, 0, max_iters * sizeof(TacsScalar));
-  memset(eigvecs, 0, max_iters * max_iters * sizeof(TacsScalar));
-  for (int i = 0; i < max_iters; i++) {
+  memset(eigs, 0, alloc_size * sizeof(TacsScalar));
+  memset(eigvecs, 0, alloc_size * alloc_size * sizeof(TacsScalar));
+  for (int i = 0; i < alloc_size; i++) {
     perm[i] = -1;
   }
 
@@ -433,7 +456,7 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
   neigs_computed = 0;
 
   // Create the vectors required for the Lanczos subspace
-  for (int i = 0; i < max_iters + 1; i++) {
+  for (int i = 0; i < alloc_size + 1; i++) {
     Q[i] = Op->createVec();
     Q[i]->incref();
   }
@@ -444,7 +467,7 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
 */
 SEP::~SEP() {
   Op->decref();
-  for (int i = 0; i < max_iters + 1; i++) {
+  for (int i = 0; i < alloc_size + 1; i++) {
     Q[i]->decref();
   }
   delete[] Q;
@@ -475,6 +498,22 @@ void SEP::setTolerances(double _tol, enum EigenSpectrum _spectrum,
   spectrum = _spectrum;
   neigvals = _neigvals;
 }
+
+/*
+  Set the thick-restart basis size (SPEC Item 5).
+
+  Note: this does not reallocate Q/Alpha/Beta/eigs/eigvecs/perm -- those
+  are sized once at construction time off whatever restart_size was passed
+  to the constructor. Calling this after construction only takes effect if
+  the new value still fits within the already-allocated alloc_size (i.e.
+  it can only disable/shrink an already-enabled restart, or re-enable one
+  up to the originally-constructed bound); it cannot grow the allocation.
+  Primarily provided so callers that already have a constructed SEP (e.g.
+  via the .pxd/.pyx layer, where the constructor's own optional argument
+  is enough for every real use case) have a documented setter alongside
+  setOrthoType/setTolerances, per SPEC's interface list.
+*/
+void SEP::setRestartSize(int _restart_size) { restart_size = _restart_size; }
 
 /*
   Reset the underlying operator
@@ -564,8 +603,19 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
     }
   } else {
     // Perform a full orthogonalization using modified Gram-Schmidt
+    //
+    // NOTE (Task 5.1 interim state): this loop is bounded by alloc_size,
+    // not max_iters, so that it never writes past the arrays sized in the
+    // constructor above (alloc_size < max_iters exactly when thick restart
+    // is active). Task 5.2 replaces this hard stop at alloc_size with the
+    // actual Wu & Simon thick-restart procedure (rebuild a smaller basis
+    // and keep going, up to the real max_iters budget via a new
+    // total_iters counter); until then, a restart-enabled solve() simply
+    // stops (same as legacy max_iters exhaustion) once the live basis
+    // reaches restart_size, which is safe but not yet the intended
+    // restart behavior.
     int i = 0;
-    for (; i < max_iters; i++) {
+    for (; i < alloc_size; i++) {
       // Compute the new vector using the provided operator
       Op->mult(Q[i], Q[i + 1]);
       if (bcs) {
@@ -597,8 +647,8 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
 
     // Readjust the number of iterations if the max iterations
     // has been reached.
-    if (i == max_iters) {
-      niters = max_iters;
+    if (i == alloc_size) {
+      niters = alloc_size;
     }
   }
 

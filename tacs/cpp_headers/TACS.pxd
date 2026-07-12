@@ -451,8 +451,9 @@ cdef extern from "GSEP.h":
         EPGeneralizedShiftInvert(TacsScalar, TACSKsm*, TACSMat*)
 
     cdef cppclass SEP(TACSObject):
-        SEP(EPOperator*, int, OrthoType, TACSBcMap*)
+        SEP(EPOperator*, int, OrthoType, TACSBcMap*, int)
         void setTolerances(double, EigenSpectrum, int)
+        void setRestartSize(int)
         int solve(KSMPrint*, KSMPrint*)
         TacsScalar extractEigenvalue(int, TacsScalar*)
         TacsScalar extractEigenvector(int, TACSBVec*, TacsScalar*)

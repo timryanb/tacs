@@ -1539,8 +1539,14 @@ cdef class EPGeneralizedShiftInvertOp(EPOp):
 cdef class SEPsolver:
     cdef SEP *ptr
     def __cinit__(self, EPOp op, int max_iters,
-                  OrthoType otype, BcMap bcs):
-        self.ptr = new SEP(op.ptr, max_iters, otype, bcs.ptr)
+                  OrthoType otype, BcMap bcs, int restart_size=0):
+        """
+        Args:
+            restart_size (int): thick-restart Lanczos basis size (SPEC
+                Item 5). 0 (default) disables thick restart and reproduces
+                today's monolithic single-Krylov-space path exactly.
+        """
+        self.ptr = new SEP(op.ptr, max_iters, otype, bcs.ptr, restart_size)
         self.ptr.incref()
         return
 
@@ -1556,6 +1562,17 @@ cdef class SEPsolver:
         the number of eigenvalues to solve
         """
         self.ptr.setTolerances(tol, spectrum, neigvals)
+        return
+
+    def setRestartSize(self, int restart_size):
+        """
+        Set the thick-restart Lanczos basis size (SPEC Item 5). 0 disables
+        thick restart. See the constructor's restart_size argument for
+        details -- this setter cannot grow the allocation made at
+        construction time, only disable/shrink or re-enable it up to that
+        originally-constructed bound.
+        """
+        self.ptr.setRestartSize(restart_size)
         return
 
     def solve(self, MPI.Comm comm, print_flag=False, int freq=1):

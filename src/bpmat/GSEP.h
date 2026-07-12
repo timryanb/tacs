@@ -186,7 +186,7 @@ class SEP : public TACSObject {
   };
 
   SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type = FULL,
-      TACSBcMap *_bcs = NULL);
+      TACSBcMap *_bcs = NULL, int _restart_size = 0);
   ~SEP();
 
   // Set the orthogonalization strategy
@@ -197,6 +197,13 @@ class SEP : public TACSObject {
 
   // Reset the eigenproblem operator
   void setOperator(EPOperator *_Op);
+
+  // Set the thick-restart basis size (SPEC Item 5). 0 (the default)
+  // disables thick restart entirely and reproduces today's monolithic
+  // single-Krylov-space path byte-for-byte; a value in (0, max_iters)
+  // bounds the live Lanczos basis at _restart_size vectors, restarting via
+  // the Wu & Simon (2000) thick-restart procedure once it is reached.
+  void setRestartSize(int _restart_size);
 
   // Solve the eigenproblem. Returns a solve_flag: 1 if converged, 0 if it
   // ran without full convergence (or produced a non-finite eigenvalue),
@@ -236,6 +243,18 @@ class SEP : public TACSObject {
   // nonzero even when the misconfiguration guard in solve() causes no
   // eigenvalues to be computed at all.
   int neigs_computed;
+
+  // Thick-restart basis size (SPEC Item 5): 0 disables thick restart
+  // (legacy path); a positive value <= max_iters bounds the live Lanczos
+  // basis, triggering a restart once it is reached.
+  int restart_size;
+
+  // The number of vectors actually allocated in Q/Alpha/Beta/eigs/eigvecs/
+  // perm below (restart_size when thick restart is active, max_iters
+  // otherwise) -- distinct from max_iters, which continues to mean "give
+  // up after this many total Lanczos steps" (SPEC lines 812-816) even when
+  // thick restart bounds the *live* basis to something smaller.
+  int alloc_size;
 
   // The coefficients of the symmetric tridiagonal matrix
   TacsScalar *Alpha, *Beta;
