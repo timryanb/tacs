@@ -702,6 +702,14 @@ class BucklingProblem(TACSProblem):
         u0 : tacs.TACS.Vec or numpy.ndarray, optional
             Distributed array containing additional loads (ex. aerodynamic forces for aerostructural coupling)
             to applied to RHS of the static problem. Alternate to Fext.
+
+        Returns
+        -------
+        success : bool
+            True if the eigenvalue solver fully converged, False otherwise
+            (either it ran without full convergence, produced a non-finite
+            eigenvalue, or was misconfigured -- a warning is issued in
+            either failure case).
         """
         startTime = time.time()
 
@@ -740,9 +748,28 @@ class BucklingProblem(TACSProblem):
         initSolveTime = time.time()
 
         # Solve the buckling analysis problem
-        self.buckleSolver.solve(
+        success = self.buckleSolver.solve(
             force=force, path=path, print_flag=self.getOption("printLevel")
         )
+
+        if success != 1:
+            if success == -1:
+                self._TACSWarning(
+                    "Eigenvalue solver was misconfigured: requested "
+                    f"numEigs={self.numEigs} exceeds the solver's "
+                    "iteration/subspace budget. No eigenvalues were "
+                    "computed. Increase `max_lanczos` or reduce `numEigs`."
+                )
+            else:
+                self._TACSWarning(
+                    "Eigenvalue solver failed to converge (or produced a "
+                    "non-finite eigenvalue) for one or more of the "
+                    f"requested numEigs={self.numEigs} modes. Results may "
+                    "be inaccurate. Consider increasing the Lanczos "
+                    "subspace size, adjusting `sigma`, or "
+                    "loosening/tightening `L2Convergence`/"
+                    "`L2ConvergenceRel`."
+                )
 
         # Save state vars
         self.assembler.getVariables(self.u0)
@@ -774,7 +801,7 @@ class BucklingProblem(TACSProblem):
             )
             self._pp("+--------------------------------------------------+")
 
-        return
+        return bool(success == 1)
 
     def getVariables(self, index, states=None):
         """
