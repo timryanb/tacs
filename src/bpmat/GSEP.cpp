@@ -567,6 +567,16 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
   int converged_early = 0;
 
   if (ortho_type == LOCAL) {
+    // Thick restart (SPEC Item 5) only applies to the FULL-orthogonalization
+    // branch -- LOCAL falls back to today's unrestarted loop verbatim, with
+    // one informational message (not a silent ignore).
+    if (restart_size > 0) {
+      fprintf(stderr,
+              "SEP::solve(): thick restart is only implemented for FULL "
+              "reorthogonalization; ignoring restart_size and using the "
+              "unrestarted LOCAL path\n");
+    }
+
     // Only local orthogonalization is utilized. This code does not
     // orthogonalize the vector against previous vectors.
     int i = 0;

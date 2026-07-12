@@ -10,15 +10,29 @@ construction pattern already used by
 directory and is never committed, so this file builds its own copy of the
 same construction).
 
-Task 5.1 (this file's first test): a minimal smoke test that a
+Task 5.1 (this file's first two tests): a minimal smoke test that a
 ``restart_size``-enabled ``SEP`` completes ``solve()`` without error/crash
 and reports a finite ``checkOrthogonality()`` -- confirms the allocation
 change (GSEP.h/.cpp) and the new .pxd/.pyx plumbing work end-to-end. This
-does NOT assert eigenvalue accuracy -- that is Task 5.3's job, once Task
-5.2's restart math is implemented; at the Task 5.1 stage, a restart-enabled
-solve may not fully converge (an interim, documented limitation, see
-GSEP.cpp's Task 5.2 placeholder comment), it must simply not crash or
-corrupt memory.
+does NOT assert eigenvalue accuracy -- that is Task 5.3's job.
+
+Task 5.2's LOCAL-branch fallback (this file's third test): ``ortho_type ==
+LOCAL`` with ``restart_size > 0`` must fall back to the unrestarted LOCAL
+path verbatim (SPEC lines 774-781), not attempt a restart.
+
+Honest checkpoint (see HANDOFF-impl.md, "Item 5 Task 5.2/5.3" section): the
+FULL-branch restart math (Wu & Simon 2000's actual restart continuation)
+is NOT implemented as of this commit. A restart-enabled FULL-orthogonalization
+solve() currently just stops (gracefully, reporting solve_flag=0, never a
+false positive) once the live basis reaches restart_size, per GSEP.cpp's
+own documented interim-safety comment -- this is intentional and verified
+memory-safe, not a bug. Task 5.3's actual machine-precision agreement test
+is deferred to a future session per the honest-checkpoint instruction in
+PLAN.md's Item 5 preamble; see HANDOFF-impl.md for the precise root-cause
+diagnosis (a naive sequential Givens-rotation reduction of the restart's
+diagonal-plus-rank-one "arrowhead" matrix to tridiagonal form is
+insufficient for more than 2 retained Ritz vectors -- it requires genuine
+iterative bulge-chasing, confirmed via an isolated numpy reproduction).
 """
 
 import math
@@ -129,6 +143,35 @@ class GSEPThickRestartTest(unittest.TestCase):
         for i in range(num_eigs):
             eig, err = sep.extractEigenvalue(i)
             self.assertNotEqual(err, -1.0)
+
+    def test_local_ortho_ignores_restart_size(self):
+        """
+        Task 5.2's LOCAL-branch fallback: ortho_type=LOCAL with
+        restart_size > 0 must solve identically to restart_size=0 (the
+        unrestarted LOCAL path used verbatim, per SPEC lines 774-781), not
+        attempt a restart -- confirmed here by requiring both to reach the
+        same solve_flag and agree on every requested eigenvalue to machine
+        precision, since a LOCAL solve's random start vector is the only
+        other source of run-to-run variation and this test uses num_eigs=1
+        to sidestep any degenerate-pair ordering sensitivity in that path.
+        """
+        num_eigs = 1
+        max_iters = 100
+
+        sep_norestart, comm = self._make_sep(
+            num_eigs, max_iters, restart_size=0, ortho_type=TACS.SEP_LOCAL
+        )
+        flag_norestart = sep_norestart.solve(comm, print_flag=False)
+
+        sep_restart, comm = self._make_sep(
+            num_eigs, max_iters, restart_size=15, ortho_type=TACS.SEP_LOCAL
+        )
+        flag_restart = sep_restart.solve(comm, print_flag=False)
+
+        self.assertEqual(flag_norestart, flag_restart)
+        eig0, _ = sep_norestart.extractEigenvalue(0)
+        eig1, _ = sep_restart.extractEigenvalue(0)
+        self.assertAlmostEqual(eig0, eig1, delta=1e-6 * abs(eig0))
 
 
 if __name__ == "__main__":
