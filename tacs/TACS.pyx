@@ -3221,6 +3221,15 @@ cdef class MeshLoader:
 
 cdef class FrequencyAnalysis:
     cdef TACSFrequencyAnalysis *ptr
+    # NOTE (tolerance-default hygiene, SPEC Item 4): eig_tol's default
+    # (1e-6) below is applied uniformly to both the Lanczos and
+    # Jacobi-Davidson branches constructed in this method, and differs
+    # from the JD-overload C++ constructor's own native default
+    # (TACSBuckling.h, eigtol=1e-9). A caller of the JD branch who relies
+    # on library defaults rather than passing eig_tol explicitly gets an
+    # effective default of 1e-6, not 1e-9 -- documentation-only, no
+    # behavior change (both known real callers, tacs/problems/modal.py and
+    # examples/crm/crm_frequency.py, already pass eig_tol explicitly).
     def __cinit__(self, Assembler assembler, TacsScalar sigma,
                   Mat M, Mat K, KSM solver, int max_lanczos=100,
                   int num_eigs=5, double eig_tol=1e-6, double eig_rtol=1e-9,

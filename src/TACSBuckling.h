@@ -132,6 +132,12 @@ class TACSFrequencyAnalysis : public TACSObject {
                         TACSMat *_mmat, TACSMat *_kmat, TACSKsm *_solver,
                         int max_lanczos, int num_eigvals, double _eig_tol);
 
+  // NOTE (tolerance-default hygiene, SPEC Item 4): this overload's own
+  // eigtol=1e-9 default is unreachable through the Cython binding, which
+  // always supplies an explicit eig_tol value (tacs/TACS.pyx's
+  // FrequencyAnalysis.__cinit__, default 1e-6, applied uniformly to both
+  // the Lanczos and Jacobi-Davidson branches) -- it only matters to a
+  // direct C++ caller of this constructor overload who omits the argument.
   TACSFrequencyAnalysis(TACSAssembler *_assembler, TacsScalar _sigma,
                         TACSMat *_mmat, TACSMat *_kmat, TACSMat *_pcmat,
                         TACSPc *_pc, int max_jd_size, int fgmres_size,
