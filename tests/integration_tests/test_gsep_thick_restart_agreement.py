@@ -331,6 +331,39 @@ class GSEPThickRestartTest(unittest.TestCase):
         specific error -- see this file's module docstring) and that
         checkOrthogonality() stays at the same ~1e-12 order VALIDATION
         Claim 7 measured for the unrestarted path.
+
+        Near-degenerate pairs (found during a later bug-hunt session, see
+        HANDOFF-impl.md's "Open follow-up" elimination table) get the same
+        widened tolerance test_degenerate_pair_survives_restart already
+        applies at numEigs=20: plate.bdf's spectrum at numEigs=10 contains
+        an extremely tight pair at rank 7/8 (0-indexed 6/7, ~1.3e-13
+        relative gap -- tighter than the already-documented modes-1/2 pair,
+        ~1e-12) that this test's own construction pattern (build+solve one
+        SEP, then build+solve the next, immediately) had never actually
+        stress-tested against a genuinely independent starting vector: both
+        legs' Q[0] draws come from the process's shared, unseeded rand()
+        stream, reseeded via time(NULL) (1-second resolution) once per
+        assembler at construction; because this whole test completes in a
+        small fraction of a second, both legs' reseed calls almost always
+        collide on the identical integer-second seed, making their Q[0]
+        draws deterministically correlated (often ~identical) rather than
+        independent. Decorrelating them (confirmed via an out-of-band
+        repeated-trial experiment during the bug hunt, not included here to
+        avoid persistently perturbing this test's own RNG state) exposes a
+        real, ~10-30% rate of borderline (1e-11 to 1e-8) disagreement at
+        this specific pair -- a genuine eigenvector-rotation-within-the-
+        degenerate-subspace effect, not a restart-specific error -- plus a
+        much rarer (~1/40-1/60) genuine lost-eigenvalue failure matching
+        the already-documented, already out-of-scope Ritz-instability (this
+        file's "restart_size headroom" section). Widening tolerance here
+        closes the former (a latent false-positive-flakiness risk in this
+        test, even though it has not been observed under this test's own
+        default correlated-Q[0] construction pattern); the latter remains
+        out of scope (would need Ritz-pair locking) and is unaffected by
+        this change -- a genuinely lost eigenvalue is still a hard functional
+        mismatch (typically 30%+ relative error, not a borderline
+        precision excursion) that the widened tolerance below would not
+        mask.
         """
         num_eigs = 10
         max_iters = 300
@@ -343,12 +376,17 @@ class GSEPThickRestartTest(unittest.TestCase):
         self.assertLess(float(abs(ortho0)), 1e-9)
         self.assertLess(float(abs(ortho1)), 1e-9)
 
+        pair_indices = self._near_degenerate_indices(eigs0)
+
         for i in range(num_eigs):
             rel = abs(eigs1[i] - eigs0[i]) / abs(eigs0[i])
+            tol = 1e-8 if i in pair_indices else 1e-11
             self.assertLess(
                 rel,
-                1e-11,
-                msg=f"idx{i}: legacy={eigs0[i]!r} restarted={eigs1[i]!r} rel={rel:.3e}",
+                tol,
+                msg=f"idx{i}{' (near-degenerate pair)' if i in pair_indices else ''}: "
+                f"legacy={eigs0[i]!r} restarted={eigs1[i]!r} rel={rel:.3e} "
+                f"(tol={tol:.0e})",
             )
 
     def test_degenerate_pair_survives_restart(self):
