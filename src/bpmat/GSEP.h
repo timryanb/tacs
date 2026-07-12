@@ -201,12 +201,19 @@ class SEP : public TACSObject {
   // Set the thick-restart basis size (SPEC Item 5). 0 (the default)
   // disables thick restart entirely and reproduces today's monolithic
   // single-Krylov-space path byte-for-byte; a value in (0, max_iters)
-  // bounds the live Lanczos basis at _restart_size vectors. NOTE: the Wu &
-  // Simon (2000) restart procedure itself is not yet implemented for the
-  // FULL-orthogonalization branch (see GSEP.cpp's solve()) -- reaching
-  // the bound currently just stops the solve gracefully (solve_flag=0),
-  // and calling this setter after construction has no effect on that
-  // branch's behavior (see GSEP.cpp's SEP::setRestartSize docstring).
+  // bounds the live Lanczos basis at _restart_size vectors, triggering the
+  // Wu & Simon (2000) restart procedure once the FULL-orthogonalization
+  // basis reaches it (LOCAL falls back to the unrestarted path, see
+  // GSEP.cpp's solve()). NOTE: this setter does NOT reallocate
+  // Q/Alpha/Beta/Sigma/eigs/eigvecs/perm -- those remain sized off
+  // alloc_size, frozen at construction from whichever restart_size was
+  // passed to the constructor. Calling this setter after construction only
+  // changes the mutable restart_size member read by the LOCAL-branch
+  // fallback-message condition and has no effect on a FULL-orthogonalization
+  // solve()'s restart trigger, which reads the frozen use_thick_restart/
+  // alloc_size decision made at construction time (see GSEP.cpp's
+  // SEP::setRestartSize docstring). Prefer passing restart_size directly to
+  // the constructor.
   void setRestartSize(int _restart_size);
 
   // Solve the eigenproblem. Returns a solve_flag: 1 if converged, 0 if it
@@ -260,8 +267,39 @@ class SEP : public TACSObject {
   // thick restart bounds the *live* basis to something smaller.
   int alloc_size;
 
-  // The coefficients of the symmetric tridiagonal matrix
+  // Frozen at construction time (SPEC: "applies only to the
+  // FULL-orthogonalization branch"): true iff restart_size > 0,
+  // restart_size < max_iters, and ortho_type == FULL was true at
+  // construction. Determines both alloc_size (above) and which reduced-
+  // eigenproblem routine solve()/checkConverged() dispatch to
+  // (ComputeEigsDense when true, ComputeEigsTriDiag when false) --
+  // computed once so a later setOrthoType() call cannot desynchronize the
+  // allocation decision from the solve-time dispatch decision.
+  int use_thick_restart;
+
+  // The number of Ritz vectors retained by the most recent thick restart
+  // (Wu & Simon 2000); 0 until the first restart happens. Together with
+  // Sigma[] below, this describes the "arrowhead" border a restart
+  // introduces into the otherwise-tridiagonal reduced matrix: entries
+  // [0, restart_keep) of the live basis are mutually decoupled (pure
+  // diagonal, in their own Ritz eigenbasis) except for a coupling to
+  // column/row `restart_keep` carried in Sigma[0..restart_keep). The
+  // standard tridiagonal chain (Alpha[i]/Beta[i]) resumes from index
+  // restart_keep onward.
+  int restart_keep;
+
+  // The coefficients of the symmetric tridiagonal matrix. After a thick
+  // restart, Alpha[0..restart_keep) hold the retained Ritz values (SPEC
+  // step 4) rather than fresh Lanczos diagonal entries; Beta[i] for
+  // i < restart_keep - 1 is stale/unused (superseded by Sigma) once a
+  // restart has occurred.
   TacsScalar *Alpha, *Beta;
+
+  // Thick-restart arrowhead coupling coefficients (SPEC step 4): Sigma[j]
+  // for j in [0, restart_keep) is the coupling between retained Ritz
+  // vector j and the fresh Lanczos vector that continues the basis at
+  // index restart_keep. Unused (NULL) unless use_thick_restart is true.
+  TacsScalar *Sigma;
 
   // Eigenvalues/eigenvectors of the tridiagonal matrix
   TacsScalar *eigs, *eigvecs;

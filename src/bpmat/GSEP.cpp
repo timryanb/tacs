@@ -371,6 +371,128 @@ static void ComputeEigsTriDiag(int n, TacsScalar *_diag, TacsScalar *_upper,
 }
 
 /*
+  Compute the eigenvalues and eigenvectors of the dense symmetric matrix
+  produced once thick restart (SPEC Item 5, Wu & Simon 2000) is active.
+
+  Before any restart has occurred (keep == 0) this matrix is exactly the
+  same tridiagonal matrix ComputeEigsTriDiag above consumes -- diagonal
+  Alpha[0..n-1], off-diagonal Beta[0..n-2] -- just solved with a dense
+  (rather than tridiagonal-specialized) LAPACK routine. After a restart,
+  entries [0, keep) are mutually decoupled (diagonal, in their own Ritz
+  eigenbasis) except for a border coupling to column/row `keep` carried in
+  Sigma[0..keep-1] (the classical thick-restart "arrowhead"); the standard
+  tridiagonal chain resumes from index keep onward via Alpha[keep..n-1]/
+  Beta[keep..n-2]. A small dense solve (LAPACK dsyev, O(n^3)) is used
+  instead of a specialized banded/arrowhead routine because n is bounded by
+  restart_size (tens, not thousands, by this feature's own design) --
+  see HANDOFF-impl.md for why a hand-rolled tridiagonalizing bulge-chase of
+  the arrowhead structure was rejected (verified, via an independent numpy
+  reproduction, to silently diverge for keep >= 3 retained Ritz vectors).
+
+  input:
+  n:      the order of the matrix (current live basis size)
+  keep:   0 if no restart has occurred yet (pure tridiagonal); otherwise
+          the number of retained Ritz vectors bordering column/row `keep`
+  Alpha:  the diagonal entries (post-restart: retained Ritz values for
+          indices < keep, fresh Lanczos diagonal entries for indices >=
+          keep)
+  Beta:   the tridiagonal chain's off-diagonal entries, meaningful for
+          indices >= keep (indices < keep - 1 are stale, superseded by
+          Sigma)
+  Sigma:  the arrowhead border coupling coefficients, meaningful for
+          indices [0, keep)
+
+  output:
+  eigs:     the eigenvalues computed using LAPACK, ascending order
+  eigvecs:  the eigenvectors computed using LAPACK
+*/
+static void ComputeEigsDense(int n, int keep, TacsScalar *Alpha,
+                             TacsScalar *Beta, TacsScalar *Sigma,
+                             TacsScalar *_eigs, TacsScalar *_eigvecs) {
+  // Assemble the dense n x n symmetric matrix. Stored as a flat
+  // row-major-or-column-major-ambiguous buffer -- since the matrix is
+  // filled symmetrically (both mat[i*n+j] and mat[j*n+i] are set whenever
+  // either is nonzero) it is simultaneously valid as the row-major matrix
+  // this function intends AND as the column-major matrix LAPACK's Fortran
+  // interface expects with LDA = n, so no transpose is needed either on
+  // input or on the output eigenvectors (mirrors the existing convention
+  // ComputeEigsTriDiag/checkConverged/extractEigenvector already rely on:
+  // eigvecs[index * n + i] == component i of eigenvector `index`).
+  double *mat = new double[n * n];
+  memset(mat, 0, n * n * sizeof(double));
+  for (int i = 0; i < n; i++) {
+    mat[i * n + i] = TacsRealPart(Alpha[i]);
+  }
+  for (int i = keep; i < n - 1; i++) {
+    mat[i * n + (i + 1)] = mat[(i + 1) * n + i] = TacsRealPart(Beta[i]);
+  }
+  if (keep > 0 && keep < n) {
+    for (int j = 0; j < keep; j++) {
+      mat[j * n + keep] = mat[keep * n + j] = TacsRealPart(Sigma[j]);
+    }
+  }
+
+  const char *jobz = "V";
+  const char *uplo = "U";
+  int lda = n;
+  int lwork = 8 * n + 16;  // comfortably above dsyev's max(1, 3*n-1) floor
+  double *work = new double[lwork];
+  double *w = new double[n];
+  int info = -1;
+
+  LAPACKdsyev(jobz, uplo, &n, mat, &lda, w, work, &lwork, &info);
+
+  if (info != 0) {
+    fprintf(stderr, "Error encountered in LAPACK function dsyev\n");
+  }
+
+#ifdef TACS_USE_COMPLEX
+  /*
+    Same complex-step perturbation technique ComputeEigsTriDiag uses above,
+    generalized from a tridiagonal to a diagonal+arrowhead(+tridiagonal
+    tail) sparsity pattern: for each eigenvector, accumulate
+    x^{T} Imag(dM/ds) x over exactly the (i, j) pairs this matrix's
+    assembly loop above populated (diagonal, tridiagonal-tail
+    off-diagonals, and arrowhead border), rather than a dense n^2 loop.
+  */
+  for (int k = 0; k < n; k++) {
+    double sens = 0.0, dot = 0.0;
+    for (int i = 0; i < n; i++) {
+      double xi = mat[k * n + i];
+      sens += TacsImagPart(Alpha[i]) * xi * xi;
+      dot += xi * xi;
+    }
+    for (int i = keep; i < n - 1; i++) {
+      sens += 2.0 * TacsImagPart(Beta[i]) * mat[k * n + i] * mat[k * n + i + 1];
+    }
+    if (keep > 0 && keep < n) {
+      for (int j = 0; j < keep; j++) {
+        sens +=
+            2.0 * TacsImagPart(Sigma[j]) * mat[k * n + j] * mat[k * n + keep];
+      }
+    }
+
+    _eigs[k] = TacsScalar(w[k], sens / dot);
+  }
+
+  for (int i = 0; i < n * n; i++) {
+    _eigvecs[i] = TacsScalar(mat[i], 0.0);
+  }
+#else
+  for (int k = 0; k < n; k++) {
+    _eigs[k] = w[k];
+  }
+  for (int i = 0; i < n * n; i++) {
+    _eigvecs[i] = mat[i];
+  }
+#endif  // TACS_USE_COMPLEX
+
+  delete[] mat;
+  delete[] work;
+  delete[] w;
+}
+
+/*
   Create the symmetric eigenvalue problem solver
 
   This object uses a Lanczos method to reduce the symmetric eigenvalue
@@ -419,16 +541,22 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
   // LOCAL/FULL after construction does not retroactively resize this
   // allocation; no caller in this codebase does that.)
   restart_size = _restart_size;
-  alloc_size =
-      (restart_size > 0 && restart_size < max_iters && ortho_type == FULL)
-          ? restart_size
-          : max_iters;
+  use_thick_restart =
+      (restart_size > 0 && restart_size < max_iters && ortho_type == FULL);
+  alloc_size = use_thick_restart ? restart_size : max_iters;
+  restart_keep = 0;
 
   Q = new TACSVec *[alloc_size + 1];
 
   // The coefficients of the Lanczos tridiagonal system
   Alpha = new TacsScalar[alloc_size];
   Beta = new TacsScalar[alloc_size];
+
+  // Thick-restart arrowhead coupling (SPEC step 4) -- only ever populated
+  // when use_thick_restart is true, but allocating it unconditionally at
+  // the same alloc_size as Alpha/Beta keeps destruction unconditional too.
+  Sigma = new TacsScalar[alloc_size];
+  memset(Sigma, 0, alloc_size * sizeof(TacsScalar));
 
   // The eigenvalues and eigenvectors of the tridiagonal system
   eigs = new TacsScalar[alloc_size];
@@ -478,6 +606,7 @@ SEP::~SEP() {
 
   delete[] Alpha;
   delete[] Beta;
+  delete[] Sigma;
   delete[] eigs;
   delete[] eigvecs;
   delete[] perm;
@@ -502,21 +631,18 @@ void SEP::setTolerances(double _tol, enum EigenSpectrum _spectrum,
 /*
   Set the thick-restart basis size (SPEC Item 5).
 
-  Note: this does not reallocate Q/Alpha/Beta/eigs/eigvecs/perm -- those
-  are sized once at construction time off whatever restart_size was passed
-  to the constructor (into the alloc_size member), and are never resized
-  afterward. In the current interim implementation (GSEP.cpp's FULL-branch
-  loop bound is tied to the frozen alloc_size, not to this mutable
-  restart_size member -- see solve()), calling this setter after
-  construction has **no observable effect on a FULL-orthogonalization
-  solve()**; the only place solve() reads restart_size post-construction
-  is the LOCAL branch's fallback-message condition. This setter exists so
-  a documented accessor is available alongside setOrthoType/setTolerances
-  per SPEC's interface list, and so that a future FULL-branch restart
-  implementation (Task 5.2's still-undone Wu-Simon math, see
-  HANDOFF-impl.md) can read a live, adjustable restart_size rather than
-  needing a second constructor argument -- but until that lands, prefer
-  passing restart_size directly to the constructor.
+  Note: this does not reallocate Q/Alpha/Beta/Sigma/eigs/eigvecs/perm --
+  those are sized once at construction time off whatever restart_size was
+  passed to the constructor (into the alloc_size member, and the
+  use_thick_restart decision derived from it), and are never resized
+  afterward. Calling this setter after construction changes only the
+  mutable restart_size member; it has no effect on a FULL-orthogonalization
+  solve()'s restart trigger (which reads the frozen use_thick_restart/
+  alloc_size decision made at construction time), and the only place
+  solve() reads restart_size post-construction is the LOCAL branch's
+  fallback-message condition. This setter exists so a documented accessor
+  is available alongside setOrthoType/setTolerances per SPEC's interface
+  list -- prefer passing restart_size directly to the constructor.
 */
 void SEP::setRestartSize(int _restart_size) { restart_size = _restart_size; }
 
@@ -630,20 +756,17 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
       niters = max_iters;
     }
   } else {
-    // Perform a full orthogonalization using modified Gram-Schmidt
+    // Perform a full orthogonalization using modified Gram-Schmidt, with
+    // Wu & Simon (2000) thick restart (SPEC lines 783-816) once the live
+    // basis reaches alloc_size (== restart_size when use_thick_restart).
     //
-    // NOTE (Task 5.1 interim state): this loop is bounded by alloc_size,
-    // not max_iters, so that it never writes past the arrays sized in the
-    // constructor above (alloc_size < max_iters exactly when thick restart
-    // is active). Task 5.2 replaces this hard stop at alloc_size with the
-    // actual Wu & Simon thick-restart procedure (rebuild a smaller basis
-    // and keep going, up to the real max_iters budget via a new
-    // total_iters counter); until then, a restart-enabled solve() simply
-    // stops (same as legacy max_iters exhaustion) once the live basis
-    // reaches restart_size, which is safe but not yet the intended
-    // restart behavior.
+    // total_iters tracks the *cumulative* number of Lanczos steps
+    // (matvecs) across all restarts -- the real budget max_iters gates on
+    // (SPEC step 6); i tracks the *live* basis index and can be reset
+    // backward by a restart, unlike total_iters.
     int i = 0;
-    for (; i < alloc_size; i++) {
+    int total_iters = 0;
+    for (;;) {
       // Compute the new vector using the provided operator
       Op->mult(Q[i], Q[i + 1]);
       if (bcs) {
@@ -655,7 +778,11 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
         Q[i + 1]->axpy(-h, Q[j]);
 
         // Store the diagonal term (and discard all other terms which
-        // will only be non-zero due to numerical issues
+        // will only be non-zero due to numerical issues -- except once a
+        // restart has occurred, in which case the terms for j < restart_
+        // keep are the genuine Wu-Simon arrowhead coupling, already
+        // captured analytically in Sigma[] at restart time (see below),
+        // not re-derived from these h values)
         if (j == i) {
           Alpha[i] = h;
         }
@@ -664,6 +791,7 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
       // Evalute the sub-digonal
       Beta[i] = sqrt(Op->dot(Q[i + 1], Q[i + 1]));
       Q[i + 1]->scale(1.0 / Beta[i]);
+      total_iters++;
 
       // Check if the desired eigenvalues have converged
       if (checkConverged(Alpha, Beta, i + 1)) {
@@ -671,12 +799,91 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
         converged_early = 1;
         break;
       }
-    }
 
-    // Readjust the number of iterations if the max iterations
-    // has been reached.
-    if (i == alloc_size) {
-      niters = alloc_size;
+      // Overall budget exhausted -- checked against total_iters, not the
+      // live basis index, so a restart-enabled solve gets the same total
+      // "give up after this many Lanczos steps" guarantee as the
+      // unrestarted path (SPEC step 6).
+      if (total_iters >= max_iters) {
+        niters = i + 1;
+        break;
+      }
+
+      // Thick-restart trigger: the live basis has grown to alloc_size
+      // without converging.
+      if (use_thick_restart && i + 1 == alloc_size) {
+        int n = i + 1;
+
+        // Step 2: keep the best `keep` Ritz vectors -- a small multiple
+        // of neigvals, not just neigvals itself, so the restarted basis
+        // has room to reconverge without immediately re-triggering
+        // (SPEC step 2). eigs/eigvecs/perm were already computed by the
+        // checkConverged() call immediately above (SPEC step 1) -- reused
+        // here, not recomputed.
+        int new_keep =
+            restart_size - 1 < 2 * neigvals ? restart_size - 1 : 2 * neigvals;
+        if (new_keep < 1) {
+          new_keep = 1;
+        }
+
+        // Step 3: form the new basis vectors as dense linear combinations
+        // of the current basis (O(n * keep)). Computed into temporary
+        // vectors first -- Q[0..new_keep) cannot be overwritten in place
+        // while other Qnew[j] combinations still need their original
+        // contents.
+        TACSVec **Qnew = new TACSVec *[new_keep];
+        for (int j = 0; j < new_keep; j++) {
+          Qnew[j] = Op->createVec();
+          Qnew[j]->incref();
+          Qnew[j]->zeroEntries();
+          for (int k = 0; k < n; k++) {
+            Qnew[j]->axpy(eigvecs[perm[j] * n + k], Q[k]);
+          }
+        }
+
+        // Step 4: rebuild the reduced recurrence. Alpha_new[j] is the
+        // retained Ritz value (the projected operator is diagonal in its
+        // own eigenbasis); Sigma[j] is the single coupling coefficient
+        // carried forward into the arrowhead border, computed from the
+        // *pre-restart* Beta[n-1] and eigvecs -- both still valid at this
+        // point since Q[0..new_keep) have not yet been overwritten.
+        TacsScalar beta_old_last = Beta[n - 1];
+        for (int j = 0; j < new_keep; j++) {
+          Alpha[j] = eigs[perm[j]];
+          Sigma[j] = beta_old_last * eigvecs[perm[j] * n + (n - 1)];
+        }
+
+        // Copy the new basis vectors into place now that every Qnew[j]
+        // combination has been fully formed.
+        for (int j = 0; j < new_keep; j++) {
+          Q[j]->copyValues(Qnew[j]);
+          Qnew[j]->decref();
+        }
+        delete[] Qnew;
+
+        // Q[n] is Wu-Simon's already-computed, already-orthogonal "next"
+        // Lanczos vector -- it becomes live basis index `new_keep`
+        // directly (it must NOT be discarded/recomputed via a fresh
+        // matvec off one of the retained Ritz vectors: doing so would
+        // silently lose the arrowhead coupling this restart just encoded
+        // into Sigma[], reproducing the false-convergence bug documented
+        // in HANDOFF-impl.md). n != new_keep always (new_keep < n by
+        // construction above), so this is a copy between distinct vector
+        // objects, not a self-copy, and Q[n] has not been touched by the
+        // Qnew assembly/copy above (all of which only ever touch indices
+        // < new_keep < n).
+        Q[new_keep]->copyValues(Q[n]);
+
+        restart_keep = new_keep;
+
+        // Step 5: continue the FULL Gram-Schmidt loop from index `keep`
+        // onward. Set i one below new_keep so the loop's unconditional
+        // i++ below lands on i = new_keep next iteration, where Q[new_
+        // keep] already holds the valid, normalized residual vector.
+        i = new_keep - 1;
+      }
+
+      i++;
     }
   }
 
@@ -884,11 +1091,26 @@ int SEP::checkConverged(TacsScalar *A, TacsScalar *B, int n) {
     return 0;
   }
 
-  // Compute the eigenvalues and eigenvectors of the symmetric
-  // tridiagonal matrix whose coefficients are stored in A/B
-  // which are the diagonal and upper diagonal of the matrix
+  // Compute the eigenvalues and eigenvectors of the reduced problem over
+  // the current n-sized basis. Before any thick restart has occurred (or
+  // when thick restart is disabled entirely), A/B describe a plain
+  // symmetric tridiagonal matrix, solved via the specialized
+  // ComputeEigsTriDiag path exactly as before this feature (byte-for-byte
+  // unchanged code path). Once thick restart is active, the reduced
+  // problem may instead carry a Wu-Simon arrowhead border (SPEC step 4),
+  // so ComputeEigsDense is used unconditionally for every checkConverged()
+  // call on a restart-enabled solve -- including before the first restart
+  // actually triggers, when restart_keep == 0 and the assembled matrix is
+  // itself just the tridiagonal case, solved via a small dense LAPACK
+  // solve instead of the tridiagonal-specialized one (agreement between
+  // the two is exactly what the Task 5.1 smoke test / Task 5.3 agreement
+  // test verify).
   TacsScalar beta = B[n - 1];
-  ComputeEigsTriDiag(n, A, B, eigs, eigvecs);
+  if (use_thick_restart) {
+    ComputeEigsDense(n, restart_keep, A, B, Sigma, eigs, eigvecs);
+  } else {
+    ComputeEigsTriDiag(n, A, B, eigs, eigvecs);
+  }
 
   // Find the permutation which sorts the matrix in the desired
   // order
