@@ -18,6 +18,7 @@
 
 #include "GSEP.h"
 
+#include "TacsUtilities.h"
 #include "tacslapack.h"
 
 /*
@@ -413,6 +414,17 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
   // Permutation of the order of the eigenvalues
   perm = new int[max_iters];
 
+  // Defense-in-depth (VALIDATION Decision 3): the neigs_computed guard is
+  // what actually prevents an out-of-bounds read, but zero-initializing
+  // here ensures that any future code path that slips past the entry guard
+  // in solve() reads deterministic zeros/-1 rather than arbitrary heap
+  // contents.
+  memset(eigs, 0, max_iters * sizeof(TacsScalar));
+  memset(eigvecs, 0, max_iters * max_iters * sizeof(TacsScalar));
+  for (int i = 0; i < max_iters; i++) {
+    perm[i] = -1;
+  }
+
   // Default values for convergence tests/sorting of the eigenvalues
   tol = 1e-12;
   spectrum = SMALLEST;
@@ -483,7 +495,23 @@ void SEP::setOperator(EPOperator *_Op) {
   eigenvalue problem with a Lanczos method. The method generates a
   series or orthonormal vectors with respect to a given inner product.
 */
-void SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
+int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
+  // Misconfiguration guard: the default neigvals = 4 (set in the
+  // constructor) applies even if the caller never calls setTolerances(),
+  // so this check must fire regardless of which setter was or wasn't
+  // called -- placing it only in setTolerances() would miss the case where
+  // SEP is constructed with max_iters < 4 and neigvals is never changed
+  // from its default.
+  if (neigvals > max_iters) {
+    fprintf(stderr,
+            "SEP::solve() Error: max_iters (%d) must be >= neigvals (%d); "
+            "no eigenvalues were computed.\n",
+            max_iters, neigvals);
+    niters = 0;
+    neigs_computed = 0;
+    return -1;
+  }
+
   // Select the initial vector randomly
   Q[0]->setRand();
   if (bcs) {
@@ -493,6 +521,11 @@ void SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
   // Normalize the first vector
   TacsScalar norm = sqrt(Op->dot(Q[0], Q[0]));
   Q[0]->scale(1.0 / norm);
+
+  // Set at break time in either branch below when checkConverged()
+  // succeeds -- used, together with the finiteness gate below, to
+  // determine the solve_flag returned by this function.
+  int converged_early = 0;
 
   if (ortho_type == LOCAL) {
     // Only local orthogonalization is utilized. This code does not
@@ -520,6 +553,7 @@ void SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
       // Check if the desired eigenvalues have converged
       if (checkConverged(Alpha, Beta, i + 1)) {
         niters = i + 1;
+        converged_early = 1;
         break;
       }
     }
@@ -556,6 +590,7 @@ void SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
       // Check if the desired eigenvalues have converged
       if (checkConverged(Alpha, Beta, i + 1)) {
         niters = i + 1;
+        converged_early = 1;
         break;
       }
     }
@@ -594,13 +629,26 @@ void SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
     snprintf(line, sizeof(line), "%2d\n", niters);
     ksm_file->print(line);
   }
+
+  // Final solve_flag gate: a solve that broke out of the loop early is
+  // only truly converged if every one of the requested eigenvalues is also
+  // finite (closes the JD-style silent-NaN gap for the Lanczos path too).
+  int converged = converged_early;
+  for (int k = 0; k < neigvals && k < niters; k++) {
+    TacsScalar val = Op->convertEigenvalue(eigs[perm[k]]);
+    if (!TacsIsFinite(val)) {
+      converged = 0;
+      break;
+    }
+  }
+  return converged ? 1 : 0;
 }
 
 /*!
   Extract the n-th eigenvalue from the probelm.
 */
 TacsScalar SEP::extractEigenvalue(int n, TacsScalar *error) {
-  if (n < 0 || n >= niters) {
+  if (n < 0 || n >= niters || n >= neigs_computed) {
     fprintf(stderr, "Eigenvalue out of range\n");
     *error = -1.0;
     return 0.0;
@@ -623,7 +671,7 @@ TacsScalar SEP::extractEigenvalue(int n, TacsScalar *error) {
   pointer.
 */
 TacsScalar SEP::extractEigenvector(int n, TACSVec *ans, TacsScalar *error) {
-  if (n < 0 || n >= niters) {
+  if (n < 0 || n >= niters || n >= neigs_computed) {
     fprintf(stderr, "Eigenvector out of range\n");
     *error = -1.0;
     ans->zeroEntries();
@@ -780,7 +828,10 @@ int SEP::checkConverged(TacsScalar *A, TacsScalar *B, int n) {
 
     // Read out the predicted error for the eigenvector
     TacsScalar eig_err = fabs(beta * eigvecs[index * n + (n - 1)] * er);
-    if (TacsRealPart(eig_err) > tol) {
+    // NOTE: written as !(<= tol), not > tol -- IEEE 754 defines NaN > tol as
+    // false, so the naive ">" polarity silently treats a NaN residual as
+    // converged. This form correctly fails NaN residuals as unconverged.
+    if (!(TacsRealPart(eig_err) <= tol)) {
       is_converged = 0;
       break;
     }

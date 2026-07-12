@@ -151,8 +151,11 @@ class TACSJacobiDavidson : public TACSObject {
   TacsScalar extractEigenvalue(int n, TacsScalar *error);
   TacsScalar extractEigenvector(int n, TACSVec *ans, TacsScalar *error);
 
-  // Solve the eigenvalue problem
-  void solve(KSMPrint *ksm_print = NULL, int print_level = 0);
+  // Solve the eigenvalue problem. Returns a solve_flag: 1 if converged, 0
+  // if it ran without full convergence (or produced a non-finite
+  // eigenvalue), -1 if misconfigured (max_eigen_vectors > max_jd_size --
+  // no eigenvalues computed).
+  int solve(KSMPrint *ksm_print = NULL, int print_level = 0);
 
   // Set tolerances to FGMRES
   void setTolerances(double _eig_rtol, double _eig_atol, double _rtol,

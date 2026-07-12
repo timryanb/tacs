@@ -114,7 +114,17 @@ class GSEPMaxItersGuardTest(unittest.TestCase):
         JD's extractEigenvalue does not have SEP's OOB-read bug (its bounds
         check is already `n < nconverged`, itself bounded by array sizes
         allocated off max_jd_size/max_eigen_vectors), so this is a
-        fail-fast/consistency addition, not an independent crash fix.
+        fail-fast/consistency addition, not an independent crash fix. Per
+        PLAN Task 1.2, only `.solve() == -1` and "no crash" are asserted
+        here -- unlike SEP, a post-guard extractEigenvalue(0) call on JD
+        does NOT reliably return error == -1.0: n=0 is still < the
+        (guard-independent) max_eigen_vectors budget, so JD's second
+        ("not yet converged, in-progress Ritz estimate") branch is taken
+        instead of its out-of-range branch, returning a meaningless-but-
+        not-crashing value from never-populated Ritz arrays. This is
+        confirmed-safe (no OOB memory access, per SPEC lines 126-146) but
+        not the same clean -1.0 contract SEP's tightened bounds check (Task
+        1.3) guarantees.
         """
         sigma = 2e5
         num_eigs = 10
@@ -142,10 +152,11 @@ class GSEPMaxItersGuardTest(unittest.TestCase):
         )
 
         solve_flag = jd_freq.solve(print_flag=False)
-        eigval, error = jd_freq.extractEigenvalue(0)
+        # Does not crash -- the return value itself is not asserted, see
+        # the docstring above.
+        jd_freq.extractEigenvalue(0)
 
         self.assertEqual(solve_flag, -1)
-        self.assertEqual(error, -1.0)
 
     def test_extract_eigenvalue_beyond_neigs_computed_does_not_crash(self):
         """

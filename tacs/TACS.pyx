@@ -1438,10 +1438,16 @@ cdef class JacobiDavidson:
         Args:
             print_flag (bool): Indicates whether to print output to stdout
             freq (int): The frequency to print output
+
+        Returns:
+            solve_flag (int): 1 if converged, 0 if not fully converged
+            (or a non-finite eigenvalue was detected), -1 if misconfigured
+            (max_jd_size < max_eigen_vectors -- no eigenvalues computed)
         """
         cdef MPI_Comm comm
         cdef int rank
         cdef KSMPrint *ksm_print = NULL
+        cdef int solve_flag
 
         if print_flag:
             comm = self.ptr.getMPIComm()
@@ -1449,11 +1455,11 @@ cdef class JacobiDavidson:
             ksm_print = new KSMPrintStdout("JD", rank, freq)
             ksm_print.incref()
 
-        self.ptr.solve(ksm_print, print_level)
+        solve_flag = self.ptr.solve(ksm_print, print_level)
         if ksm_print != NULL:
             ksm_print.decref()
 
-        return
+        return solve_flag
 
     def setTolerances(self, eig_rtol=5e-7, eig_atol=1e-30,
                       rtol=1e-6, atol=1e-12):
@@ -1559,19 +1565,25 @@ cdef class SEPsolver:
         Args:
             print_flag(bool): indicates whether to print output
             freq(int): the printout frequency
+
+        Returns:
+            solve_flag (int): 1 if converged, 0 if not fully converged
+            (or a non-finite eigenvalue was detected), -1 if misconfigured
+            (max_iters < neigvals -- no eigenvalues computed)
         """
         cdef int rank
         cdef KSMPrint *ksm_print = NULL
+        cdef int solve_flag
 
         if print_flag:
             ksm_print = new KSMPrintStdout("SEP", comm.rank, freq)
             ksm_print.incref()
 
-        self.ptr.solve(ksm_print, NULL)
+        solve_flag = self.ptr.solve(ksm_print, NULL)
 
         if ksm_print != NULL:
             ksm_print.decref()
-        return
+        return solve_flag
 
     def extractEigenvalue(self, int index):
         cdef TacsScalar err = 0.0
@@ -3249,11 +3261,17 @@ cdef class FrequencyAnalysis:
     def solve(self, print_flag=True, int freq=10, int print_level=0):
         """
         Solve the natural frequency problem
+
+        Returns:
+            solve_flag (int): 1 if converged, 0 if not fully converged
+            (or a non-finite eigenvalue was detected), -1 if misconfigured
+            (no eigenvalues computed)
         """
         cdef MPI_Comm comm
         cdef int rank
         cdef TACSAssembler *assembler = NULL
         cdef KSMPrint *ksm_print = NULL
+        cdef int solve_flag
 
         if print_flag:
             assembler = self.ptr.getAssembler()
@@ -3262,10 +3280,10 @@ cdef class FrequencyAnalysis:
             ksm_print = new KSMPrintStdout("FrequencyAnalysis", rank, freq)
             ksm_print.incref()
 
-        self.ptr.solve(ksm_print, print_level)
+        solve_flag = self.ptr.solve(ksm_print, print_level)
         if ksm_print != NULL:
             ksm_print.decref()
-        return
+        return solve_flag
 
     def extractEigenvalue(self, int index):
         """
@@ -3379,12 +3397,21 @@ cdef class BucklingAnalysis:
         self.ptr.setSigma(sigma)
 
     def solve(self, Vec force=None, Vec path=None, print_flag=True, int freq=10):
+        """
+        Solve the buckling eigenvalue problem
+
+        Returns:
+            solve_flag (int): 1 if converged, 0 if not fully converged
+            (or a non-finite eigenvalue was detected), -1 if misconfigured
+            (no eigenvalues computed)
+        """
         cdef TACSBVec *f = NULL
         cdef TACSBVec *u0 = NULL
         cdef MPI_Comm comm
         cdef int rank
         cdef TACSAssembler *assembler = NULL
         cdef KSMPrint *ksm_print = NULL
+        cdef int solve_flag
 
         if force is not None:
             f = force.getBVecPtr()
@@ -3398,8 +3425,8 @@ cdef class BucklingAnalysis:
             MPI_Comm_rank(comm, &rank)
             ksm_print = new KSMPrintStdout("BucklingAnalysis", rank, freq)
 
-        self.ptr.solve(f, u0, ksm_print)
-        return
+        solve_flag = self.ptr.solve(f, u0, ksm_print)
+        return solve_flag
 
     def extractEigenvalue(self, int eig):
         cdef TacsScalar err = 0.0

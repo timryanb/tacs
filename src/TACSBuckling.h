@@ -57,10 +57,12 @@ class TACSLinearBuckling : public TACSObject {
   TacsScalar getSigma();
   void setSigma(TacsScalar sigma);
 
-  // Solve the eigenvalue problem
+  // Solve the eigenvalue problem. Returns the inner SEP solver's
+  // solve_flag (Item 2), forwarded unchanged: 1 converged, 0 not fully
+  // converged, -1 misconfigured.
   // ----------------------------
-  void solve(TACSVec *rhs = NULL, TACSVec *u0 = NULL,
-             KSMPrint *ksm_print = NULL);
+  int solve(TACSVec *rhs = NULL, TACSVec *u0 = NULL,
+            KSMPrint *ksm_print = NULL);
   void evalEigenDVSens(int n, TACSBVec *dfdx);
   void evalEigenXptSens(int n, TACSBVec *dfdX);
   void evalEigenSVSens(int n, TACSBVec *dfdu);
@@ -148,7 +150,9 @@ class TACSFrequencyAnalysis : public TACSObject {
   // ----------------------------------------
   TacsScalar getSigma();
   void setSigma(TacsScalar _sigma);
-  void solve(KSMPrint *ksm_print = NULL, int print_level = 0);
+  // Returns the inner SEP/JD solver's solve_flag (Item 2), forwarded
+  // unchanged: 1 converged, 0 not fully converged, -1 misconfigured.
+  int solve(KSMPrint *ksm_print = NULL, int print_level = 0);
   void evalEigenDVSens(int n, TACSBVec *dfdx);
   void evalEigenXptSens(int n, TACSBVec *dfdX);
 

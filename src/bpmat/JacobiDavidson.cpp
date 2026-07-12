@@ -450,7 +450,21 @@ TacsScalar TACSJacobiDavidson::extractEigenvector(int n, TACSVec *ans,
   where r is orthogonal to the subspace Q and t is orthogonal to the
   subspace t by construction. FGMRES builds the subspaces W and Z.
 */
-void TACSJacobiDavidson::solve(KSMPrint *ksm_print, int print_level) {
+int TACSJacobiDavidson::solve(KSMPrint *ksm_print, int print_level) {
+  // Misconfiguration guard, added for consistency/fail-fast clarity with
+  // SEP's analogous guard (Item 1) -- JD's extractEigenvalue does not have
+  // an OOB-read bug of its own (its bounds check is n < nconverged, itself
+  // bounded by arrays allocated off max_jd_size/max_eigen_vectors), so this
+  // is not fixing a demonstrated crash.
+  if (max_eigen_vectors > max_jd_size) {
+    fprintf(stderr,
+            "TACSJacobiDavidson::solve() Error: max_jd_size (%d) must be >= "
+            "max_eigen_vectors (%d); no eigenvalues were computed.\n",
+            max_jd_size, max_eigen_vectors);
+    nconverged = 0;
+    return -1;
+  }
+
   // Keep track of the current subspace
   V[0]->setRand(-1.0, 1.0);
   oper->applyBCs(V[0]);
@@ -912,6 +926,18 @@ void TACSJacobiDavidson::solve(KSMPrint *ksm_print, int print_level) {
   }
 
   delete[] rwork;
+
+  // Final solve_flag gate: fully converged only if every requested
+  // eigenvector converged AND every converged eigenvalue is finite (closes
+  // the silent-NaN gap from an un-factored/misconfigured preconditioner,
+  // e.g. VALIDATION Claim 5).
+  int converged = (nconverged >= max_eigen_vectors);
+  for (int k = 0; k < nconverged && converged; k++) {
+    if (!TacsIsFinite(eigvals[k])) {
+      converged = 0;
+    }
+  }
+  return converged ? 1 : 0;
 }
 
 /*

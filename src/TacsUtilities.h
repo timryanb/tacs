@@ -15,7 +15,30 @@
 #ifndef TACS_UTILITIES_H
 #define TACS_UTILITIES_H
 
+#include <cmath>
+
 #include "TACSObject.h"
+
+/**
+  Check whether a (possibly complex-stepped) scalar is finite.
+
+  Under TACS_USE_COMPLEX, the imaginary part carries a complex-step
+  directional derivative -- a non-finite imaginary part is just as
+  legitimate a "do not trust this value" signal as a non-finite real part,
+  so both parts are checked.
+
+  @param value The scalar to check
+  @return Nonzero if value (and, in complex mode, its imaginary part) is
+  finite
+*/
+inline int TacsIsFinite(TacsScalar value) {
+#ifdef TACS_USE_COMPLEX
+  return std::isfinite(TacsRealPart(value)) &&
+         std::isfinite(TacsImagPart(value));
+#else
+  return std::isfinite(value);
+#endif
+}
 
 int TacsIntegerComparator(const void *a, const void *b);
 

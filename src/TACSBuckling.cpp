@@ -193,7 +193,7 @@ void TACSLinearBuckling::setSigma(TacsScalar _sigma) {
 
   (K + sigma G)^{-1} K x = lambda/(lambda - sigma) x
 */
-void TACSLinearBuckling::solve(TACSVec *rhs, TACSVec *u0, KSMPrint *ksm_print) {
+int TACSLinearBuckling::solve(TACSVec *rhs, TACSVec *u0, KSMPrint *ksm_print) {
   // Zero the variables
   assembler->zeroVariables();
 
@@ -273,7 +273,7 @@ void TACSLinearBuckling::solve(TACSVec *rhs, TACSVec *u0, KSMPrint *ksm_print) {
   pc->factor();
 
   // Solve the symmetric eigenvalue problem
-  sep->solve(ksm_print);
+  return sep->solve(ksm_print);
 }
 
 /*!
@@ -804,7 +804,7 @@ void TACSFrequencyAnalysis::setSigma(TacsScalar _sigma) {
 /*
   Solve the eigenvalue problem
 */
-void TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
+int TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
   // Zero the variables
   assembler->zeroVariables();
   if (jd) {
@@ -828,7 +828,7 @@ void TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
     }
 
     // Solve the problem using Jacobi-Davidson
-    jd->solve(ksm_print, print_level);
+    int solve_flag = jd->solve(ksm_print, print_level);
 
     if (ksm_print && print_level > 0) {
       t0 = MPI_Wtime() - t0;
@@ -837,6 +837,8 @@ void TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
       snprintf(line, sizeof(line), "JD computational time: %15.6f\n", t0);
       ksm_print->print(line);
     }
+
+    return solve_flag;
   } else {
     if (mg) {
       // Assemble the mass matrix
@@ -873,8 +875,8 @@ void TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
     // Factor the preconditioner
     pc->factor();
 
-    // Solve the problem using Jacobi-Davidson
-    sep->solve(ksm_print);
+    // Solve the problem using Lanczos
+    int solve_flag = sep->solve(ksm_print);
 
     if (ksm_print && print_level > 0) {
       t0 = MPI_Wtime() - t0;
@@ -883,6 +885,8 @@ void TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
       snprintf(line, sizeof(line), "Lanczos computational time: %15.6f\n", t0);
       ksm_print->print(line);
     }
+
+    return solve_flag;
   }
 }
 

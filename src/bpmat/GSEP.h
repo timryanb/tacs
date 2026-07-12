@@ -198,8 +198,10 @@ class SEP : public TACSObject {
   // Reset the eigenproblem operator
   void setOperator(EPOperator *_Op);
 
-  // Solve the eigenproblem
-  void solve(KSMPrint *ksm_print = NULL, KSMPrint *ksm_file = NULL);
+  // Solve the eigenproblem. Returns a solve_flag: 1 if converged, 0 if it
+  // ran without full convergence (or produced a non-finite eigenvalue),
+  // -1 if misconfigured (neigvals > max_iters -- no eigenvalues computed).
+  int solve(KSMPrint *ksm_print = NULL, KSMPrint *ksm_file = NULL);
 
   // Extract the eigenvalues and eigenvectors from the solver
   TacsScalar extractEigenvalue(int n, TacsScalar *error);
