@@ -1566,11 +1566,13 @@ cdef class SEPsolver:
 
     def setRestartSize(self, int restart_size):
         """
-        Set the thick-restart Lanczos basis size (SPEC Item 5). 0 disables
-        thick restart. See the constructor's restart_size argument for
-        details -- this setter cannot grow the allocation made at
-        construction time, only disable/shrink or re-enable it up to that
-        originally-constructed bound.
+        Set the thick-restart Lanczos basis size (SPEC Item 5). Does not
+        reallocate (allocation is fixed at construction time from the
+        constructor's restart_size argument). In the current interim
+        implementation, calling this after construction has no observable
+        effect on a FULL-orthogonalization solve() -- prefer passing
+        restart_size directly to the constructor. See GSEP.cpp's
+        SEP::setRestartSize docstring for the full explanation.
         """
         self.ptr.setRestartSize(restart_size)
         return

@@ -504,14 +504,19 @@ void SEP::setTolerances(double _tol, enum EigenSpectrum _spectrum,
 
   Note: this does not reallocate Q/Alpha/Beta/eigs/eigvecs/perm -- those
   are sized once at construction time off whatever restart_size was passed
-  to the constructor. Calling this after construction only takes effect if
-  the new value still fits within the already-allocated alloc_size (i.e.
-  it can only disable/shrink an already-enabled restart, or re-enable one
-  up to the originally-constructed bound); it cannot grow the allocation.
-  Primarily provided so callers that already have a constructed SEP (e.g.
-  via the .pxd/.pyx layer, where the constructor's own optional argument
-  is enough for every real use case) have a documented setter alongside
-  setOrthoType/setTolerances, per SPEC's interface list.
+  to the constructor (into the alloc_size member), and are never resized
+  afterward. In the current interim implementation (GSEP.cpp's FULL-branch
+  loop bound is tied to the frozen alloc_size, not to this mutable
+  restart_size member -- see solve()), calling this setter after
+  construction has **no observable effect on a FULL-orthogonalization
+  solve()**; the only place solve() reads restart_size post-construction
+  is the LOCAL branch's fallback-message condition. This setter exists so
+  a documented accessor is available alongside setOrthoType/setTolerances
+  per SPEC's interface list, and so that a future FULL-branch restart
+  implementation (Task 5.2's still-undone Wu-Simon math, see
+  HANDOFF-impl.md) can read a live, adjustable restart_size rather than
+  needing a second constructor argument -- but until that lands, prefer
+  passing restart_size directly to the constructor.
 */
 void SEP::setRestartSize(int _restart_size) { restart_size = _restart_size; }
 
@@ -541,11 +546,24 @@ int SEP::solve(KSMPrint *ksm_print, KSMPrint *ksm_file) {
   // called -- placing it only in setTolerances() would miss the case where
   // SEP is constructed with max_iters < 4 and neigvals is never changed
   // from its default.
-  if (neigvals > max_iters) {
+  //
+  // Checked against alloc_size, not max_iters: alloc_size == max_iters
+  // whenever thick restart is disabled (restart_size <= 0) or the
+  // orthogonalization type is LOCAL, so this is the same check as before
+  // for every existing caller. But when restart_size > 0 with FULL
+  // orthogonalization, alloc_size == restart_size can be smaller than
+  // max_iters -- if neigvals > alloc_size in that case, checkConverged()
+  // never reaches n >= neigvals (GSEP.cpp's early-return there), so
+  // neigs_computed stays 0 and perm[] stays at its constructor
+  // -1-initialized sentinel for every slot; the finiteness gate near the
+  // end of this function would then read eigs[perm[k]] == eigs[-1], an
+  // out-of-bounds heap read (reproduced under valgrind during review).
+  if (neigvals > alloc_size) {
     fprintf(stderr,
-            "SEP::solve() Error: max_iters (%d) must be >= neigvals (%d); "
-            "no eigenvalues were computed.\n",
-            max_iters, neigvals);
+            "SEP::solve() Error: the live basis size (%d, either max_iters "
+            "or the smaller restart_size when thick restart is active) "
+            "must be >= neigvals (%d); no eigenvalues were computed.\n",
+            alloc_size, neigvals);
     niters = 0;
     neigs_computed = 0;
     return -1;

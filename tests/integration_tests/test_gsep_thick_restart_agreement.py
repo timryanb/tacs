@@ -20,6 +20,18 @@ Task 5.2's LOCAL-branch fallback (this file's third test): ``ortho_type ==
 LOCAL`` with ``restart_size > 0`` must fall back to the unrestarted LOCAL
 path verbatim (SPEC lines 774-781), not attempt a restart.
 
+Review fix (this file's fourth test): a review of commits 21d347c6/
+7647360b found that decoupling the FULL-branch loop bound from
+``max_iters`` to the (potentially smaller) ``alloc_size`` exposed a new
+out-of-bounds heap read reachable through the public ``restart_size``
+constructor argument with no validation -- ``restart_size < neigvals``
+(FULL orthogonalization) meant ``checkConverged()`` never reached
+``n >= neigvals``, so ``perm[]`` stayed at its constructor
+``-1``-initialized sentinel and the finiteness gate read ``eigs[-1]``
+(confirmed under valgrind). Fixed in GSEP.cpp by checking
+``neigvals > alloc_size`` instead of ``neigvals > max_iters``; this test
+locks in the fix's clean ``-1`` misconfiguration return.
+
 Honest checkpoint (see HANDOFF-impl.md, "Item 5 Task 5.2/5.3" section): the
 FULL-branch restart math (Wu & Simon 2000's actual restart continuation)
 is NOT implemented as of this commit. A restart-enabled FULL-orthogonalization
@@ -172,6 +184,30 @@ class GSEPThickRestartTest(unittest.TestCase):
         eig0, _ = sep_norestart.extractEigenvalue(0)
         eig1, _ = sep_restart.extractEigenvalue(0)
         self.assertAlmostEqual(eig0, eig1, delta=1e-6 * abs(eig0))
+
+    def test_restart_size_below_neigvals_returns_clean_misconfig(self):
+        """
+        Review fix regression test: restart_size (3) < numEigs (10) on the
+        FULL-orthogonalization branch must return a clean -1
+        (misconfigured, no eigenvalues computed) and must not crash or read
+        out of bounds -- previously this read eigs[perm[k]] with
+        perm[k] == -1 (the constructor's sentinel, never overwritten
+        because checkConverged() never reaches n >= neigvals when
+        alloc_size == restart_size < neigvals). A subsequent
+        extractEigenvalue() call must also report the standard
+        out-of-range error, not a memory-corruption crash.
+        """
+        num_eigs = 10
+        max_iters = 100
+        restart_size = 3
+
+        sep, comm = self._make_sep(num_eigs, max_iters, restart_size)
+        solve_flag = sep.solve(comm, print_flag=False)
+
+        self.assertEqual(solve_flag, -1)
+        eig, err = sep.extractEigenvalue(0)
+        self.assertEqual(err, -1.0)
+        self.assertEqual(eig, 0.0)
 
 
 if __name__ == "__main__":

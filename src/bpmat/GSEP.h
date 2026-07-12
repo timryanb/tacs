@@ -201,8 +201,12 @@ class SEP : public TACSObject {
   // Set the thick-restart basis size (SPEC Item 5). 0 (the default)
   // disables thick restart entirely and reproduces today's monolithic
   // single-Krylov-space path byte-for-byte; a value in (0, max_iters)
-  // bounds the live Lanczos basis at _restart_size vectors, restarting via
-  // the Wu & Simon (2000) thick-restart procedure once it is reached.
+  // bounds the live Lanczos basis at _restart_size vectors. NOTE: the Wu &
+  // Simon (2000) restart procedure itself is not yet implemented for the
+  // FULL-orthogonalization branch (see GSEP.cpp's solve()) -- reaching
+  // the bound currently just stops the solve gracefully (solve_flag=0),
+  // and calling this setter after construction has no effect on that
+  // branch's behavior (see GSEP.cpp's SEP::setRestartSize docstring).
   void setRestartSize(int _restart_size);
 
   // Solve the eigenproblem. Returns a solve_flag: 1 if converged, 0 if it
