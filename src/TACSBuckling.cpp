@@ -47,12 +47,16 @@
   max_lanczos:  Maximum size of the projected subspace
   num_eigvals:  Number of converged eigenvalues required
   eig_tol:      Tolerance of the eigenvalues
+  restart_size: Thick-restart Lanczos basis-size bound (SPEC Item 5); 0
+                (default) disables restart, reproducing today's monolithic
+                path byte-for-byte
 */
 TACSLinearBuckling::TACSLinearBuckling(TACSAssembler *_assembler,
                                        TacsScalar _sigma, TACSMat *_gmat,
                                        TACSMat *_kmat, TACSMat *_aux_mat,
                                        TACSKsm *_solver, int _max_lanczos_vecs,
-                                       int _num_eigvals, double _eig_tol) {
+                                       int _num_eigvals, double _eig_tol,
+                                       int _restart_size) {
   // Copy pointer to the TACS assembler object
   assembler = _assembler;
   assembler->incref();
@@ -117,7 +121,8 @@ TACSLinearBuckling::TACSLinearBuckling(TACSAssembler *_assembler,
   ep_op->incref();
 
   // Allocate the eigenvalue solver
-  sep = new SEP(ep_op, max_lanczos_vecs, SEP::FULL, assembler->getBcMap());
+  sep = new SEP(ep_op, max_lanczos_vecs, SEP::FULL, assembler->getBcMap(),
+                _restart_size);
   sep->incref();
   sep->setTolerances(eig_tol, SEP::SMALLEST_MAGNITUDE, num_eigvals);
 
@@ -614,7 +619,8 @@ TACSFrequencyAnalysis::TACSFrequencyAnalysis(TACSAssembler *_assembler,
                                              TacsScalar _sigma, TACSMat *_mmat,
                                              TACSMat *_kmat, TACSKsm *_solver,
                                              int max_lanczos, int num_eigvals,
-                                             double eig_tol) {
+                                             double eig_tol,
+                                             int _restart_size) {
   // Store the TACSAssembler pointer
   assembler = _assembler;
   assembler->incref();
@@ -667,9 +673,11 @@ TACSFrequencyAnalysis::TACSFrequencyAnalysis(TACSAssembler *_assembler,
 
   // Allocate the symmetric eigenproblem solver
   if (mmat) {
-    sep = new SEP(ep_op, max_lanczos, SEP::FULL, assembler->getBcMap());
+    sep = new SEP(ep_op, max_lanczos, SEP::FULL, assembler->getBcMap(),
+                  _restart_size);
   } else {
-    sep = new SEP(simple_ep_op, max_lanczos, SEP::FULL, assembler->getBcMap());
+    sep = new SEP(simple_ep_op, max_lanczos, SEP::FULL, assembler->getBcMap(),
+                  _restart_size);
   }
   sep->incref();
   sep->setTolerances(eig_tol, SEP::SMALLEST_MAGNITUDE, num_eigvals);

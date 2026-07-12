@@ -3254,7 +3254,13 @@ cdef class FrequencyAnalysis:
                   int num_eigs=5, double eig_tol=1e-6, double eig_rtol=1e-9,
                   Mat PC=None, Pc pc=None, int fgmres_size=5,
                   double eig_atol=1e-30, int num_recycle=0,
-                  JDRecycleType recycle_type=JD_NUM_RECYCLE):
+                  JDRecycleType recycle_type=JD_NUM_RECYCLE,
+                  int restart_size=0):
+        # NOTE (SPEC Item 5, thick-restart Lanczos): restart_size only
+        # applies to the Lanczos (solver is not None) branch below -- it
+        # has no effect on the Jacobi-Davidson branch, which has no SEP.
+        # 0 (the default) reproduces today's behavior byte-for-byte for
+        # every existing caller of either branch.
 
         # Call the constructor for the Jacobi-Davidson eigensolver
         if solver is None:
@@ -3268,11 +3274,11 @@ cdef class FrequencyAnalysis:
             if M is None:
                 self.ptr = new TACSFrequencyAnalysis(assembler.ptr, sigma, NULL,
                                                     K.ptr, solver.ptr, max_lanczos,
-                                                    num_eigs, eig_tol)
+                                                    num_eigs, eig_tol, restart_size)
             else:
                 self.ptr = new TACSFrequencyAnalysis(assembler.ptr, sigma, M.ptr,
                                                     K.ptr, solver.ptr, max_lanczos,
-                                                    num_eigs, eig_tol)
+                                                    num_eigs, eig_tol, restart_size)
         self.ptr.incref()
         return
 
@@ -3402,15 +3408,17 @@ cdef class BucklingAnalysis:
     cdef TACSLinearBuckling *ptr
     def __cinit__(self, Assembler assembler, TacsScalar sigma,
                   Mat G, Mat K, KSM solver, int max_lanczos=100,
-                  int num_eigs=5, double eig_tol=1e-6):
+                  int num_eigs=5, double eig_tol=1e-6, int restart_size=0):
         # Get the auxiliary matrix from the solver
         cdef TACSMat *aux_mat
         solver.ptr.getOperators(&aux_mat, NULL)
 
-        # Create the linear buckling class
+        # Create the linear buckling class. restart_size=0 (the default,
+        # SPEC Item 5) reproduces today's behavior byte-for-byte for every
+        # existing caller.
         self.ptr = new TACSLinearBuckling(assembler.ptr, sigma, G.ptr,
                                           K.ptr, aux_mat, solver.ptr, max_lanczos,
-                                          num_eigs, eig_tol)
+                                          num_eigs, eig_tol, restart_size)
         self.ptr.incref()
         return
 

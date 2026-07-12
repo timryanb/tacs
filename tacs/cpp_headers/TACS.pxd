@@ -489,9 +489,13 @@ cdef extern from "JacobiDavidson.h":
 
 cdef extern from "TACSBuckling.h":
     cdef cppclass TACSFrequencyAnalysis(TACSObject):
+        # SPEC Item 5 (thick-restart Lanczos): the Lanczos overload gains a
+        # sixth plain int (restart_size) -- cdef extern declarations carry
+        # no Python-level defaults here, the 0-default lives only in
+        # TACS.pyx's FrequencyAnalysis.__cinit__ keyword.
         TACSFrequencyAnalysis(TACSAssembler *, TacsScalar,
                               TACSMat*, TACSMat*, TACSKsm*,
-                              int, int, double)
+                              int, int, double, int)
         TACSFrequencyAnalysis(TACSAssembler*, TacsScalar,
                               TACSMat*, TACSMat*, TACSMat*,
                               TACSPc*,
@@ -507,11 +511,13 @@ cdef extern from "TACSBuckling.h":
         void evalEigenXptSens(int, TACSBVec*)
 
     cdef cppclass TACSLinearBuckling(TACSObject):
+        # SPEC Item 5 (thick-restart Lanczos): gains a ninth plain int
+        # (restart_size) -- see the TACSFrequencyAnalysis note above.
         TACSLinearBuckling( TACSAssembler *,
                             TacsScalar,
                             TACSMat *, TACSMat *,
                             TACSMat *, TACSKsm *,
-                            int, int, double)
+                            int, int, double, int)
         TACSAssembler* getAssembler()
         TacsScalar getSigma()
         void setSigma(TacsScalar)

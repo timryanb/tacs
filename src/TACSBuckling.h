@@ -42,10 +42,17 @@
 */
 class TACSLinearBuckling : public TACSObject {
  public:
+  // NOTE (SPEC Item 5, thick-restart Lanczos): _restart_size is an
+  // optional trailing parameter, default 0 (disabled), threaded straight
+  // through to the internal SEP's own _restart_size constructor argument
+  // -- mirrors the SEP constructor's own "gains one new optional trailing
+  // parameter... no existing constructor call is required to change"
+  // pattern (GSEP.h), so this is a zero-behavior-change addition for
+  // every existing caller of this constructor.
   TACSLinearBuckling(TACSAssembler *_assembler, TacsScalar _sigma,
                      TACSMat *_gmat, TACSMat *_kmat, TACSMat *_aux_mat,
                      TACSKsm *_solver, int _max_lanczos_vecs, int _num_eigvals,
-                     double _eig_tol);
+                     double _eig_tol, int _restart_size = 0);
   ~TACSLinearBuckling();
 
   // Retrieve the instance of TACSAssembler
@@ -128,9 +135,16 @@ class TACSLinearBuckling : public TACSObject {
 */
 class TACSFrequencyAnalysis : public TACSObject {
  public:
+  // NOTE (SPEC Item 5, thick-restart Lanczos): _restart_size is an
+  // optional trailing parameter, default 0 (disabled), threaded straight
+  // through to the internal SEP's own _restart_size constructor argument
+  // for this (Lanczos) overload only -- the Jacobi-Davidson overload below
+  // has no SEP and is unaffected. Mirrors the SEP constructor's own
+  // zero-behavior-change trailing-parameter pattern (GSEP.h).
   TACSFrequencyAnalysis(TACSAssembler *_assembler, TacsScalar _sigma,
                         TACSMat *_mmat, TACSMat *_kmat, TACSKsm *_solver,
-                        int max_lanczos, int num_eigvals, double _eig_tol);
+                        int max_lanczos, int num_eigvals, double _eig_tol,
+                        int _restart_size = 0);
 
   // NOTE (tolerance-default hygiene, SPEC Item 4): this overload's own
   // eigtol=1e-9 default is unreachable through the Cython binding, which
