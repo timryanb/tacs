@@ -824,6 +824,12 @@ class BucklingProblem(TACSProblem):
             Eigenvector for mode
         """
         eigVal, err = self.buckleSolver.extractEigenvalue(index)
+        if err == -1.0:
+            raise ValueError(
+                f"Requested eigenvalue/eigenvector index {index} is out of "
+                f"range (only numEigs={self.numEigs} eigenvalues were "
+                "requested; fewer may have actually converged)."
+            )
         eigVector = self.assembler.createVec()
         self.buckleSolver.extractEigenvector(index, eigVector)
         # Inplace assignment if vectors were provided
@@ -841,6 +847,12 @@ class BucklingProblem(TACSProblem):
             Mode index to return solution for
         """
         eigVal, err = self.buckleSolver.extractEigenvalue(index)
+        if err == -1.0:
+            raise ValueError(
+                f"Requested eigenvalue/eigenvector index {index} is out of "
+                f"range (only numEigs={self.numEigs} eigenvalues were "
+                "requested; fewer may have actually converged)."
+            )
         return err
 
     def addXptSens(self, indices, xptSensList, scale=1.0):

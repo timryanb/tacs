@@ -58,7 +58,14 @@ def elem_call_back(
     return elem, scale
 
 
-class GSEPMaxItersGuardTest(unittest.TestCase):
+class GSEPModalMaxItersGuardTest(unittest.TestCase):
+    # NOTE: named to include "Modal" (this file's tests are built on
+    # tacs.TACS.FrequencyAnalysis, the modal-analysis raw layer) so that
+    # `pytest tests/integration_tests/ -k "modal or buckling"` (this
+    # feature's PLAN Task 6.4 regression sweep) selects these
+    # segfault-guard tests too -- confirmed during implementation via
+    # `--collect-only` that the un-renamed class name matched neither
+    # keyword and was silently skipped by that sweep.
     N_PROCS = 1
 
     def _make_modal_problem(self, sigma, num_eigs):

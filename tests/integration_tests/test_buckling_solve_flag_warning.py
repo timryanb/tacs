@@ -9,11 +9,14 @@ An unreachably tight ``L2Convergence``/``L2ConvergenceRel`` forces the
 Lanczos loop to run to ``max_lanczos`` without ever satisfying
 ``checkConverged()``. ``plate_shear_buckle.bdf`` (this repo's buckling-test
 convention mesh, e.g. ``test_shell_plate_buckling_shear.py``) needs
-``numEigs=90`` (not 10) to force genuine non-convergence within the default
-``max_lanczos=100`` budget -- confirmed during implementation that smaller
-``numEigs`` values (5, 10, 50, 70) all converge cleanly even at
-``tol=1e-30`` on this mesh, mirroring the same honestly-reported caveat
-found for the modal case (test_modal_solve_flag_warning.py).
+``numEigs=99`` (not 10) to force genuine, seed-independent non-convergence
+within the default ``max_lanczos=100`` budget -- confirmed during
+implementation that smaller ``numEigs`` values (5, 10, 50, 70, and even 90)
+either converge cleanly at ``tol=1e-30`` on this mesh or are order-dependent
+on prior ``rand()`` state from earlier tests in the same process (see
+``test_unreachable_tolerance_reports_non_convergence``'s docstring below),
+mirroring the same honestly-reported caveat found for the modal case
+(test_modal_solve_flag_warning.py).
 
 **Warning-assertion idiom.** Same as test_modal_solve_flag_warning.py:
 ``_TACSWarning`` prints directly (no ``warnings`` module), so stdout is
@@ -52,7 +55,7 @@ def elem_call_back(
 class BucklingSolveFlagWarningTest(unittest.TestCase):
     N_PROCS = 2
 
-    def _make_buckling_problem(self, sigma=10.0, num_eigs=90):
+    def _make_buckling_problem(self, sigma=10.0, num_eigs=99):
         comm = MPI.COMM_WORLD
         fea_assembler = pytacs.pyTACS(bdf_file, comm)
         fea_assembler.initialize(elem_call_back)
@@ -68,6 +71,29 @@ class BucklingSolveFlagWarningTest(unittest.TestCase):
         result = problem.buckleSolver.solve(print_flag=problem.getOption("printLevel"))
         self.assertIsInstance(result, int)
         self.assertIn(result, (-1, 0, 1))
+
+    def test_get_variables_and_get_modal_error_out_of_range_index_raises(self):
+        """
+        SPEC.md Item 1 "Error handling" section: buckling.py's
+        getVariables()/getModalError() (extractEigenvalue call sites) must
+        raise ValueError, not silently return a bogus value, when the C++
+        layer's out-of-range sentinel (error == -1.0) fires. Uses a
+        normally-converged problem with a deliberately huge out-of-range
+        index (150, safely beyond BucklingAnalysis's default
+        max_lanczos=100 -- niters can never exceed max_iters regardless of
+        mesh/config, so this is unconditionally out of range), not a
+        request within numEigs (which the tridiagonal solve may already
+        have incidentally computed at a converged iteration count larger
+        than numEigs -- confirmed during implementation that on this mesh
+        even index 50 is NOT out of range at num_eigs=5, niters converges
+        past 50 -- and would not reliably reproduce error==-1.0).
+        """
+        problem = self._make_buckling_problem(num_eigs=5)
+        problem.solve()
+        with self.assertRaises(ValueError):
+            problem.getVariables(150)
+        with self.assertRaises(ValueError):
+            problem.getModalError(150)
 
     def test_unreachable_tolerance_reports_non_convergence(self):
         """

@@ -482,6 +482,12 @@ class ModalProblem(TACSProblem):
             Eigenvector for mode
         """
         eigVal, err = self.freqSolver.extractEigenvalue(index)
+        if err == -1.0:
+            raise ValueError(
+                f"Requested eigenvalue/eigenvector index {index} is out of "
+                f"range (only numEigs={self.numEigs} eigenvalues were "
+                "requested; fewer may have actually converged)."
+            )
         eigVector = self.assembler.createVec()
         self.freqSolver.extractEigenvector(index, eigVector)
         # Inplace assignment if vectors were provided

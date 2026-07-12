@@ -86,6 +86,27 @@ class ModalSolveFlagWarningTest(unittest.TestCase):
         self.assertIsInstance(result, int)
         self.assertIn(result, (-1, 0, 1))
 
+    def test_get_variables_out_of_range_index_raises(self):
+        """
+        SPEC.md Item 1 "Error handling" section: modal.py's getVariables()
+        (extractEigenvalue call site) must raise ValueError, not silently
+        return a bogus value, when the C++ layer's out-of-range sentinel
+        (error == -1.0) fires -- this is a caller indexing error, not a
+        numerical non-convergence. Uses a normally-converged problem with a
+        deliberately huge out-of-range index (150, safely beyond
+        FrequencyAnalysis's default max_lanczos=100 -- niters can never
+        exceed max_iters regardless of mesh/config, so this is
+        unconditionally out of range), not a request within numEigs (which
+        the tridiagonal solve may already have incidentally computed at a
+        converged iteration count larger than numEigs -- confirmed during
+        implementation that even index 50 is NOT reliably out of range on
+        some meshes -- and would not reliably reproduce error==-1.0).
+        """
+        problem = self._make_modal_problem(num_eigs=5)
+        problem.solve()
+        with self.assertRaises(ValueError):
+            problem.getVariables(150)
+
     def test_unreachable_tolerance_reports_non_convergence(self):
         """
         Task 2.3 gate: an unreachably tight L2Convergence/L2ConvergenceRel
