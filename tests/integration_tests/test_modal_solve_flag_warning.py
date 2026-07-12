@@ -95,8 +95,18 @@ class ModalSolveFlagWarningTest(unittest.TestCase):
         unchanged) -- assertIs(success, False) (not just falsy) makes this
         RED state unambiguous rather than accidentally passing on None's
         falsiness.
+
+        num_eigs=50 (not VALIDATION's num_eigs=10): confirmed during
+        implementation that num_eigs=10 on this mesh (726 dof) converges
+        cleanly even at tol=1e-30 within the default max_lanczos=100 budget
+        -- exactly the honestly-reported caveat in
+        exp_c4_silent_nonconvergence.py's own docstring ("this scenario
+        alone may not force non-convergence"). Requesting half of the
+        default max_lanczos=100 budget (num_eigs=50) does force a genuine
+        non-convergence within the iteration cap, still without touching
+        max_lanczos itself (not exposed by pytacs, Finding Q2/Q7).
         """
-        problem = self._make_modal_problem()
+        problem = self._make_modal_problem(num_eigs=50)
         problem.setOption("L2Convergence", 1e-30)
         problem.setOption("L2ConvergenceRel", 1e-30)
 
