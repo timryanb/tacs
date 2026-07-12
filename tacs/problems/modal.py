@@ -128,6 +128,55 @@ class ModalProblem(TACSProblem):
             "numEigs if useThickRestartLanczos is set; 0 (default) means "
             "'pick a safe default automatically'.",
         ],
+        # Item 6 (JD pyTACS exposure, gated -- SPEC.md "## Item 6"): the
+        # Go/No-Go re-benchmark (docs/plans/feature-eigen-solver-perf/
+        # scripts/exp_c9_rerun_hardened.py, not committed -- see its header
+        # comment for the full recorded numbers) resolved NO-GO: even
+        # through the hardened path (Items 2/3), Jacobi-Davidson measured
+        # 6-9x slower than Lanczos on every repeated run and converged only
+        # 20-80% of the time (process-random-seed dependent) at the
+        # SPEC-recommended re-benchmark budgets. The option below is
+        # therefore double-gated (requires allowExperimentalEigenSolver=
+        # True too) rather than a normal, endorsed option -- Lanczos remains
+        # the default and the only recommended choice.
+        "eigenSolver": [
+            str,
+            "lanczos",
+            "Eigensolver backend: 'lanczos' (default, recommended) or "
+            "'jacobi-davidson' (gated-experimental; requires "
+            "allowExperimentalEigenSolver=True -- Item 6's Go/No-Go "
+            "re-benchmark found it both slower and less reliable than "
+            "Lanczos; see exp_c9_rerun_hardened.py).",
+        ],
+        "allowExperimentalEigenSolver": [
+            bool,
+            False,
+            "Required in addition to eigenSolver='jacobi-davidson' before "
+            "the Jacobi-Davidson path activates. A hard construction-time "
+            "error (not merely a warning) is raised if 'jacobi-davidson' is "
+            "requested without this also set to True, per Item 6's "
+            "NO-GO gate outcome -- see the 'eigenSolver' option's own "
+            "description.",
+        ],
+        "maxJacobiDavidsonSize": [
+            int,
+            20,
+            "Maximum Jacobi-Davidson subspace size (analogous to, but "
+            "distinct from, max_lanczos -- only used when "
+            "eigenSolver='jacobi-davidson').",
+        ],
+        "maxJDGMRESSize": [
+            int,
+            30,
+            "Maximum FGMRES correction-equation subspace size (only used "
+            "when eigenSolver='jacobi-davidson').",
+        ],
+        "JDNumRecycle": [
+            int,
+            0,
+            "Number of converged eigenvectors to recycle between solves "
+            "(only used when eigenSolver='jacobi-davidson').",
+        ],
         # Output Options
         "writeSolution": [bool, True, "Flag for suppressing all f5 file writing."],
         "numberSolutions": [
@@ -201,10 +250,26 @@ class ModalProblem(TACSProblem):
         self.sigma = sigma
         self.numEigs = numEigs
 
+        # Guards setOption()'s per-key _createVariables() rebuild (below)
+        # while the constructor's options dict is still being applied one
+        # key at a time (BaseUI.__init__'s loop) -- necessary for Item 6's
+        # double-gated eigenSolver/allowExperimentalEigenSolver combination
+        # (SPEC.md lines 989-994): a caller passing both in one options
+        # dict must not have the hard-stop validation fire on the
+        # intermediate state where only one of the two keys has been
+        # applied yet, purely because of the two keys' dict iteration
+        # order. No behavior change for any existing option -- every
+        # option is still fully applied and _createVariables() still runs
+        # (once, below, with the complete, final option set) before this
+        # constructor returns.
+        self._initializing = True
+
         # Default setup for common problem class objects, sets up comm and options
         TACSProblem.__init__(
             self, assembler, comm, options, outputViewer, meshLoader, isNonlinear
         )
+
+        self._initializing = False
 
         # String name used in evalFunctions
         self.valName = "eigsm"
@@ -224,8 +289,6 @@ class ModalProblem(TACSProblem):
         self.M = self.assembler.createSchurMat()
         self.K = self.assembler.createSchurMat()
 
-        self.pc = tacs.TACS.Pc(self.K)
-
         # Set artificial stiffness factors in rbe class
         c1 = self.getOption("RBEStiffnessScaleFactor")
         c2 = self.getOption("RBEArtificialStiffness")
@@ -237,37 +300,97 @@ class ModalProblem(TACSProblem):
         self.assembler.assembleMatType(tacs.TACS.STIFFNESS_MATRIX, self.K)
         self.assembler.assembleMatType(tacs.TACS.MASS_MATRIX, self.M)
 
-        subspace = self.getOption("subSpaceSize")
-        restarts = self.getOption("nRestarts")
-        self.gmres = tacs.TACS.KSM(self.K, self.pc, subspace, restarts)
-
         atol = self.getOption("L2Convergence")
         rtol = self.getOption("L2ConvergenceRel")
 
-        # Thick-restart Lanczos (SPEC Item 5): restart_size=0 (the default,
-        # useThickRestartLanczos=False) reproduces today's behavior
-        # byte-for-byte -- no existing caller opts in, so this is a
-        # zero-behavior-change addition.
-        use_thick_restart = self.getOption("useThickRestartLanczos")
-        requested_restart_size = self.getOption("lanczosRestartSize")
-        restart_size = _resolveLanczosRestartSize(
-            self.numEigs, _MAX_LANCZOS, use_thick_restart, requested_restart_size
-        )
+        eigen_solver = self.getOption("eigenSolver")
+        if eigen_solver.lower() == "jacobi-davidson":
+            # Item 6 (gated JD exposure): NO-GO per the Go/No-Go
+            # re-benchmark (see defaultOptions' "eigenSolver" description
+            # above) -- a hard stop unless the caller explicitly
+            # acknowledges the experimental, unendorsed status.
+            if not self.getOption("allowExperimentalEigenSolver"):
+                raise self._TACSError(
+                    "eigenSolver='jacobi-davidson' requires "
+                    "allowExperimentalEigenSolver=True to also be set. "
+                    "Item 6's Go/No-Go re-benchmark found Jacobi-Davidson "
+                    "both slower (6-9x) and less reliable (20-80% "
+                    "non-convergence at recommended budgets) than the "
+                    "default Lanczos solver on the tested problem class -- "
+                    "see docs/plans/feature-eigen-solver-perf/scripts/"
+                    "exp_c9_rerun_hardened.py's header comment for the "
+                    "recorded numbers. This is a deliberate hard stop, not "
+                    "a warning, to prevent silent adoption of a solver "
+                    "known to underperform; set "
+                    "allowExperimentalEigenSolver=True to opt in anyway."
+                )
+            self._TACSWarning(
+                "Jacobi-Davidson is an experimental, unvalidated-for-"
+                "general-use eigensolver in this version of TACS; Lanczos "
+                "is recommended for production use."
+            )
 
-        # Create the frequency analysis object
-        self.freqSolver = tacs.TACS.FrequencyAnalysis(
-            self.assembler,
-            self.sigma,
-            self.M,
-            self.K,
-            self.gmres,
-            max_lanczos=_MAX_LANCZOS,
-            num_eigs=self.numEigs,
-            eig_tol=atol,
-            eig_atol=atol,
-            eig_rtol=rtol,
-            restart_size=restart_size,
-        )
+            # Peer preconditioner matrix for the JD branch (SPEC's
+            # Interfaces section) -- distinct from the Lanczos branch's
+            # self.pc/self.K-based KSM below.
+            self.pcmat = self.assembler.createSchurMat()
+            self.pc = tacs.TACS.Pc(self.pcmat)
+
+            # NOTE (Cython parameter-name gotcha, SPEC lines 966-976):
+            # FrequencyAnalysis.__cinit__'s single `max_lanczos` parameter
+            # is reused positionally as the JD constructor's `max_jd_size`
+            # argument when solver=None -- pass the JD-specific
+            # maxJacobiDavidsonSize option here, NOT the Lanczos-oriented
+            # _MAX_LANCZOS module constant. Do not "fix" this apparent
+            # mismatch; it is the Cython layer's own parameter reuse, not a
+            # naming bug in this call site.
+            self.freqSolver = tacs.TACS.FrequencyAnalysis(
+                self.assembler,
+                self.sigma,
+                self.M,
+                self.K,
+                None,
+                PC=self.pcmat,
+                pc=self.pc,
+                max_lanczos=self.getOption("maxJacobiDavidsonSize"),
+                fgmres_size=self.getOption("maxJDGMRESSize"),
+                num_eigs=self.numEigs,
+                eig_tol=atol,
+                eig_atol=atol,
+                eig_rtol=rtol,
+                num_recycle=self.getOption("JDNumRecycle"),
+            )
+        else:
+            self.pc = tacs.TACS.Pc(self.K)
+
+            subspace = self.getOption("subSpaceSize")
+            restarts = self.getOption("nRestarts")
+            self.gmres = tacs.TACS.KSM(self.K, self.pc, subspace, restarts)
+
+            # Thick-restart Lanczos (SPEC Item 5): restart_size=0 (the
+            # default, useThickRestartLanczos=False) reproduces today's
+            # behavior byte-for-byte -- no existing caller opts in, so
+            # this is a zero-behavior-change addition.
+            use_thick_restart = self.getOption("useThickRestartLanczos")
+            requested_restart_size = self.getOption("lanczosRestartSize")
+            restart_size = _resolveLanczosRestartSize(
+                self.numEigs, _MAX_LANCZOS, use_thick_restart, requested_restart_size
+            )
+
+            # Create the frequency analysis object
+            self.freqSolver = tacs.TACS.FrequencyAnalysis(
+                self.assembler,
+                self.sigma,
+                self.M,
+                self.K,
+                self.gmres,
+                max_lanczos=_MAX_LANCZOS,
+                num_eigs=self.numEigs,
+                eig_tol=atol,
+                eig_atol=atol,
+                eig_rtol=rtol,
+                restart_size=restart_size,
+            )
 
     def _initializeFunctionList(self):
         """
@@ -301,8 +424,12 @@ class ModalProblem(TACSProblem):
             "outputdir",
         ]:
             pass
-        # Reset solver for all other option changes
-        else:
+        # Reset solver for all other option changes -- skipped while still
+        # applying the constructor's initial options dict one key at a
+        # time (see __init__'s self._initializing comment above); the
+        # constructor always calls _createVariables() itself, once, right
+        # after every key has been applied.
+        elif not getattr(self, "_initializing", False):
             self._createVariables()
 
     def setValName(self, valName):
