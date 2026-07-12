@@ -418,6 +418,7 @@ SEP::SEP(EPOperator *_Op, int _max_iters, OrthoType _ortho_type,
   spectrum = SMALLEST;
   neigvals = 4;
   niters = -1;
+  neigs_computed = 0;
 
   // Create the vectors required for the Lanczos subspace
   for (int i = 0; i < max_iters + 1; i++) {
@@ -766,6 +767,9 @@ int SEP::checkConverged(TacsScalar *A, TacsScalar *B, int n) {
   // Find the permutation which sorts the matrix in the desired
   // order
   sortEigenvalues(eigs, n, perm);
+
+  // Record that eigs/eigvecs/perm[0..n-1] have now actually been populated
+  neigs_computed = n;
 
   // Check for convergence of each of the desired eigenvalues
   int is_converged = 1;

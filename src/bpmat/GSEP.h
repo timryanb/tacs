@@ -228,6 +228,13 @@ class SEP : public TACSObject {
   // The number of iterations completed thus far
   int niters;
 
+  // The number of eigenvalues actually computed (i.e. the largest n for
+  // which ComputeEigsTriDiag/sortEigenvalues has populated
+  // eigs/eigvecs/perm[0..n-1]) -- distinct from niters, which may be
+  // nonzero even when the misconfiguration guard in solve() causes no
+  // eigenvalues to be computed at all.
+  int neigs_computed;
+
   // The coefficients of the symmetric tridiagonal matrix
   TacsScalar *Alpha, *Beta;
 
