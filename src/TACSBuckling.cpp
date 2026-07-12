@@ -819,6 +819,17 @@ int TACSFrequencyAnalysis::solve(KSMPrint *ksm_print, int print_level) {
     } else {
       assembler->assembleMatType(TACS_MASS_MATRIX, mmat);
       assembler->assembleMatType(TACS_STIFFNESS_MATRIX, kmat);
+
+      // Guarantee pc_mat/pc are factored every solve() call, mirroring the
+      // Lanczos branch's unconditional pc->factor() below. Without this,
+      // a caller who never calls setSigma() before solve() (the JD
+      // constructor does not call it either) runs FGMRES against an
+      // unfactored/garbage preconditioner from iteration 1, producing nan
+      // Ritz values (SPEC Item 3 / VALIDATION Claim 5). The mg branch above
+      // is intentionally left untouched -- pc == mg there, so calling this
+      // would trigger a second, more expensive TACSMg::factor() on top of
+      // the mg->factor() call already performed one line above.
+      jd_op->setEigenvalueEstimate(TacsRealPart(sigma));
     }
 
     // Keep track of the computational time
