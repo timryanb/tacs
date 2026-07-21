@@ -127,7 +127,7 @@ this option with caution.</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">funcs</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dvConstraint</span><span class="o">.</span><span class="n">evalConstraints</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s1">&#39;LE_SPAR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dvConstraint</span><span class="o">.</span><span class="n">evalConstraints</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s2">&quot;LE_SPAR&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">funcs</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Result will look like (if DVConstraint has name of &#39;c1&#39;):</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># {&#39;c1_LE_SPAR&#39;: array([12354.10])}</span>
@@ -155,7 +155,7 @@ respect to all design variables and node locations are computed.</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">funcsSens</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">dvConstraint</span><span class="o">.</span><span class="n">evalConstraintsSens</span><span class="p">(</span><span class="n">funcsSens</span><span class="p">,</span> <span class="s1">&#39;LE_SPAR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dvConstraint</span><span class="o">.</span><span class="n">evalConstraintsSens</span><span class="p">(</span><span class="n">funcsSens</span><span class="p">,</span> <span class="s2">&quot;LE_SPAR&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">funcsSens</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Result will look like (if DVConstraint has name of &#39;c1&#39;):</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># {&#39;c1_LE_SPAR&#39;:{&#39;struct&#39;:&lt;50x242 sparse matrix of type &#39;&lt;class &#39;numpy.float64&#39;&gt;&#39; with 100 stored elements in Compressed Sparse Row format&gt;}}</span>
@@ -171,7 +171,7 @@ respect to all design variables and node locations are computed.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>src</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy values from</p></li>
-<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
 </ul>
 </dd>
 </dl>
@@ -184,7 +184,7 @@ respect to all design variables and node locations are computed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
 <li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy into</p></li>
 </ul>
 </dd>
@@ -214,7 +214,7 @@ Bounds will be saved as a tuple: (lower, upper)</p></li>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conBounds</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tacsConstraint</span><span class="o">.</span><span class="n">getConstraintBounds</span><span class="p">(</span><span class="n">conBounds</span><span class="p">,</span> <span class="s1">&#39;LE_SPAR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tacsConstraint</span><span class="o">.</span><span class="n">getConstraintBounds</span><span class="p">(</span><span class="n">conBounds</span><span class="p">,</span> <span class="s2">&quot;LE_SPAR&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">conBounds</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Result will look like (if TACSConstraint has name of &#39;c1&#39;):</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># {&#39;c1_LE_SPAR&#39;: (array([-1e20]), array([1e20]))}</span>
@@ -252,7 +252,7 @@ are evaluated and updated into the provided dictionary.</p>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">conSizes</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">tacsConstraint</span><span class="o">.</span><span class="n">getConstraintSizes</span><span class="p">(</span><span class="n">conSizes</span><span class="p">,</span> <span class="s1">&#39;LE_SPAR&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tacsConstraint</span><span class="o">.</span><span class="n">getConstraintSizes</span><span class="p">(</span><span class="n">conSizes</span><span class="p">,</span> <span class="s2">&quot;LE_SPAR&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">funconSizescs</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Result will look like (if TACSConstraint has name of &#39;c1&#39;):</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># {&#39;c1_LE_SPAR&#39;: 10}</span>
@@ -261,9 +261,23 @@ are evaluated and updated into the provided dictionary.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.DVConstraint.getCoordName">
+<span class="sig-name descname"><span class="pre">getCoordName</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.getCoordName" title="Link to this definition">¶</a></dt>
+<dd><p>Get name for the nodal coordinates in pyOpt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>coordName</strong> -- Name of the nodal coordinates used in setNodes() dict.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tacs.constraints.DVConstraint.getDesignVarRange">
 <span class="sig-name descname"><span class="pre">getDesignVarRange</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.getDesignVarRange" title="Link to this definition">¶</a></dt>
-<dd><p>get the lower/upper bounds for the design variables.</p>
+<dd><p>Get the lower/upper bounds for the design variables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -284,7 +298,7 @@ are evaluated and updated into the provided dictionary.</p>
 <dd class="field-odd"><p><strong>x</strong> -- The current design variable vector set in tacs.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -299,7 +313,7 @@ are evaluated and updated into the provided dictionary.</p>
 the number of structural nodes on this processor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -373,6 +387,27 @@ on this processor</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.DVConstraint.getOptions">
+<span class="sig-name descname"><span class="pre">getOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.getOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of all current options in use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.DVConstraint.getVarName">
+<span class="sig-name descname"><span class="pre">getVarName</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.getVarName" title="Link to this definition">¶</a></dt>
+<dd><p>Get name for the design variables in pyOpt. Only needed
+if more than 1 pytacs object is used in an optimization</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>varName</strong> -- Name of the design variables used in setDesignVars() dict.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tacs.constraints.DVConstraint.getVarsPerNode">
 <span class="sig-name descname"><span class="pre">getVarsPerNode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.getVarsPerNode" title="Link to this definition">¶</a></dt>
 <dd><p>Get the number of variables per node for the model.</p>
@@ -408,12 +443,23 @@ options to the stdout on the root processor</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="tacs.constraints.DVConstraint.setCoordName">
+<span class="sig-name descname"><span class="pre">setCoordName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordName</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.setCoordName" title="Link to this definition">¶</a></dt>
+<dd><p>Set a name for the nodal coordinates in pyOpt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>coordName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of the nodal coordinates used in setNodes() dict.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="tacs.constraints.DVConstraint.setDesignVars">
 <span class="sig-name descname"><span class="pre">setDesignVars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.setDesignVars" title="Link to this definition">¶</a></dt>
 <dd><p>Update the design variables used by tacs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- The variables (typically from the optimizer) to set. It
+<dd class="field-odd"><p><strong>x</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- The variables (typically from the optimizer) to set. It
 looks for variable in the <code class="docutils literal notranslate"><span class="pre">self.varName</span></code> attribute if in dict.</p>
 </dd>
 </dl>
@@ -425,7 +471,7 @@ looks for variable in the <code class="docutils literal notranslate"><span class
 <dd><p>Set the mesh coordinates of the structure.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>Xpts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Structural coordinate in array of size (N * 3) where N is
+<dd class="field-odd"><p><strong>Xpts</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a>) -- Structural coordinate in array of size (N * 3) where N is
 the number of structural nodes on this processor.</p>
 </dd>
 </dl>
@@ -459,12 +505,12 @@ the number of structural nodes on this processor.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tacs.constraints.DVConstraint.setVarName">
 <span class="sig-name descname"><span class="pre">setVarName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">varName</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tacs.constraints.DVConstraint.setVarName" title="Link to this definition">¶</a></dt>
-<dd><p>Set a name for the structural variables in pyOpt. Only needs
+<dd><p>Set a name for the design variables in pyOpt. Only needs
 to be changed if more than 1 pytacs object is used in an
 optimization</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>varName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of the structural variable used in addVarGroup().</p>
+<dd class="field-odd"><p><strong>varName</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of the design variables used in setDesignVars() dict.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -496,6 +542,7 @@ optimization</p>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getConstraintBounds"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getConstraintBounds()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getConstraintKeys"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getConstraintKeys()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getConstraintSizes"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getConstraintSizes()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.DVConstraint.getCoordName"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getCoordName()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getDesignVarRange"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getDesignVarRange()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getDesignVars"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getDesignVars()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getNodes"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getNodes()</span></code></a></li>
@@ -504,10 +551,13 @@ optimization</p>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getNumOwnedNodes"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getNumOwnedNodes()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getNumVariables"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getNumVariables()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getOption"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getOption()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.DVConstraint.getOptions"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getOptions()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.DVConstraint.getVarName"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getVarName()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.getVarsPerNode"><code class="docutils literal notranslate"><span class="pre">DVConstraint.getVarsPerNode()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.printDefaultOptions"><code class="docutils literal notranslate"><span class="pre">DVConstraint.printDefaultOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.printModifiedOptions"><code class="docutils literal notranslate"><span class="pre">DVConstraint.printModifiedOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.printOptions"><code class="docutils literal notranslate"><span class="pre">DVConstraint.printOptions()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.constraints.DVConstraint.setCoordName"><code class="docutils literal notranslate"><span class="pre">DVConstraint.setCoordName()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.setDesignVars"><code class="docutils literal notranslate"><span class="pre">DVConstraint.setDesignVars()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.setNodes"><code class="docutils literal notranslate"><span class="pre">DVConstraint.setNodes()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.constraints.DVConstraint.setOption"><code class="docutils literal notranslate"><span class="pre">DVConstraint.setOption()</span></code></a></li>

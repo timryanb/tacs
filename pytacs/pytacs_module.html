@@ -193,26 +193,26 @@ This can be done by calling <a class="reference internal" href="#tacs.pytacs.pyT
 </ul>
 </dd>
 <dt>Property cards:</dt><dd><ul class="simple">
-<li><p>PSHELL -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.IsoShellConstitutive" title="tacs.constitutive.IsoShellConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoShellConstitutive</span></code></a></p></li>
-<li><p>PCOMP -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.CompositeShellConstitutive" title="tacs.constitutive.CompositeShellConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeShellConstitutive</span></code></a></p></li>
-<li><p>PBAR, PROD -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.BasicBeamConstitutive" title="tacs.constitutive.BasicBeamConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicBeamConstitutive</span></code></a></p></li>
-<li><p>PBARL -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.IsoRectangleBeamConstitutive" title="tacs.constitutive.IsoRectangleBeamConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoRectangleBeamConstitutive</span></code></a>/<a class="reference internal" href="../core/constitutive.html#tacs.constitutive.IsoTubeBeamConstitutive" title="tacs.constitutive.IsoTubeBeamConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">IsoTubeBeamConstitutive</span></code></a>/<a class="reference internal" href="../core/constitutive.html#tacs.constitutive.BasicBeamConstitutive" title="tacs.constitutive.BasicBeamConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicBeamConstitutive</span></code></a></p></li>
-<li><p>PSOLID -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.SolidConstitutive" title="tacs.constitutive.SolidConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolidConstitutive</span></code></a></p></li>
-<li><p>PBUSH -&gt; <a class="reference internal" href="../core/constitutive.html#tacs.constitutive.DOFSpringConstitutive" title="tacs.constitutive.DOFSpringConstitutive"><code class="xref py py-class docutils literal notranslate"><span class="pre">DOFSpringConstitutive</span></code></a></p></li>
+<li><p>PSHELL -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">IsoShellConstitutive</span></code></p></li>
+<li><p>PCOMP -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">CompositeShellConstitutive</span></code></p></li>
+<li><p>PBAR, PROD -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">BasicBeamConstitutive</span></code></p></li>
+<li><p>PBARL -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">IsoRectangleBeamConstitutive</span></code>/<code class="xref py py-class docutils literal notranslate"><span class="pre">IsoTubeBeamConstitutive</span></code>/<code class="xref py py-class docutils literal notranslate"><span class="pre">BasicBeamConstitutive</span></code></p></li>
+<li><p>PSOLID -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">SolidConstitutive</span></code></p></li>
+<li><p>PBUSH -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">DOFSpringConstitutive</span></code></p></li>
 </ul>
 </dd>
 <dt>Elements cards:</dt><dd><ul class="simple">
-<li><p>CQUAD4, CQUADR -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Quad4Shell" title="tacs.elements.Quad4Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4Shell</span></code></a></p></li>
-<li><p>CQUAD9 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Quad9Shell" title="tacs.elements.Quad9Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad9Shell</span></code></a></p></li>
-<li><p>CTRIA3, CTRIAR -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Tri3Shell" title="tacs.elements.Tri3Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tri3Shell</span></code></a></p></li>
-<li><p>CBAR, CROD -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Beam2" title="tacs.elements.Beam2"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam2</span></code></a></p></li>
-<li><p>CHEXA -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Element3D" title="tacs.elements.Element3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code></a> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearHexaBasis" title="tacs.elements.LinearHexaBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearHexaBasis</span></code></a>, <a class="reference internal" href="../core/elements.html#tacs.elements.LinearElasticity3D" title="tacs.elements.LinearElasticity3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code></a>)</p></li>
-<li><p>CTETRA -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.Element3D" title="tacs.elements.Element3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code></a> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearTetrahedralBasis" title="tacs.elements.LinearTetrahedralBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearTetrahedralBasis</span></code></a>, <a class="reference internal" href="../core/elements.html#tacs.elements.LinearElasticity3D" title="tacs.elements.LinearElasticity3D"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code></a>)</p></li>
-<li><p>RBE2 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.RBE2" title="tacs.elements.RBE2"><code class="xref py py-class docutils literal notranslate"><span class="pre">RBE2</span></code></a></p></li>
-<li><p>RBE3 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.RBE3" title="tacs.elements.RBE3"><code class="xref py py-class docutils literal notranslate"><span class="pre">RBE3</span></code></a></p></li>
-<li><p>CONM1 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.MassElement" title="tacs.elements.MassElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MassElement</span></code></a></p></li>
-<li><p>CONM2 -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.MassElement" title="tacs.elements.MassElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">MassElement</span></code></a></p></li>
-<li><p>CBUSH -&gt; <a class="reference internal" href="../core/elements.html#tacs.elements.SpringElement" title="tacs.elements.SpringElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpringElement</span></code></a></p></li>
+<li><p>CQUAD4, CQUADR -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4Shell</span></code></p></li>
+<li><p>CQUAD9 -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Quad9Shell</span></code></p></li>
+<li><p>CTRIA3, CTRIAR -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Tri3Shell</span></code></p></li>
+<li><p>CBAR, CROD -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Beam2</span></code></p></li>
+<li><p>CHEXA -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearHexaBasis" title="tacs.elements.LinearHexaBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearHexaBasis</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code>)</p></li>
+<li><p>CTETRA -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">Element3D</span></code> (<a class="reference internal" href="../core/elements.html#tacs.elements.LinearTetrahedralBasis" title="tacs.elements.LinearTetrahedralBasis"><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearTetrahedralBasis</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">LinearElasticity3D</span></code>)</p></li>
+<li><p>RBE2 -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">RBE2</span></code></p></li>
+<li><p>RBE3 -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">RBE3</span></code></p></li>
+<li><p>CONM1 -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">MassElement</span></code></p></li>
+<li><p>CONM2 -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">MassElement</span></code></p></li>
+<li><p>CBUSH -&gt; <code class="xref py py-class docutils literal notranslate"><span class="pre">SpringElement</span></code></p></li>
 </ul>
 </dd>
 <dt>Design Variable cards:</dt><dd><ul class="simple">
@@ -224,8 +224,8 @@ This can be done by calling <a class="reference internal" href="#tacs.pytacs.pyT
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Not every NASTRAN element card has one unique TACS element counterpart.
-For example a user may want a <cite>CQUAD4</cite> card interpreted as <a class="reference internal" href="../core/elements.html#tacs.elements.Quad4Shell" title="tacs.elements.Quad4Shell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4Shell</span></code></a> in the case of an elastic analysis,
-but might want it interpreted as a <a class="reference internal" href="../core/elements.html#tacs.elements.Quad4ThermalShell" title="tacs.elements.Quad4ThermalShell"><code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4ThermalShell</span></code></a> in the case of a thermoelastic analysis.
+For example a user may want a <cite>CQUAD4</cite> card interpreted as <code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4Shell</span></code> in the case of an elastic analysis,
+but might want it interpreted as a <code class="xref py py-class docutils literal notranslate"><span class="pre">Quad4ThermalShell</span></code> in the case of a thermoelastic analysis.
 In the case where the default TACS elements above don't match the user's desired TACS element,
 the user is recommended to setup that element through an
 <a class="reference internal" href="#initializing-with-elemcallback"><span class="std std-ref">elemCallBack procedure</span></a> instead.</p>
@@ -506,7 +506,10 @@ Use multiple calls to selectCompIDs to accumulate multiple regions.</p>
 <p>For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># This will select upper skin components between the</span>
 <span class="c1"># leading and trailing edge spars and between ribs 1 and 4.</span>
-<span class="n">selectCompIDs</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s2">&quot;U_SKIN&quot;</span><span class="p">,</span> <span class="n">includeBound</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;LE_SPAR&quot;</span><span class="p">,</span> <span class="s2">&quot;TE_SPAR&quot;</span><span class="p">,</span> <span class="s2">&quot;RIB.01&quot;</span><span class="p">,</span> <span class="s2">&quot;RIB.04&quot;</span><span class="p">])</span>
+<span class="n">selectCompIDs</span><span class="p">(</span>
+    <span class="n">include</span><span class="o">=</span><span class="s2">&quot;U_SKIN&quot;</span><span class="p">,</span>
+    <span class="n">includeBound</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;LE_SPAR&quot;</span><span class="p">,</span> <span class="s2">&quot;TE_SPAR&quot;</span><span class="p">,</span> <span class="s2">&quot;RIB.01&quot;</span><span class="p">,</span> <span class="s2">&quot;RIB.04&quot;</span><span class="p">],</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>4. nGroup: The number of groups to divide the found components
@@ -700,14 +703,14 @@ objects as there are element types in elemDescripts (one for each).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tacs.pytacs.pyTACS.getOrigDesignVars">
 <span class="sig-name descname"><span class="pre">getOrigDesignVars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tacs/pytacs.html#pyTACS.getOrigDesignVars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tacs.pytacs.pyTACS.getOrigDesignVars" title="Link to this definition">¶</a></dt>
-<dd><p>get the original design variables that were specified with
+<dd><p>Get the original design variables that were specified with
 during assembler creation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> -- The original design variable vector set in tacs.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -715,7 +718,7 @@ during assembler creation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="tacs.pytacs.pyTACS.getDesignVarRange">
 <span class="sig-name descname"><span class="pre">getDesignVarRange</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tacs/pytacs.html#pyTACS.getDesignVarRange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tacs.pytacs.pyTACS.getDesignVarRange" title="Link to this definition">¶</a></dt>
-<dd><p>get the lower/upper bounds for the design variables.</p>
+<dd><p>Get the lower/upper bounds for the design variables.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -742,7 +745,7 @@ Defaults to False.</p>
 <dd class="field-even"><p><strong>x</strong> -- Distributed design variable vector</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a> or tacs.TACS.Vec</p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a> or tacs.TACS.Vec</p>
 </dd>
 </dl>
 </dd></dl>
@@ -785,7 +788,7 @@ Defaults to False.</p>
 the number of structural nodes on this processor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a></p>
+<dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -805,7 +808,7 @@ Defaults to False.</p>
 <dd class="field-even"><p><strong>xpts</strong> -- Distributed node coordinate vector</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a> or tacs.TACS.Vec</p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a> or tacs.TACS.Vec</p>
 </dd>
 </dl>
 </dd></dl>
@@ -867,7 +870,7 @@ Defaults to False.</p>
 <dd class="field-even"><p><strong>vars</strong> -- Distributed state variable vector</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)">numpy.ndarray</a> or tacs.TACS.Vec</p>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)">numpy.ndarray</a> or tacs.TACS.Vec</p>
 </dd>
 </dl>
 </dd></dl>
@@ -892,7 +895,7 @@ Defaults to False.</p>
 <dd><p>Applies zeros to boundary condition DOFs in input vector.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>vec</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- Vector to apply boundary conditions to.</p>
+<dd class="field-odd"><p><strong>vec</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- Vector to apply boundary conditions to.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -903,7 +906,7 @@ Defaults to False.</p>
 <dd><p>Sets dirichlet boundary condition values in the input vector.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>vec</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- Vector to set boundary conditions in.</p>
+<dd class="field-odd"><p><strong>vec</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>tacs.TACS.Vec</em>) -- Vector to set boundary conditions in.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1239,7 +1242,7 @@ Defaults to None.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>src</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy values from</p></li>
-<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
 </ul>
 </dd>
 </dl>
@@ -1252,7 +1255,7 @@ Defaults to None.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
 <li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy into</p></li>
 </ul>
 </dd>
@@ -1274,6 +1277,12 @@ Defaults to None.</p></li>
 <dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of option to get</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.pytacs.pyTACS.getOptions">
+<span class="sig-name descname"><span class="pre">getOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.pytacs.pyTACS.getOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of all current options in use.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1404,6 +1413,7 @@ options to the stdout on the root processor</p>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.copyToTACSVec"><code class="docutils literal notranslate"><span class="pre">pyTACS.copyToTACSVec()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.dtype"><code class="docutils literal notranslate"><span class="pre">pyTACS.dtype</span></code></a></li>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.getOption"><code class="docutils literal notranslate"><span class="pre">pyTACS.getOption()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.pytacs.pyTACS.getOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.getOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.printDefaultOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.printDefaultOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.printModifiedOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.printModifiedOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.pytacs.pyTACS.printOptions"><code class="docutils literal notranslate"><span class="pre">pyTACS.printOptions()</span></code></a></li>

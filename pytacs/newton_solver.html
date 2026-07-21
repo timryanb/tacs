@@ -199,7 +199,7 @@ The problem's state is updated with the solution whether or not this is provided
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>src</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy values from</p></li>
-<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
 </ul>
 </dd>
 </dl>
@@ -212,7 +212,7 @@ The problem's state is updated with the solution whether or not this is provided
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
 <li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy into</p></li>
 </ul>
 </dd>
@@ -242,6 +242,12 @@ fatal failure in the solver which requires a full reset</p>
 <dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of option to get</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.solvers.NewtonSolver.getOptions">
+<span class="sig-name descname"><span class="pre">getOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.solvers.NewtonSolver.getOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of all current options in use.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -363,6 +369,7 @@ Where:
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.dtype"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.dtype</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.fatalFailure"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.fatalFailure</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.getOption"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.getOption()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.solvers.NewtonSolver.getOptions"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.getOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.hasConverged"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.hasConverged</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.initializeSolve"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.initializeSolve()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.NewtonSolver.iterationCount"><code class="docutils literal notranslate"><span class="pre">NewtonSolver.iterationCount</span></code></a></li>

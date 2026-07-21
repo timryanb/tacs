@@ -15,7 +15,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="NewtonSolver" href="newton_solver.html" />
-    <link rel="prev" title="Solver classes" href="solvers.html" /> 
+    <link rel="prev" title="BaseSolver" href="base_solver.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="Related">
       <h3>Navigation</h3>
@@ -30,7 +30,7 @@
           <a href="newton_solver.html" title="NewtonSolver"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="solvers.html" title="Solver classes"
+          <a href="base_solver.html" title="BaseSolver"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TACS  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../interfaces.html" >Interfaces</a> &#187;</li>
@@ -202,7 +202,7 @@ f_ext = r(u, 1) - f_int</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>src</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy values from</p></li>
-<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
+<li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a>) -- Vector/array to copy values into</p></li>
 </ul>
 </dd>
 </dl>
@@ -215,7 +215,7 @@ f_ext = r(u, 1) - f_int</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
+<li><p><strong>src</strong> (<em>tacs.TACS.Vec</em><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>numpy.ndarray</em></a><em> or </em><em>scalar</em>) -- Vector/array to copy values from</p></li>
 <li><p><strong>dest</strong> (<em>tacs.TACS.Vec</em>) -- Vector to copy into</p></li>
 </ul>
 </dd>
@@ -245,6 +245,12 @@ fatal failure in the solver which requires a full reset</p>
 <dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) -- Name of option to get</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tacs.solvers.ContinuationSolver.getOptions">
+<span class="sig-name descname"><span class="pre">getOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tacs.solvers.ContinuationSolver.getOptions" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of all current options in use.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -357,6 +363,7 @@ Where:
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.dtype"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.dtype</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.fatalFailure"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.fatalFailure</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.getOption"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.getOption()</span></code></a></li>
+<li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.getOptions"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.getOptions()</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.hasConverged"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.hasConverged</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.iterationCount"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.iterationCount</span></code></a></li>
 <li><a class="reference internal" href="#tacs.solvers.ContinuationSolver.printDefaultOptions"><code class="docutils literal notranslate"><span class="pre">ContinuationSolver.printDefaultOptions()</span></code></a></li>
@@ -377,8 +384,8 @@ Where:
   </div>
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="solvers.html"
-                          title="previous chapter">Solver classes</a></p>
+    <p class="topless"><a href="base_solver.html"
+                          title="previous chapter">BaseSolver</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
@@ -412,7 +419,7 @@ Where:
           <a href="newton_solver.html" title="NewtonSolver"
              >next</a> |</li>
         <li class="right" >
-          <a href="solvers.html" title="Solver classes"
+          <a href="base_solver.html" title="BaseSolver"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">TACS  documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../interfaces.html" >Interfaces</a> &#187;</li>
