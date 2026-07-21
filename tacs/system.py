@@ -5,10 +5,7 @@ pySystem
 # =============================================================================
 # Imports
 # =============================================================================
-import numpy as np
 
-import tacs.pymeshloader
-import tacs.TACS
 from tacs.utilities import BaseUI
 
 
@@ -66,23 +63,35 @@ class TACSSystem(BaseUI):
 
     def setVarName(self, varName):
         """
-        Set a name for the structural variables in pyOpt. Only needs
+        Set a name for the design variables in pyOpt. Only needs
         to be changed if more than 1 pytacs object is used in an
         optimization
 
         Parameters
         ----------
         varName : str
-            Name of the structural variable used in addVarGroup().
+            Name of the design variables used in setDesignVars() dict.
         """
         self.varName = varName
+
+    def getVarName(self):
+        """
+        Get name for the design variables in pyOpt. Only needed
+        if more than 1 pytacs object is used in an optimization
+
+        Returns
+        -------
+        varName : str
+            Name of the design variables used in setDesignVars() dict.
+        """
+        return self.varName
 
     def getDesignVars(self):
         """
         Get the current set of  design variables for this problem.
 
         Returns
-        ----------
+        -------
         x : numpy.ndarray
             The current design variable vector set in tacs.
 
@@ -108,20 +117,20 @@ class TACSSystem(BaseUI):
             # or array or TACSBVec
             else:
                 self.copyToTACSVec(x, self.x)
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "setDesignVars must be called with either a numpy array, TACS Vec, or dict containing one of the two, as input."
-            )
+            ) from err
 
         # Set the variables in tacs
         self.assembler.setDesignVars(self.x)
 
     def getDesignVarRange(self):
         """
-        get the lower/upper bounds for the design variables.
+        Get the lower/upper bounds for the design variables.
 
         Returns
-        ----------
+        -------
         xlb : numpy.ndarray
             The design variable lower bound.
         xub : numpy.ndarray
@@ -170,6 +179,28 @@ class TACSSystem(BaseUI):
         """
         return self.x.getSize()
 
+    def setCoordName(self, coordName):
+        """
+        Set a name for the nodal coordinates in pyOpt.
+
+        Parameters
+        ----------
+        coordName : str
+            Name of the nodal coordinates used in setNodes() dict.
+        """
+        self.coordName = coordName
+
+    def getCoordName(self):
+        """
+        Get name for the nodal coordinates in pyOpt.
+
+        Returns
+        -------
+        coordName : str
+            Name of the nodal coordinates used in setNodes() dict.
+        """
+        return self.coordName
+
     def getNodes(self):
         """
         Return the mesh coordinates of this problem.
@@ -200,10 +231,10 @@ class TACSSystem(BaseUI):
             # or array or TACSBVec
             else:
                 self.copyToTACSVec(Xpts, self.Xpts)
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "setNodes must be called with either a numpy array, TACS Vec, or dict containing one of the two, as input."
-            )
+            ) from err
         self.assembler.setNodes(self.Xpts)
 
     def _arrayToNodeVec(self, xptsArray):

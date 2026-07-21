@@ -15,7 +15,6 @@ import copy
 import os
 import time
 from collections import OrderedDict
-import warnings
 
 import numpy as np
 import pyNastran.bdf as pn
@@ -236,8 +235,7 @@ class StaticProblem(TACSProblem):
                 self.nonlinearSolver.setCallback(self._nonlinearCallback)
             else:
                 raise self._TACSError(
-                    "Unknown nonlinearSolver option. Valid options are "
-                    "'Continuation'"
+                    "Unknown nonlinearSolver option. Valid options are 'Continuation'"
                 )
 
     def _createVariables(self):
@@ -351,7 +349,7 @@ class StaticProblem(TACSProblem):
         #        opt('nRestarts'), opt('flexible'))
         else:
             raise self._TACSError(
-                "Unknown linearSolver option. Valid options are " "'GMRES' or 'GCROT'"
+                "Unknown linearSolver option. Valid options are 'GMRES' or 'GCROT'"
             )
 
         self.linearSolver.setTolerances(
@@ -391,14 +389,6 @@ class StaticProblem(TACSProblem):
         value : depends on option
             New option value to set
         """
-        # Updated deprecated option
-        if name.lower() == "ksmsolver":
-            name = "linearSolver"
-            warnings.warn(
-                "'KSMSolver' option will be deprecated starting in tacs 3.7.0. "
-                "Please use `linearSolver` option instead.",
-                DeprecationWarning,
-            )
 
         # Default setOption for common problem class objects
         TACSProblem.setOption(self, name, value)
@@ -408,7 +398,7 @@ class StaticProblem(TACSProblem):
         if self.linearSolver is not None:
             # Update tolerances
             if "l2convergence" in name.lower():
-                createVariables = False
+                recreateSolver = False
                 self.linearSolver.setTolerances(
                     self.getOption("L2ConvergenceRel"),
                     self.getOption("L2Convergence"),
@@ -556,7 +546,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         compIDs : list[int] or int
             The components with added loads. Use pyTACS selectCompIDs method
             to determine this.
@@ -571,7 +560,6 @@ class StaticProblem(TACSProblem):
 
         Notes
         -----
-
         The units of the entries of the 'force' vector F are not
         necessarily physical forces and their interpretation depends
         on the physics problem being solved and the dofs included
@@ -599,7 +587,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         nodeIDs : list[int]
             The nodes IDs with added loads.
 
@@ -613,7 +600,6 @@ class StaticProblem(TACSProblem):
 
         Notes
         -----
-
         The units of the entries of the 'force' vector F are not
         necessarily physical forces and their interpretation depends
         on the physics problem being solved and the dofs included
@@ -649,7 +635,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         Fapplied : numpy.ndarray or tacs.TACS.Vec
             Distributed array containing loads to applied to RHS of the problem.
 
@@ -664,7 +649,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         compIDs : list[int] or int
             The components with added loads. Use pyTACS selectCompIDs method
             to determine this.
@@ -689,7 +673,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         elemIDs : list[int]
             The global element ID numbers for which to apply the traction.
 
@@ -718,7 +701,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         compIDs : list[int] or int
             The components with added loads. Use pyTACS selectCompIDs method
             to determine this.
@@ -743,7 +725,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         elemIDs : list[int]
             The global element ID numbers for which to apply the pressure.
 
@@ -784,7 +765,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         omegaVector : numpy.ndarray
             Rotational velocity vector (rad/s) used to define centrifugal load.
 
@@ -804,7 +784,6 @@ class StaticProblem(TACSProblem):
 
         Parameters
         ----------
-
         loadID : int
             Load identification number of load set in BDF file user wishes to add to problem.
 
@@ -1090,7 +1069,7 @@ class StaticProblem(TACSProblem):
         --------
         >>> funcs = {}
         >>> staticProblem.solve()
-        >>> staticProblem.evalFunctions(funcs, ['mass'])
+        >>> staticProblem.evalFunctions(funcs, ["mass"])
         >>> funcs
         >>> # Result will look like (if StaticProblem has name of 'c1'):
         >>> # {'cl_mass':12354.10}
@@ -1182,7 +1161,7 @@ class StaticProblem(TACSProblem):
         Examples
         --------
         >>> funcsSens = {}
-        >>> staticProblem.evalFunctionsSens(funcsSens, ['mass'])
+        >>> staticProblem.evalFunctionsSens(funcsSens, ["mass"])
         >>> funcsSens
         >>> # Result will look like (if StaticProblem has name of 'c1'):
         >>> # {'c1_mass':{'struct':[1.234, ..., 7.89], 'Xpts':[3.14, ..., 1.59]}}
@@ -1206,7 +1185,7 @@ class StaticProblem(TACSProblem):
         for f in evalFuncs:
             if f not in self.functionList:
                 raise self._TACSError(
-                    "Supplied function has not been added " "using addFunction()"
+                    "Supplied function has not been added using addFunction()"
                 )
             else:
                 # Populate the lists with the tacs bvecs
@@ -1334,7 +1313,7 @@ class StaticProblem(TACSProblem):
 
         # Update from the BVec values, if the input was a numpy array
         if isinstance(svSensList[0], np.ndarray):
-            for svSensArray, svSensBVec in zip(svSensList, svSensBVecList):
+            for svSensArray, svSensBVec in zip(svSensList, svSensBVecList, strict=True):
                 svSensArray[:] = svSensBVec.getArray()
 
     def addDVSens(self, evalFuncs, dvSensList, scale=1.0):
@@ -1378,7 +1357,7 @@ class StaticProblem(TACSProblem):
 
         # Update the BVec values, if the input was a numpy array
         if isinstance(dvSensList[0], np.ndarray):
-            for dvSensArray, dvSensBVec in zip(dvSensList, dvSensBVecList):
+            for dvSensArray, dvSensBVec in zip(dvSensList, dvSensBVecList, strict=True):
                 # Copy values to numpy array
                 dvSensArray[:] = dvSensBVec.getArray()
 
@@ -1431,7 +1410,7 @@ class StaticProblem(TACSProblem):
 
         # Update the BVec values, if the input was a numpy array
         if isinstance(dvSensList[0], np.ndarray):
-            for dvSensArray, dvSensBVec in zip(dvSensList, dvSensBVecList):
+            for dvSensArray, dvSensBVec in zip(dvSensList, dvSensBVecList, strict=True):
                 # Copy values to numpy array
                 dvSensArray[:] = dvSensBVec.getArray()
 
@@ -1476,7 +1455,9 @@ class StaticProblem(TACSProblem):
 
         # Update from the BVec values, if the input was a numpy array
         if isinstance(xptSensList[0], np.ndarray):
-            for xptSensArray, xptSensBVec in zip(xptSensList, xptSensBVecList):
+            for xptSensArray, xptSensBVec in zip(
+                xptSensList, xptSensBVecList, strict=True
+            ):
                 # Copy values to numpy array
                 xptSensArray[:] = xptSensBVec.getArray()
 
@@ -1530,7 +1511,9 @@ class StaticProblem(TACSProblem):
             xptSensBVec.endSetValues()
 
         if isinstance(xptSensList[0], np.ndarray):
-            for xptSensArray, xptSensBVec in zip(xptSensList, xptSensBVecList):
+            for xptSensArray, xptSensBVec in zip(
+                xptSensList, xptSensBVecList, strict=True
+            ):
                 # Copy values to numpy array
                 xptSensArray[:] = xptSensBVec.getArray()
 
@@ -1682,29 +1665,6 @@ class StaticProblem(TACSProblem):
         else:
             prod[:] = prod + scale * self.res.getArray()
 
-    def addTransposeJacVecProduct(self, phi, prod, scale=1.0):
-        """
-        Adds product of Jacobian transpose and input vector into output vector as shown below:
-        prod += scale * J(^T) . phi
-
-        Parameters
-        ----------
-        phi : tacs.TACS.Vec or numpy.ndarray
-            Input vector to product with the transpose Jacobian.
-
-        prod : tacs.TACS.Vec or numpy.ndarray
-            Output vector to add Jacobian product to.
-
-        scale : float
-            Scalar used to scale Jacobian product by.
-        """
-        warnings.warn(
-            "addTransposeJacVecProduct is deprecated and will be removed in version 3.12.0. "
-            "Use addJacVecProduct(phi, prod, scale, transpose=True) instead.",
-            DeprecationWarning,
-        )
-        self.addJacVecProduct(phi, prod, scale, transpose=True)
-
     def zeroVariables(self):
         """
         Zero all the tacs solution b-vecs
@@ -1803,7 +1763,7 @@ class StaticProblem(TACSProblem):
             Vector to place current state variables into (optional)
 
         Returns
-        ----------
+        -------
         states : numpy.ndarray
             current state vector
         """
