@@ -19,7 +19,7 @@ class GPConstitutiveMLTest(unittest.TestCase):
             self.rtol = 1e-9
         else:
             # KS is high inside this buckling model
-            self.dh = 1e-8
+            self.dh = 1e-7
             self.rtol = 1e-2
         self.dtype = TACS.dtype
 
@@ -364,7 +364,7 @@ class GPConstitutiveMLTest(unittest.TestCase):
                                     self.pt,
                                     self.x,
                                     self.dh,
-                                    self.print_level,
+                                    2,#self.print_level,
                                     self.rtol,
                                     self.atol,
                                 )
