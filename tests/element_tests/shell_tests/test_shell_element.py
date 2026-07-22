@@ -333,7 +333,7 @@ class ElementTest(unittest.TestCase):
                                     self.dvars,
                                     self.ddvars,
                                     self.dh,
-                                    self.print_level,
+                                    2, #self.print_level,
                                     self.atol,
                                     self.rtol,
                                 )
