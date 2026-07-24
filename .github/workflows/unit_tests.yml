@@ -47,6 +47,19 @@ jobs:
             OPTIONAL: 'debug'
             INTERFACE: 'interface'
             PUBLISH_DOCS: false
+            EXTRA_DEBUG_CC_FLAGS: ''
+
+          # Debug-only job (H5 experiment, docs/plans/bugfix-trans-beam-macos-blowup):
+          # identical to Real-MacOS except FP contraction (FMA fusion) is disabled,
+          # to test whether real-vs-complex FP-contraction differences on clang/arm64
+          # are what tips the beam transient's Y-mode into divergence. Remove this
+          # entry once the hypothesis is settled.
+          - NAME: Real-MacOS-NoFPContract
+            OS: macos-latest
+            OPTIONAL: 'debug'
+            INTERFACE: 'interface'
+            PUBLISH_DOCS: false
+            EXTRA_DEBUG_CC_FLAGS: '-ffp-contract=off'
 
           # complex versions
           - NAME: Complex-Ubuntu
@@ -108,11 +121,11 @@ jobs:
           mamba install -c conda-forge metis=5.1.0 -q -y;
           cd $TACS_DIR;
           cp Makefile.in.info Makefile.in;
-          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
+          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" EXTRA_DEBUG_CC_FLAGS="-fPIC -g ${{ matrix.EXTRA_DEBUG_CC_FLAGS }}";
           cd $TACS_DIR;
           make ${{ matrix.INTERFACE }};
           cd $TACS_DIR/examples;
-          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis";
+          make ${{ matrix.OPTIONAL }} TACS_DIR=$TACS_DIR METIS_INCLUDE=-I${CONDA_PREFIX}/include/ METIS_LIB="-L${CONDA_PREFIX}/lib/ -lmetis" EXTRA_DEBUG_CC_FLAGS="-fPIC -g ${{ matrix.EXTRA_DEBUG_CC_FLAGS }}";
       - name: Install f5totec/f5tovtk
         run: |
           # Sometimes needed for macos runner to prevent it from pulling numpy 2 when installing tecio later
