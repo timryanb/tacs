@@ -23,6 +23,21 @@ linearized) at a fixed, deterministic, nonzero state
 the Jacobian, addResidual *does* depend on state, so this is the next
 narrowing step per Experiment 5's conclusion (residual assembly vs. the
 linear solve/factorization are the two remaining state-dependent stages).
+Ran once already: also bit-identical across all three platforms -- rules
+out residual *assembly* too (at this state).
+
+Part 3: takes the step2plus_order2 matrix and the residual_state1 vector
+(both already confirmed bit-identical across platforms) and runs them
+through the actual solve path newtonSolve uses -- TACSSchurPc.factor() +
+applyFactor(), the direct block-Schur factorization/back-substitution, which
+is TACS's own C++ code, not a call into the platform's BLAS/LAPACK
+(Accelerate on macOS is a precompiled library unaffected by TACS's own
+-ffp-contract flag, so if Accelerate's own arithmetic were the culprit,
+NoFPContract wouldn't have fixed anything -- it did, so the FMA-sensitive
+code must be inside TACS's own compiled sources: assembly, already ruled
+out twice, or factor/solve, tested here). Since both inputs are already
+confirmed identical, any difference in the solved `update` vector isolates
+cleanly to the factorization/solve arithmetic itself.
 
 Run in serial (1 rank). The dense matrix is extracted column-by-column via
 Mat.mult() against unit probe vectors rather than Mat.getDenseMatrix()
@@ -48,7 +63,7 @@ from mpi4py import MPI
 
 print("DIAG: imported numpy, mpi4py", flush=True)
 
-from tacs import constitutive, elements, pytacs
+from tacs import TACS, constitutive, elements, pytacs
 
 print("DIAG: imported tacs", flush=True)
 
@@ -143,6 +158,26 @@ def main():
     res_arr = np.array(res.getArray(), copy=True)
     print(f"### DUMP {label} shape={res_arr.shape}", flush=True)
     for i, v in enumerate(res_arr):
+        fv = float(v.real if np.iscomplexobj(v) else v)
+        print(f"DUMP {label}[{i}] = {fv.hex()}", flush=True)
+    print(f"### DUMP {label} END", flush=True)
+
+    # Part 3: solve mat (still holding step2plus_order2's Jacobian from the
+    # end of the Part 1 loop) against res (still holding residual_state1)
+    # via the same TACSSchurPc direct factor/back-substitution newtonSolve
+    # uses (see module docstring).
+    label = "solve_step2plus_residual_state1"
+    pc = TACS.Pc(mat)
+    pc.factor()
+    print(f"DIAG: factored for {label}", flush=True)
+
+    update = assembler.createVec()
+    pc.applyFactor(res, update)
+    print(f"### DUMP {label} solved", flush=True)
+
+    update_arr = np.array(update.getArray(), copy=True)
+    print(f"### DUMP {label} shape={update_arr.shape}", flush=True)
+    for i, v in enumerate(update_arr):
         fv = float(v.real if np.iscomplexobj(v) else v)
         print(f"DUMP {label}[{i}] = {fv.hex()}", flush=True)
     print(f"### DUMP {label} END", flush=True)
