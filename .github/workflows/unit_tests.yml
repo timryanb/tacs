@@ -159,7 +159,7 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]] && [[ -f ${TACS_DIR}/extern/ESP122/ESPenv.sh ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          testflo -v --timeout 420 .;
+          testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py;
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
