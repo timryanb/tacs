@@ -172,19 +172,24 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]] && [[ -f ${TACS_DIR}/extern/ESP122/ESPenv.sh ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          echo "DIAG_BASH: before testflo";
-          testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py
-          echo "DIAG_BASH: after testflo, exit code was $?";
+          # Real-MacOS's login shell aborts the rest of this script on testflo's
+          # nonzero exit (confirmed via DIAG_BASH markers -- effectively -e
+          # semantics even though `defaults.run.shell: bash -l {0}` has no -e
+          # flag; Real-Ubuntu's shell does not do this). The `||` guard below
+          # neutralizes that abort (capturing the real exit code) so the dump
+          # still runs on a known, expected test failure; the step still
+          # reports the correct pass/fail via the final `exit`.
+          testflo_status=0
+          testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py || testflo_status=$?
           # H5 bit-compare debug dump (docs/plans/bugfix-trans-beam-macos-blowup):
           # dumps the beam model's assembled tangent matrix, bit-exactly, for
           # the two (alpha,beta,gamma) triples the real transient's first
           # Newton iteration of each step uses. Real-mode only. Remove once
           # the investigation closes.
           if [[ ${{ matrix.INTERFACE }} == 'interface' ]]; then
-            echo "DIAG_BASH: entering dump if-block";
-            python ./tests/integration_tests/debug_dump_beam_jacobian.py
-            echo "DIAG_BASH: python exited with $?";
+            python ./tests/integration_tests/debug_dump_beam_jacobian.py || true
           fi
+          exit $testflo_status
           echo "DIAG_BASH: end of run-unit-tests script";
       - name: Build docs
         run: |
@@ -208,7 +213,10 @@ jobs:
       # This allows the user to ssh into the github runner and debug a job upon failure
       # This will only trigger if the job was run using workflow_dispatch and debug_enabled input flag was set to true
       - name: Setup interactive debug session on failure
-        if: ${{ failure() && github.event.inputs.debug_enabled }}
+        # workflow_dispatch inputs are always strings, so the un-set default
+        # ('false') was truthy in `${{ }}` and this fired on every failure
+        # regardless of the debug_enabled input; compare explicitly instead.
+        if: ${{ failure() && github.event.inputs.debug_enabled == 'true' }}
         uses: mxschmitt/action-tmate@v3
         # To access the terminal through the web-interface:
         #   1. Click on the web-browser link printed out in this action from the github workkflow terminal
