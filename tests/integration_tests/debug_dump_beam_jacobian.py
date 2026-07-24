@@ -1,21 +1,33 @@
 """
 Temporary diagnostic for docs/plans/bugfix-trans-beam-macos-blowup.
 
-Dumps the assembled global tangent matrix (alpha*K + beta*C + gamma*M) for
-the transient_beam.bdf / Beam2 model, bit-exactly (as hex floats), for the
-two distinct (alpha, beta, gamma) coefficient triples the real 20-step,
-dt=0.1 BDF-2 transient run actually uses at Newton iteration 0 of each step
-(order-1 ramp at step 1, steady-state order-2 BDF for steps 2-20 on this
-uniform grid) -- hand-derived from TACSBDFIntegrator::get2ndBDFCoeff.
+Part 1: dumps the assembled global tangent matrix (alpha*K + beta*C +
+gamma*M) for the transient_beam.bdf / Beam2 model, bit-exactly (as hex
+floats), for the two distinct (alpha, beta, gamma) coefficient triples the
+real 20-step, dt=0.1 BDF-2 transient run actually uses at Newton iteration 0
+of each step (order-1 ramp at step 1, steady-state order-2 BDF for steps
+2-20 on this uniform grid) -- hand-derived from
+TACSBDFIntegrator::get2ndBDFCoeff. TACSBeamLinearModel's addJacobian output
+does not depend on the current state (vars/dvars/ddvars) at all -- only on
+Xpts, material properties, and (alpha, beta, gamma) -- so this reproduces
+exactly the numeric computation the real transient performs at each step's
+first Newton iteration, without needing to run the transient loop itself.
+Ran once already (Experiment 5): bit-identical across Real-MacOS /
+Real-MacOS-NoFPContract / Real-Ubuntu -- rules out Jacobian *assembly* as
+H5's locus.
 
-TACSBeamLinearModel's addJacobian output does not depend on the current
-state (vars/dvars/ddvars) at all -- only on Xpts, material properties, and
-(alpha, beta, gamma) -- so this reproduces exactly the numeric computation
-the real transient performs at each step's first Newton iteration, without
-needing to run the transient loop itself. Run in serial (1 rank). The dense
-matrix is extracted column-by-column via Mat.mult() against unit probe
-vectors rather than Mat.getDenseMatrix() (avoids the Schur local-map
-reorder path -- a less-exercised binding -- in case that's a confound).
+Part 2: dumps the assembled residual vector (assembleRes, no alpha/beta/
+gamma needed -- the residual is evaluated at the current state, not
+linearized) at a fixed, deterministic, nonzero state
+(vars[i]=0.001*(i+1), dvars[i]=0.002*(i+1), ddvars[i]=0.003*(i+1)) -- unlike
+the Jacobian, addResidual *does* depend on state, so this is the next
+narrowing step per Experiment 5's conclusion (residual assembly vs. the
+linear solve/factorization are the two remaining state-dependent stages).
+
+Run in serial (1 rank). The dense matrix is extracted column-by-column via
+Mat.mult() against unit probe vectors rather than Mat.getDenseMatrix()
+(avoids the Schur local-map reorder path -- a less-exercised binding -- in
+case that's a confound).
 
 Every stage prints a marker with flush=True and the whole body runs under a
 top-level try/except that prints a full traceback to stdout, so a first
@@ -108,6 +120,32 @@ def main():
             fv = float(v.real if np.iscomplexobj(v) else v)
             print(f"DUMP {label}[{i}] = {fv.hex()}", flush=True)
         print(f"### DUMP {label} END", flush=True)
+
+    # Part 2: residual assembly at a fixed nonzero state (see module docstring)
+    label = "residual_state1"
+    vars_arr_vals = [0.001 * (i + 1) for i in range(n)]
+    dvars_arr_vals = [0.002 * (i + 1) for i in range(n)]
+    ddvars_arr_vals = [0.003 * (i + 1) for i in range(n)]
+
+    vars_vec = assembler.createVec()
+    dvars_vec = assembler.createVec()
+    ddvars_vec = assembler.createVec()
+    vars_vec.getArray()[:] = vars_arr_vals
+    dvars_vec.getArray()[:] = dvars_arr_vals
+    ddvars_vec.getArray()[:] = ddvars_arr_vals
+    assembler.setVariables(vars_vec, dvars_vec, ddvars_vec)
+    print(f"DIAG: set nonzero state for {label}", flush=True)
+
+    res.zeroEntries()
+    assembler.assembleRes(res)
+    print(f"### DUMP {label} assembled", flush=True)
+
+    res_arr = np.array(res.getArray(), copy=True)
+    print(f"### DUMP {label} shape={res_arr.shape}", flush=True)
+    for i, v in enumerate(res_arr):
+        fv = float(v.real if np.iscomplexobj(v) else v)
+        print(f"DUMP {label}[{i}] = {fv.hex()}", flush=True)
+    print(f"### DUMP {label} END", flush=True)
 
 
 try:
