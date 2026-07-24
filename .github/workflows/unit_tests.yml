@@ -173,6 +173,14 @@ jobs:
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
           testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py;
+          # H5 bit-compare debug dump (docs/plans/bugfix-trans-beam-macos-blowup):
+          # dumps the beam model's assembled tangent matrix, bit-exactly, for
+          # the two (alpha,beta,gamma) triples the real transient's first
+          # Newton iteration of each step uses. Real-mode only. Remove once
+          # the investigation closes.
+          if [[ ${{ matrix.INTERFACE }} == 'interface' ]]; then
+            python ./tests/integration_tests/debug_dump_beam_jacobian.py;
+          fi
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
