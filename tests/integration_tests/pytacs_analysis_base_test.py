@@ -102,6 +102,9 @@ class PyTACSTestCase:
             """
             # solve
             funcs = self.run_solve()
+            if self.comm.rank == 0:
+                print("Computed", funcs)
+                print("Ref", self.FUNC_REFS)
 
             # Test functions values against historical values
             for prob in self.tacs_probs:
