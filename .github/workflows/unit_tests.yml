@@ -172,15 +172,20 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]] && [[ -f ${TACS_DIR}/extern/ESP122/ESPenv.sh ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
-          testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py;
+          echo "DIAG_BASH: before testflo";
+          testflo -vs --timeout 420 ./tests/integration_tests/test_trans_beam.py
+          echo "DIAG_BASH: after testflo, exit code was $?";
           # H5 bit-compare debug dump (docs/plans/bugfix-trans-beam-macos-blowup):
           # dumps the beam model's assembled tangent matrix, bit-exactly, for
           # the two (alpha,beta,gamma) triples the real transient's first
           # Newton iteration of each step uses. Real-mode only. Remove once
           # the investigation closes.
           if [[ ${{ matrix.INTERFACE }} == 'interface' ]]; then
-            python ./tests/integration_tests/debug_dump_beam_jacobian.py;
+            echo "DIAG_BASH: entering dump if-block";
+            python ./tests/integration_tests/debug_dump_beam_jacobian.py
+            echo "DIAG_BASH: python exited with $?";
           fi
+          echo "DIAG_BASH: end of run-unit-tests script";
       - name: Build docs
         run: |
           cd $TACS_DIR/docs;
