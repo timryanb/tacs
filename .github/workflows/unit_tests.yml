@@ -130,7 +130,7 @@ jobs:
           mamba install -c conda-forge "petsc>=3.19,!=3.22.3" petsc4py "numpy>=2" -q -y;
           pip list
           # Install pygeo for mach tests
-          mamba install -c smdogroup pygeo -q -y;
+          mamba install -c smdogroup pygeo "numpy>=2" -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
            if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]]; then
             cd $TACS_DIR/extern/
