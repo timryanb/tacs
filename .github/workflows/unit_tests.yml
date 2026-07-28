@@ -128,6 +128,7 @@ jobs:
         run: |
           # Install petsc for openmdao tests (there's a problem with 3.22.3 on mac runner)
           mamba install -c conda-forge "petsc>=3.19,!=3.22.3" petsc4py "numpy>=2" -q -y;
+          pip list
           # Install pygeo for mach tests
           mamba install -c smdogroup pygeo -q -y;
           # Install ESP/CAPS prebuilt for shape derivatives, only in Real mode
@@ -159,6 +160,7 @@ jobs:
           if [[ ${{ matrix.NAME }} == 'Real-Ubuntu' ]] && [[ -f ${TACS_DIR}/extern/ESP122/ESPenv.sh ]]; then
             source ${TACS_DIR}/extern/ESP122/ESPenv.sh
           fi
+          pip list
           testflo -v --timeout 420 .;
       - name: Build docs
         run: |
