@@ -8,13 +8,16 @@ wing box. The box is unswept out to the planform break at z = 1.5 m and swept
 and tapered from there to the tip at z = 13.8 m, so the quarter-chord axis is
 a three-point piecewise-linear line. It produces ``wingbox_vmt.pdf``, a
 multi-page report with the envelope of all cases first and one page per
-case, plus one CSV per case and an envelope CSV.
+case, plus one CSV per case and an envelope CSV. The model is in SI units
+(N, m); the report labels its axes accordingly and shows forces in kN, while
+the CSV files and the printed table stay in N.
 
 The same post-processing is available from the command line::
 
     python -m tacs.postprocess.vmt pullup_000.f5 pushover_000.f5 gust_000.f5 \
         --axis 1.9375 0 0  1.9375 0 1.5  7.95 0 13.8 --shear-dir 0 -1 0 \
-        --num-stations 30 --output wingbox_vmt.pdf --csv wingbox_vmt.csv
+        --num-stations 30 --output wingbox_vmt.pdf --csv wingbox_vmt.csv \
+        --force-scale 1e-3 --force-unit kN --length-unit m
 """
 
 import argparse
@@ -90,11 +93,17 @@ if comm.rank == 0:
     print(f"envelope: root Vmax = {envelope.Vmax[0]:11.4e} ({envelope.VmaxCase[0]})")
     writeVMTEnvelopeCsv(envelope, "wingbox_vmt_envelope.csv")
 
+    # Label the plot axes with the model units. The scale factor converts the
+    # plotted forces (and moments) from N to kN; the results themselves and
+    # the CSV files above are left in model units.
     pages = plotVMTReport(
         results,
         "wingbox_vmt.pdf",
         data=loadF5(f5Files[0]),
         shearDir=shearDir,
         title="Wingbox",
+        forceUnit="kN",
+        lengthUnit="m",
+        forceScale=1e-3,
     )
     print(f"wrote wingbox_vmt.pdf with {pages} pages")

@@ -26,6 +26,7 @@ from tacs.postprocess.vmt import (
     computeVMT,
     plotVMTEnvelope,
     plotVMTReport,
+    scaleVMTResult,
     selectComponents,
     writeVMTCsv,
     writeVMTEnvelopeCsv,
@@ -210,6 +211,35 @@ class TestComputeVMT(unittest.TestCase):
         np.testing.assert_allclose(result.V, [-P, 0.0])
         self.assertEqual(result.nodeS.shape, (1,))
 
+    def test_scale_result(self):
+        result = computeVMT(
+            [[10.0, 2.0, 0.0]], [[0.0, 0.0, P]], STRAIGHT_AXIS, numStations=11
+        )
+        self.assertIs(scaleVMTResult(result), result)
+        scaled = scaleVMTResult(result, forceScale=2.0, lengthScale=3.0)
+        np.testing.assert_allclose(scaled.s, 3.0 * result.s)
+        np.testing.assert_allclose(scaled.nodeS, 3.0 * result.nodeS)
+        np.testing.assert_allclose(scaled.V, 2.0 * result.V)
+        np.testing.assert_allclose(scaled.M, 6.0 * result.M)
+        np.testing.assert_allclose(scaled.T, 6.0 * result.T)
+        np.testing.assert_allclose(scaled.force, 2.0 * result.force)
+        np.testing.assert_allclose(scaled.moment, 6.0 * result.moment)
+        np.testing.assert_allclose(scaled.stationPoints, 3.0 * result.stationPoints)
+        np.testing.assert_allclose(scaled.axisPoints, 3.0 * result.axisPoints)
+        self.assertAlmostEqual(scaled.axisLength, 30.0)
+        # The unit frame is not a length and must be untouched
+        np.testing.assert_allclose(scaled.tangent, result.tangent)
+        np.testing.assert_allclose(scaled.shearAxis, result.shearAxis)
+        # dM/ds = V still holds after scaling
+        np.testing.assert_allclose(
+            np.diff(scaled.M) / np.diff(scaled.s), scaled.V[:-1], atol=1e-9
+        )
+        for bad in (0.0, -1.0, np.inf, np.nan, "abc"):
+            with self.assertRaises(ValueError):
+                scaleVMTResult(result, forceScale=bad)
+            with self.assertRaises(ValueError):
+                scaleVMTResult(result, lengthScale=bad)
+
     def test_invalid_input(self):
         with self.assertRaises(ValueError):
             computeVMT([[1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0]], [[0.0, 0.0, 0.0]])
@@ -389,6 +419,50 @@ class TestEnvelope(unittest.TestCase):
         self.assertEqual(list(table["VmaxCase"][:-1]), ["down"] * 5)
 
     @unittest.skipIf(matplotlib is None, "matplotlib not installed")
+    @unittest.skipIf(matplotlib is None, "matplotlib not installed")
+    def test_plot_units_and_scale(self):
+        fig, axes = plotVMTEnvelope(
+            self.cases,
+            forceUnit="lbf",
+            lengthUnit="in",
+            forceScale=0.5,
+            lengthScale=2.0,
+        )
+        try:
+            axPlan, axV, axM, axT = axes
+            self.assertTrue(axV.get_ylabel().endswith("[lbf]"))
+            self.assertTrue(axM.get_ylabel().endswith("[lbf·in]"))
+            self.assertTrue(axT.get_ylabel().endswith("[lbf·in]"))
+            self.assertTrue(axT.get_xlabel().endswith("[in]"))
+            self.assertTrue(axPlan.get_xlabel().endswith("[in]"))
+            self.assertTrue(axPlan.get_ylabel().endswith("[in]"))
+            self.assertEqual(axV.get_xlim(), (0.0, 20.0))
+            env = computeEnvelope(self.cases)
+            # Case lines are drawn after the two envelope curves
+            lineV = axV.get_lines()[-3]
+            np.testing.assert_allclose(lineV.get_xdata(), 2.0 * self.up.s)
+            np.testing.assert_allclose(lineV.get_ydata(), 0.5 * self.up.V)
+            lineM = axM.get_lines()[-3]
+            np.testing.assert_allclose(lineM.get_ydata(), self.up.M)
+            from matplotlib.collections import PolyCollection
+
+            band = [c for c in axV.collections if isinstance(c, PolyCollection)][0]
+            verts = band.get_paths()[0].vertices
+            self.assertAlmostEqual(verts[:, 1].min(), 0.5 * env.Vmin.min())
+            self.assertAlmostEqual(verts[:, 1].max(), 0.5 * env.Vmax.max())
+        finally:
+            plt.close(fig)
+        # Only a force unit: moments get no unit rather than a half label
+        fig, axes = plotVMTEnvelope(self.cases, forceUnit="N")
+        try:
+            self.assertTrue(axes[1].get_ylabel().endswith("[N]"))
+            self.assertFalse(axes[2].get_ylabel().endswith("]"))
+            self.assertFalse(axes[3].get_xlabel().endswith("]"))
+        finally:
+            plt.close(fig)
+        with self.assertRaises(ValueError):
+            plotVMTEnvelope(self.cases, lengthScale=0.0)
+
     def test_envelope_plot_and_report(self):
         fig, axes = plotVMTEnvelope(self.cases)
         try:

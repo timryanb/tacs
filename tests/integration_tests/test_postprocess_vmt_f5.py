@@ -17,6 +17,7 @@ from mpi4py import MPI
 
 from tacs import constitutive, elements, pytacs
 from tacs.postprocess import (
+    buildSilhouette,
     computeEnvelope,
     computeVMTCases,
     computeVMTFromF5,
@@ -364,6 +365,44 @@ class TestWingboxVMT(unittest.TestCase):
         finally:
             plt.close(fig)
 
+    @unittest.skipIf(matplotlib is None, "matplotlib not installed")
+    def test_plot_units_and_scale(self):
+        result = computeVMTFromF5(
+            self.data, self.axis, shearDir=self.shearDir, numStations=20
+        )
+        silhouette = buildSilhouette(self.data, result, self.shearDir)
+        fig, axes = plotVMT(
+            result,
+            silhouette=silhouette,
+            shearDir=self.shearDir,
+            forceUnit="N",
+            lengthUnit="m",
+            forceScale=1e-3,
+            lengthScale=1e3,
+        )
+        try:
+            axPlan, axV, axM, axT = axes
+            self.assertTrue(axV.get_ylabel().endswith("[N]"))
+            self.assertTrue(axM.get_ylabel().endswith("[N·m]"))
+            self.assertTrue(axT.get_xlabel().endswith("[m]"))
+            self.assertAlmostEqual(axV.get_xlim()[1], 1e3 * result.axisLength)
+            np.testing.assert_allclose(axV.get_lines()[-1].get_ydata(), 1e-3 * result.V)
+            np.testing.assert_allclose(axM.get_lines()[-1].get_ydata(), result.M)
+            np.testing.assert_allclose(axM.get_lines()[-1].get_xdata(), 1e3 * result.s)
+            # The planform silhouette is drawn in the scaled length unit
+            polys = [
+                c
+                for c in axPlan.collections
+                if c.__class__.__name__ == "PolyCollection"
+            ]
+            drawn = np.concatenate([p.vertices for c in polys for p in c.get_paths()])
+            expected = silhouette.quads.reshape(-1, 2)
+            self.assertAlmostEqual(
+                np.ptp(drawn[:, 0]), 1e3 * np.ptp(expected[:, 0]), places=3
+            )
+        finally:
+            plt.close(fig)
+
     def test_cases_and_envelope(self):
         results = computeVMTCases(
             [self.f5, self.f5Pushover],
@@ -452,6 +491,7 @@ class TestWingboxVMT(unittest.TestCase):
             "--csv",
             csv,
         ]
+        noOutput = argv[:-2]
         if matplotlib is not None:
             png = os.path.join(self.tmp.name, "cli.png")
             argv += ["--output", png]
@@ -463,6 +503,26 @@ class TestWingboxVMT(unittest.TestCase):
         np.testing.assert_allclose(table[:, 1], result.V)
         if matplotlib is not None:
             self.assertTrue(os.path.getsize(png) > 0)
+            unitsPng = os.path.join(self.tmp.name, "units.png")
+            unitsArgv = noOutput + [
+                "--output",
+                unitsPng,
+                "--force-unit",
+                "N",
+                "--length-unit",
+                "m",
+                "--force-scale",
+                "1e-3",
+                "--length-scale",
+                "1000",
+            ]
+            self.assertEqual(main(unitsArgv), 0)
+            self.assertTrue(os.path.getsize(unitsPng) > 0)
+        # Scale factors must be positive; argparse rejects them before any work
+        for flag in ("--force-scale", "--length-scale"):
+            for bad in ("0", "-2", "nan", "abc"):
+                with self.assertRaises(SystemExit):
+                    main(noOutput + [flag, bad])
         self.assertEqual(
             main(
                 [

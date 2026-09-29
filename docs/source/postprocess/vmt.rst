@@ -20,6 +20,8 @@ API Reference
 
 .. autofunction:: tacs.postprocess.vmt.plotVMT
 
+.. autofunction:: tacs.postprocess.vmt.scaleVMTResult
+
 .. autofunction:: tacs.postprocess.vmt.writeVMTCsv
 
 Several load cases and envelopes

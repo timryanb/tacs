@@ -85,6 +85,14 @@ Command line::
 
     python -m tacs.postprocess.vmt pullup_000.f5 pushover_000.f5 --axis 4 0 0  4 0 13.8 \
         --shear-dir 0 -1 0 --num-stations 30 --output vmt_report.pdf
+
+Label the plot axes with units, or convert the plotted numbers first (here
+from N and m to kN and mm)::
+
+    python -m tacs.postprocess.vmt pullup_000.f5 --axis 4 0 0  4 0 13.8 --shear-dir 0 -1 0 \
+        --output vmt.pdf --force-unit N --length-unit m
+    python -m tacs.postprocess.vmt pullup_000.f5 --axis 4 0 0  4 0 13.8 --shear-dir 0 -1 0 \
+        --output vmt.pdf --force-scale 1e-3 --length-scale 1e3 --force-unit kN --length-unit mm
 """
 
 import argparse
@@ -93,7 +101,7 @@ import os
 import struct
 import sys
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -909,6 +917,66 @@ def computeVMTFromF5(
     return VMTResult(**{**result.__dict__, "includeReactions": usedReactions})
 
 
+def _checkScale(name, value):
+    """Return ``value`` as a float after checking it is a positive finite number."""
+    try:
+        scale = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a positive number, got {value!r}") from exc
+    if not np.isfinite(scale) or scale <= 0.0:
+        raise ValueError(f"{name} must be a positive number, got {value!r}")
+    return scale
+
+
+def scaleVMTResult(result, forceScale=1.0, lengthScale=1.0):
+    """
+    Return a copy of ``result`` with all forces and lengths multiplied by constants.
+
+    This is a plain unit conversion of the numbers: forces (``V``, ``force``)
+    are multiplied by ``forceScale``, lengths (``s``, ``nodeS``,
+    ``stationPoints``, ``axisPoints``, ``axisLength``) by ``lengthScale`` and
+    moments (``M``, ``T``, ``moment``) by their product. For example a model
+    in N and m is converted to kN and mm with ``forceScale=1e-3`` and
+    ``lengthScale=1e3``.
+
+    Parameters
+    ----------
+    result : VMTResult
+    forceScale : float
+        Multiplier applied to every force, must be positive.
+    lengthScale : float
+        Multiplier applied to every length, must be positive.
+
+    Returns
+    -------
+    VMTResult
+        The same object when both factors are ``1``, otherwise a scaled copy.
+
+    Raises
+    ------
+    ValueError
+        If a scale factor is not a positive finite number.
+    """
+    forceScale = _checkScale("forceScale", forceScale)
+    lengthScale = _checkScale("lengthScale", lengthScale)
+    if forceScale == 1.0 and lengthScale == 1.0:
+        return result
+    momentScale = forceScale * lengthScale
+    return replace(
+        result,
+        s=result.s * lengthScale,
+        V=result.V * forceScale,
+        M=result.M * momentScale,
+        T=result.T * momentScale,
+        force=result.force * forceScale,
+        moment=result.moment * momentScale,
+        stationPoints=result.stationPoints * lengthScale,
+        nodeS=result.nodeS * lengthScale,
+        axisPoints=result.axisPoints * lengthScale,
+        axisLength=result.axisLength * lengthScale,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Layer 4: planform silhouette and plotting
 # ---------------------------------------------------------------------------
@@ -1068,6 +1136,45 @@ _DIAGRAM_LABELS = (
 )
 
 
+def _unitSuffix(unit, sep=" "):
+    """Return ``"[unit]"`` preceded by ``sep`` for an axis label, or ``""`` without a unit."""
+    return f"{sep}[{unit}]" if unit else ""
+
+
+def _momentUnit(forceUnit, lengthUnit):
+    """Return the moment unit, e.g. ``"N·m"``, or ``None`` unless both are given."""
+    if forceUnit and lengthUnit:
+        return f"{forceUnit}·{lengthUnit}"
+    return None
+
+
+def _diagramLabels(forceUnit=None, lengthUnit=None):
+    """Return ``_DIAGRAM_LABELS`` with the unit of every quantity appended."""
+    momentUnit = _momentUnit(forceUnit, lengthUnit)
+    units = (forceUnit, momentUnit, momentUnit)
+    # The unit goes on a second line so the long y labels fit the panel height
+    return tuple(
+        (key, label + _unitSuffix(unit, sep="\n"))
+        for (key, label), unit in zip(_DIAGRAM_LABELS, units, strict=True)
+    )
+
+
+def _scaleSilhouette(silhouette, lengthScale):
+    """Return the silhouette with every in-plane coordinate multiplied by ``lengthScale``."""
+    lengthScale = _checkScale("lengthScale", lengthScale)
+    if lengthScale == 1.0:
+        return silhouette
+    return replace(
+        silhouette,
+        quads=silhouette.quads * lengthScale,
+        tris=silhouette.tris * lengthScale,
+        lines=silhouette.lines * lengthScale,
+        axisXY=silhouette.axisXY * lengthScale,
+        stationXY=silhouette.stationXY * lengthScale,
+        origin=silhouette.origin * lengthScale,
+    )
+
+
 def _importPyplot():
     """Import matplotlib lazily with an installation hint on failure."""
     try:
@@ -1113,7 +1220,7 @@ def _resolveSilhouette(result, data, silhouette, shearDir, elemMask):
     )
 
 
-def _newFigure(figsize):
+def _newFigure(figsize, forceUnit=None, lengthUnit=None):
     """Create the figure with the planform panel above three shared-x diagrams."""
     from matplotlib.gridspec import GridSpec
 
@@ -1124,16 +1231,26 @@ def _newFigure(figsize):
     axV = fig.add_subplot(gs[1])
     axM = fig.add_subplot(gs[2], sharex=axV)
     axT = fig.add_subplot(gs[3], sharex=axV)
-    for ax, (_, label) in zip((axV, axM, axT), _DIAGRAM_LABELS, strict=True):
+    labels = _diagramLabels(forceUnit, lengthUnit)
+    for ax, (_, label) in zip((axV, axM, axT), labels, strict=True):
         ax.axhline(0.0, color="0.6", linewidth=0.8)
         ax.set_ylabel(label)
         ax.grid(True, alpha=0.3)
-    axT.set_xlabel("arc length along beam axis, s")
+    axT.set_xlabel("arc length along beam axis, s" + _unitSuffix(lengthUnit))
     return fig, (axPlan, axV, axM, axT)
 
 
 def _drawPlanform(
-    fig, axPlan, silhouette, result, arcCmap, arcNorm, faceColor, lineColor, title
+    fig,
+    axPlan,
+    silhouette,
+    result,
+    arcCmap,
+    arcNorm,
+    faceColor,
+    lineColor,
+    title,
+    lengthUnit=None,
 ):
     """Draw the silhouette, the arc-length coloured axis, station ticks and colourbar."""
     from matplotlib.cm import ScalarMappable
@@ -1210,8 +1327,8 @@ def _drawPlanform(
         )
     axPlan.autoscale_view()
     axPlan.set_aspect("equal", adjustable="datalim")
-    axPlan.set_xlabel("in-plane coordinate along axis")
-    axPlan.set_ylabel("in-plane coordinate")
+    axPlan.set_xlabel("in-plane coordinate along axis" + _unitSuffix(lengthUnit))
+    axPlan.set_ylabel("in-plane coordinate" + _unitSuffix(lengthUnit))
     axPlan.set_title(
         title if title is not None else "Planform projected along the shear direction"
     )
@@ -1220,7 +1337,7 @@ def _drawPlanform(
         ax=axPlan,
         fraction=0.04,
         pad=0.02,
-        label="beam axis arc length, s",
+        label="beam axis arc length, s" + _unitSuffix(lengthUnit),
     )
 
 
@@ -1238,6 +1355,10 @@ def plotVMT(
     lineColor="0.45",
     cmap="viridis",
     cmapRange=(0.0, 1.0),
+    forceUnit=None,
+    lengthUnit=None,
+    forceScale=1.0,
+    lengthScale=1.0,
 ):
     """
     Plot the planform silhouette with the beam axis, and V, M, T below it.
@@ -1276,6 +1397,19 @@ def plotVMT(
     cmapRange : tuple of float
         Fraction of ``cmap`` that is used, ``(low, high)`` in ``[0, 1]``. Useful
         to skip the near-white end of single-hue maps such as ``"Blues"``.
+    forceUnit, lengthUnit : str, optional
+        Unit labels appended to the axis labels, e.g. ``"N"`` and ``"m"`` or
+        ``"lbf"`` and ``"in"``. The moment and torque axes are labelled
+        ``forceUnit·lengthUnit`` and only get a unit when both are given.
+        The labels are cosmetic; combine them with the scale factors below
+        when the plotted numbers have to be converted first.
+    forceScale, lengthScale : float
+        Multipliers applied to the plotted forces and lengths (moments and
+        the planform geometry scale accordingly), see
+        :func:`scaleVMTResult`. ``result``, ``data`` and ``silhouette`` are
+        always given in model units. For example a model in N and m is
+        plotted in kN and mm with ``forceScale=1e-3, lengthScale=1e3,
+        forceUnit="kN", lengthUnit="mm"``.
 
     Returns
     -------
@@ -1287,14 +1421,27 @@ def plotVMT(
     ------
     ImportError
         If matplotlib is not installed.
+    ValueError
+        If a scale factor is not a positive finite number.
     """
     plt = _importPyplot()
     silhouette = _resolveSilhouette(result, data, silhouette, shearDir, elemMask)
+    result = scaleVMTResult(result, forceScale, lengthScale)
+    silhouette = _scaleSilhouette(silhouette, lengthScale)
     arcCmap, arcNorm = _arcColormap(cmap, cmapRange, result.axisLength)
-    fig, axes = _newFigure(figsize)
+    fig, axes = _newFigure(figsize, forceUnit, lengthUnit)
     axPlan, axV, axM, axT = axes
     _drawPlanform(
-        fig, axPlan, silhouette, result, arcCmap, arcNorm, faceColor, lineColor, title
+        fig,
+        axPlan,
+        silhouette,
+        result,
+        arcCmap,
+        arcNorm,
+        faceColor,
+        lineColor,
+        title,
+        lengthUnit,
     )
 
     for ax, (key, _) in zip((axV, axM, axT), _DIAGRAM_LABELS, strict=True):
@@ -1526,6 +1673,10 @@ def plotVMTEnvelope(
     cmapRange=(0.0, 1.0),
     bandColor="0.55",
     maxCaseLines=10,
+    forceUnit=None,
+    lengthUnit=None,
+    forceScale=1.0,
+    lengthScale=1.0,
 ):
     """
     Plot the min/max envelope of V, M and T over several load cases.
@@ -1545,6 +1696,9 @@ def plotVMTEnvelope(
         Colour of the envelope band and of its bounding curves.
     maxCaseLines : int
         Largest number of cases that get individual colours and a legend.
+    forceUnit, lengthUnit, forceScale, lengthScale
+        Unit labels and unit-conversion factors, as in :func:`plotVMT`. The
+        envelope is computed from the scaled cases.
 
     Returns
     -------
@@ -1554,14 +1708,29 @@ def plotVMTEnvelope(
     """
     plt = _importPyplot()
     cases = _asCaseDict(results)
-    envelope = computeEnvelope(cases)
     first = next(iter(cases.values()))
     silhouette = _resolveSilhouette(first, data, silhouette, shearDir, elemMask)
+    silhouette = _scaleSilhouette(silhouette, lengthScale)
+    cases = {
+        name: scaleVMTResult(res, forceScale, lengthScale)
+        for name, res in cases.items()
+    }
+    first = next(iter(cases.values()))
+    envelope = computeEnvelope(cases)
     arcCmap, arcNorm = _arcColormap(cmap, cmapRange, first.axisLength)
-    fig, axes = _newFigure(figsize)
+    fig, axes = _newFigure(figsize, forceUnit, lengthUnit)
     axPlan, axV, axM, axT = axes
     _drawPlanform(
-        fig, axPlan, silhouette, first, arcCmap, arcNorm, faceColor, lineColor, title
+        fig,
+        axPlan,
+        silhouette,
+        first,
+        arcCmap,
+        arcNorm,
+        faceColor,
+        lineColor,
+        title,
+        lengthUnit,
     )
 
     numCases = len(cases)
@@ -1631,7 +1800,9 @@ def plotVMTReport(
     title : str, optional
         Prefix for the page titles.
     **kwargs
-        Passed to :func:`plotVMT` and :func:`plotVMTEnvelope` (colours).
+        Passed to :func:`plotVMT` and :func:`plotVMTEnvelope`: colours, unit
+        labels (``forceUnit``, ``lengthUnit``) and unit-conversion factors
+        (``forceScale``, ``lengthScale``).
 
     Returns
     -------
@@ -1825,11 +1996,54 @@ def buildParser():
     )
     parser.add_argument("--show", action="store_true", help="display the figure")
     parser.add_argument(
+        "--force-unit",
+        metavar="UNIT",
+        help=(
+            "force unit written in the plot axis labels, e.g. N or lbf; moments "
+            "are labelled UNIT·LENGTH when --length-unit is also given"
+        ),
+    )
+    parser.add_argument(
+        "--length-unit",
+        metavar="UNIT",
+        help="length unit written in the plot axis labels, e.g. m or in",
+    )
+    parser.add_argument(
+        "--force-scale",
+        type=_positiveFloat,
+        default=1.0,
+        metavar="FACTOR",
+        help=(
+            "multiply the plotted forces by FACTOR (moments scale with it) to "
+            "convert units, e.g. 0.001 for N to kN; CSV and table output stay "
+            "in model units (default 1)"
+        ),
+    )
+    parser.add_argument(
+        "--length-scale",
+        type=_positiveFloat,
+        default=1.0,
+        metavar="FACTOR",
+        help=(
+            "multiply the plotted lengths by FACTOR (moments and the planform "
+            "scale with it) to convert units, e.g. 39.3701 for m to in; CSV and "
+            "table output stay in model units (default 1)"
+        ),
+    )
+    parser.add_argument(
         "--list-components",
         action="store_true",
         help="list the components in the first file and exit",
     )
     return parser
+
+
+def _positiveFloat(text):
+    """Parse an argparse value as a strictly positive, finite float."""
+    try:
+        return _checkScale("scale factor", text)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
 def _parseComponents(tokens):
@@ -1927,27 +2141,31 @@ def main(argv=None):
             elemMask, _ = selectComponents(datas[0], components)
             first = next(iter(results.values()))
             silhouette = buildSilhouette(datas[0], first, args.shear_dir, elemMask)
+            plotKwargs = {
+                "silhouette": silhouette,
+                "shearDir": args.shear_dir,
+                "forceUnit": args.force_unit,
+                "lengthUnit": args.length_unit,
+                "forceScale": args.force_scale,
+                "lengthScale": args.length_scale,
+            }
             isPdf = bool(args.output) and args.output.lower().endswith(".pdf")
             if args.output and isPdf:
-                plotVMTReport(
-                    results, args.output, silhouette=silhouette, shearDir=args.shear_dir
-                )
+                plotVMTReport(results, args.output, **plotKwargs)
             elif args.output and multi:
                 for name, res in results.items():
                     fig, _ = plotVMT(
                         res,
-                        silhouette=silhouette,
-                        shearDir=args.shear_dir,
                         fileName=_withSuffix(args.output, name),
                         title=name,
+                        **plotKwargs,
                     )
                     plt.close(fig)
                 fig, _ = plotVMTEnvelope(
                     results,
-                    silhouette=silhouette,
-                    shearDir=args.shear_dir,
                     fileName=_withSuffix(args.output, "envelope"),
                     title=f"envelope of {len(results)} load cases",
+                    **plotKwargs,
                 )
                 plt.close(fig)
             if args.show or (args.output and not isPdf and not multi):
@@ -1955,19 +2173,17 @@ def main(argv=None):
                 if multi:
                     fig, _ = plotVMTEnvelope(
                         results,
-                        silhouette=silhouette,
-                        shearDir=args.shear_dir,
                         show=args.show,
                         title=f"envelope of {len(results)} load cases",
+                        **plotKwargs,
                     )
                 else:
                     fig, _ = plotVMT(
                         res,
-                        silhouette=silhouette,
-                        shearDir=args.shear_dir,
                         fileName=None if isPdf else args.output,
                         show=args.show,
                         title=name,
+                        **plotKwargs,
                     )
                 plt.close(fig)
 
